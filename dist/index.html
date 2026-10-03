@@ -92,12 +92,16 @@
   /* bg fixed hai taaki 02 threats tak same bg static rahe, text uske upar scroll ho */
   .hero{align-items:stretch;text-align:left;overflow:clip;padding:150px var(--gx) 0;background:transparent}
   .hero__bg{position:fixed;inset:0;z-index:0;background:url("design/Red%20Veins%20Across%20a%20Shattered%20World.png") 68% 38%/cover no-repeat;transition:opacity .6s ease}
-  .hero__vid{position:fixed;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;object-position:68% 38%;transition:opacity .6s ease}
+  .hero__vid{position:fixed;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;object-position:68% 38%;transition:opacity .6s ease;
+    filter:saturate(1.3) contrast(1.15) brightness(.88)}
+  /* film grain — soft video pe texture, blur nazar nahi aata */
+  .hero__grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.25;transition:opacity .6s ease;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E")}
   .hero__shade{position:fixed;inset:0;z-index:0;pointer-events:none;background:
      linear-gradient(90deg,rgba(10,10,12,.94) 0%,rgba(10,10,12,.82) 30%,rgba(10,10,12,.45) 55%,rgba(10,10,12,.08) 78%,rgba(10,10,12,.25) 100%),
      linear-gradient(180deg,rgba(10,10,12,.7) 0%,transparent 26%),
      radial-gradient(45% 55% at 78% 45%,transparent 40%,rgba(10,10,12,.5) 100%);transition:opacity .6s ease}
-  body.bg-off .hero__bg,body.bg-off .hero__shade,body.bg-off .hero__vid{opacity:0}
+  body.bg-off .hero__bg,body.bg-off .hero__shade,body.bg-off .hero__vid,body.bg-off .hero__grain{opacity:0}
   main{position:relative;z-index:1}
   #services,#partners,#team,#work,.site-footer{position:relative;z-index:2;background:var(--bg)}
   #threats{position:relative;z-index:1;background:transparent}
@@ -578,6 +582,7 @@
   <div class="hero__bg" aria-hidden="true"></div>
   <video class="hero__vid" autoplay muted loop playsinline preload="auto" poster="design/Red%20Veins%20Across%20a%20Shattered%20World.png" aria-hidden="true"><source src="design/hero-bg.mp4" type="video/mp4"></video>
   <div class="hero__shade" aria-hidden="true"></div>
+  <div class="hero__grain" aria-hidden="true"></div>
   <div class="nebula" aria-hidden="true"></div>
   <canvas class="stars" id="stars" aria-hidden="true"></canvas>
   <div class="hero__cards" aria-hidden="true">
