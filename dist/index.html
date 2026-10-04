@@ -93,15 +93,21 @@
   .hero{align-items:stretch;text-align:left;overflow:clip;padding:150px var(--gx) 0;background:transparent}
   .hero__bg{position:fixed;inset:0;z-index:0;background:url("design/Red%20Veins%20Across%20a%20Shattered%20World.png") 68% 38%/cover no-repeat;transition:opacity .6s ease}
   .hero__vid{position:fixed;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;object-position:68% 38%;transition:opacity .6s ease;
-    filter:saturate(1.3) contrast(1.15) brightness(.88)}
-  /* film grain — soft video pe texture, blur nazar nahi aata */
+    filter:saturate(1.3) contrast(1.15) brightness(.8)}
+  /* cursor spotlight — contact wala logic, broad circle */
+  .hero__spot{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity .5s;overflow:hidden;
+    -webkit-mask-image:radial-gradient(circle 340px at var(--sx,50%) var(--sy,30%),#000 40%,transparent 74%);
+    mask-image:radial-gradient(circle 340px at var(--sx,50%) var(--sy,30%),#000 40%,transparent 74%)}
+  .hero__spotvid{width:100%;height:100%;object-fit:cover;object-position:68% 38%;
+    filter:saturate(1.5) contrast(1.22) brightness(1.18)}
+  .hero:hover .hero__spot{opacity:1}
   .hero__grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.25;transition:opacity .6s ease;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E")}
   .hero__shade{position:fixed;inset:0;z-index:0;pointer-events:none;background:
-     linear-gradient(90deg,rgba(10,10,12,.94) 0%,rgba(10,10,12,.82) 30%,rgba(10,10,12,.45) 55%,rgba(10,10,12,.08) 78%,rgba(10,10,12,.25) 100%),
-     linear-gradient(180deg,rgba(10,10,12,.7) 0%,transparent 26%),
-     radial-gradient(45% 55% at 78% 45%,transparent 40%,rgba(10,10,12,.5) 100%);transition:opacity .6s ease}
-  body.bg-off .hero__bg,body.bg-off .hero__shade,body.bg-off .hero__vid,body.bg-off .hero__grain{opacity:0}
+     linear-gradient(90deg,rgba(10,10,12,.98) 0%,rgba(10,10,12,.94) 30%,rgba(10,10,12,.75) 55%,rgba(10,10,12,.4) 78%,rgba(10,10,12,.55) 100%),
+     linear-gradient(180deg,rgba(10,10,12,.88) 0%,transparent 26%),
+     radial-gradient(45% 55% at 78% 45%,transparent 40%,rgba(10,10,12,.75) 100%);transition:opacity .6s ease}
+  body.bg-off .hero__bg,body.bg-off .hero__shade,body.bg-off .hero__vid,body.bg-off .hero__grain,body.bg-off .hero__spot{opacity:0}
   main{position:relative;z-index:1}
   #services,#partners,#team,#work,.site-footer{position:relative;z-index:2;background:var(--bg)}
   #threats{position:relative;z-index:1;background:transparent}
@@ -290,7 +296,12 @@
      Drop logo files into partners/ and reference as partners/your-logo.png (relative path).
      If an image is missing, initials show automatically via onerror -> .no-img. */
   .logos{margin-top:clamp(32px,5vh,52px)}
-  .logos__track{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+  .logos{margin-top:clamp(32px,5vh,52px);overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+  .logos__track{display:flex;gap:0;width:max-content;animation:plogos 32s linear infinite}
+  .logos:hover .logos__track{animation-play-state:paused}
+  @keyframes plogos{to{transform:translateX(-50%)}}
+  #partners .pcard{flex:0 0 auto;width:250px;margin-right:18px;text-align:center;align-items:center}
+  #partners .pcard__tag{display:none}
   .pcard{padding:18px 18px 16px;display:flex;flex-direction:column;align-items:stretch;text-align:left;border-radius:16px;border:1px solid rgba(225,29,46,.28);
     background:radial-gradient(90% 80% at 85% 108%,rgba(225,29,46,.14),transparent 60%),linear-gradient(135deg,rgba(24,24,30,.94),rgba(11,11,15,.9))}
   #partners .pcard.glass:hover{border-color:rgba(240,42,59,.55)}
@@ -327,8 +338,7 @@
   #partners.show-all .pcard.is-extra{display:flex;animation:qin .5s var(--out)}
   .more-wrap{display:flex;justify-content:center;margin-top:26px}
   .more-wrap .btn{height:42px;padding:0 26px;font-size:10px}
-  @media (max-width:960px){.logos__track{grid-template-columns:repeat(2,1fr)}}
-  @media (max-width:560px){.logos__track{grid-template-columns:1fr}}
+  @media (max-width:560px){#partners .pcard{width:210px}}
   .quotes{margin-top:clamp(36px,6vh,60px);padding-top:32px;border-top:1px solid var(--rule);text-align:center}
   .quote{display:none;min-height:96px}
   .quote.is-active{display:block;animation:qin .6s var(--out)}
@@ -361,8 +371,8 @@
   /* cursor spotlight — bg sirf cursor ke paas reveal */
   .work__spot{position:absolute;inset:0;pointer-events:none;background:url("design/contact.png") 72% 28%/cover no-repeat;
     opacity:0;transition:opacity .5s;
-    -webkit-mask-image:radial-gradient(circle 130px at var(--sx,50%) var(--sy,50%),#000 45%,transparent 75%);
-    mask-image:radial-gradient(circle 130px at var(--sx,50%) var(--sy,50%),#000 45%,transparent 75%)}
+    -webkit-mask-image:radial-gradient(circle 170px at var(--sx,50%) var(--sy,50%),#000 45%,transparent 75%);
+    mask-image:radial-gradient(circle 170px at var(--sx,50%) var(--sy,50%),#000 45%,transparent 75%)}
   #work:hover .work__spot{opacity:1}
   #work>*:not(.work__bg):not(.work__shade):not(.work__spot):not(.work__flow):not(.work-hud){position:relative;z-index:1}
   .work-hud{position:absolute;top:70px;right:var(--gx);z-index:0;width:330px;height:210px;pointer-events:none;
@@ -437,8 +447,6 @@
   .fcol li a:hover{color:#fff;padding-left:8px}
   .fcol li a i{font-style:normal;color:var(--red);opacity:0;transform:translateX(-4px);transition:opacity .3s,transform .35s var(--out)}
   .fcol li a:hover i{opacity:1;transform:none}
-  .fgiant{font-family:var(--disp);font-weight:700;font-size:clamp(4.5rem,15.5vw,15rem);line-height:.95;letter-spacing:-.02em;text-align:center;margin:clamp(28px,5vh,48px) 0 0;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.13);user-select:none}
-  .fgiant span{-webkit-text-stroke:0;color:var(--red);text-shadow:0 0 60px rgba(225,29,46,.5)}
   .fbottom{margin:24px var(--gx) 0;padding-top:22px;border-top:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
   .fstatus{display:inline-flex;align-items:center;gap:10px}
   .fstatus i{width:7px;height:7px;border-radius:50%;background:#3ddc84;box-shadow:0 0 0 0 rgba(61,220,132,.6);animation:pulse 2.4s ease-out infinite}
@@ -461,7 +469,7 @@
   .modal[hidden]{display:none}
   .modal__back{position:absolute;inset:0;background:rgba(6,6,8,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;transition:opacity .4s}
   .modal.is-open .modal__back{opacity:1}
-  .modal__card{position:relative;width:min(880px,100%);max-height:calc(100svh - 40px);overflow:auto;background:#151518;border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:clamp(24px,4vw,56px);box-shadow:0 40px 120px rgba(0,0,0,.6);opacity:0;transform:translateY(16px) scale(.98);transition:opacity .45s,transform .55s var(--out)}
+  .modal__card{position:relative;width:min(600px,100%);max-height:calc(100svh - 40px);overflow:auto;background:#151518;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:clamp(20px,3vw,32px);box-shadow:0 40px 120px rgba(0,0,0,.6);opacity:0;transform:translateY(16px) scale(.98);transition:opacity .45s,transform .55s var(--out)}
   .modal.is-open .modal__card{opacity:1;transform:none}
   .modal__head{display:flex;align-items:center;gap:14px;padding-bottom:22px;border-bottom:1px solid rgba(255,255,255,.1)}
   .modal__mark{display:grid;place-items:center;width:34px;height:34px;border-radius:6px;background:#0A0A0C;border:1px solid rgba(255,255,255,.08)}
@@ -469,16 +477,16 @@
   .modal__title{font:500 14px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase}
   .modal__close{margin-left:auto;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--muted);transition:background .3s,color .3s}
   .modal__close:hover{background:rgba(255,255,255,.08);color:var(--text)}
-  .f{display:grid;gap:8px;margin-top:26px}
+  .f{display:grid;gap:6px;margin-top:16px}
   .f label{font-size:14px;font-weight:500}
   .f label i{font-style:normal;color:var(--red)}
-  .f input,.f select,.f textarea{width:100%;height:56px;padding:0 20px;border-radius:12px;background:#0C0C14;border:1px solid rgba(255,255,255,.08);color:var(--text);font:400 15px var(--sans);transition:border-color .3s,box-shadow .3s}
-  .f textarea{height:110px;padding:16px 20px;resize:vertical}
+  .f input,.f select,.f textarea{width:100%;height:48px;padding:0 16px;border-radius:10px;background:#0C0C14;border:1px solid rgba(255,255,255,.08);color:var(--text);font:400 14px var(--sans);transition:border-color .3s,box-shadow .3s}
+  .f textarea{height:84px;padding:12px 16px;resize:vertical}
   .f select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2385858F' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 20px center}
   .f input::placeholder,.f textarea::placeholder{color:#5E5E68}
   .f input:focus,.f select:focus,.f textarea:focus{outline:0;border-color:rgba(225,29,46,.6);box-shadow:0 0 0 3px rgba(225,29,46,.12)}
-  .f2{display:grid;grid-template-columns:1fr 1fr;gap:26px}
-  .submit{width:100%;height:64px;margin-top:34px;border-radius:999px;background:linear-gradient(90deg,#E11D2E,#F05A4E);color:#fff;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:12px;transition:transform .3s var(--out),filter .3s}
+  .f2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .submit{width:100%;height:54px;margin-top:22px;border-radius:999px;background:linear-gradient(90deg,#E11D2E,#F05A4E);color:#fff;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:12px;transition:transform .3s var(--out),filter .3s}
   .submit:hover{transform:translateY(-1px);filter:brightness(1.06)}
   .submit svg{width:18px;height:18px}
   .modal__note{margin-top:16px;text-align:center;font-size:12px;color:var(--muted)}
@@ -548,6 +556,8 @@
 
   @media (prefers-reduced-motion:reduce){
     *,*::before,*::after{transition:none!important;animation:none!important}
+    .logos{overflow:visible;-webkit-mask-image:none;mask-image:none}
+    .logos__track{flex-wrap:wrap;width:auto}
     [data-reveal],.hero .line>span,.hero .eyebrow,.hero .lead,.hero .three,.hero .cta,.nav,.foot,.scroll{opacity:1!important;transform:none!important}
     .rule{transform:none!important}
   }
@@ -582,6 +592,7 @@
   <div class="hero__bg" aria-hidden="true"></div>
   <video class="hero__vid" autoplay muted loop playsinline preload="auto" poster="design/Red%20Veins%20Across%20a%20Shattered%20World.png" aria-hidden="true"><source src="design/hero-bg.mp4" type="video/mp4"></video>
   <div class="hero__shade" aria-hidden="true"></div>
+  <div class="hero__spot" aria-hidden="true"><video class="hero__spotvid" muted loop playsinline preload="auto" aria-hidden="true"><source src="design/hero-bg.mp4" type="video/mp4"></video></div>
   <div class="hero__grain" aria-hidden="true"></div>
   <div class="nebula" aria-hidden="true"></div>
   <canvas class="stars" id="stars" aria-hidden="true"></canvas>
@@ -709,20 +720,13 @@
       <a class="pcard glass" href="#" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/micuppa-alt.png" alt="Micuppa" loading="lazy" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">MI</span></span><b class="pcard__name">Micuppa</b><span class="pcard__tag">Product partner</span></a>
       <a class="pcard glass" href="#" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/Brandgoesup-static.png" alt="BrandGoesUp" loading="lazy" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">BG</span></span><b class="pcard__name">BrandGoesUp</b><span class="pcard__tag">Growth partner</span></a>
       <a class="pcard glass" href="https://poly.kkwagh.edu.in/" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/kkwagh.png" alt="K.K. Wagh Polytechnic" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">KW</span></span><b class="pcard__name">K.K. Wagh Polytechnic</b><span class="pcard__tag">Education</span></a>
-      <a class="pcard glass" href="https://www.navjeevannashik.org/" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/navjeevan.png" alt="Navjeevan College" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">NC</span></span><b class="pcard__name">Navjeevan College</b><span class="pcard__tag">Education</span></a><!-- CONFIRM: exact institute page -->
       <a class="pcard glass" href="https://www.thedarknetcommunity.com/" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/tdc.png" alt="The Darknet Community" loading="lazy" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">TD</span></span><b class="pcard__name">The Darknet Community</b><span class="pcard__tag">Community</span></a>
-      <a class="pcard glass" href="#" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/wisdom-high.png" alt="Wisdom High International School" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">WH</span></span><b class="pcard__name">Wisdom High International School</b><span class="pcard__tag">Education</span></a><!-- CONFIRM URL -->
-      <a class="pcard glass is-extra" href="#" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/guru-gobind.png" alt="Guru Gobind College" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">GG</span></span><b class="pcard__name">Guru Gobind College</b><span class="pcard__tag">Education</span></a><!-- CONFIRM URL -->
-      <a class="pcard glass is-extra" href="#" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/kvn-naik.png" alt="KVN Naik" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">KN</span></span><b class="pcard__name">KVN Naik</b><span class="pcard__tag">Education</span></a><!-- CONFIRM URL -->
-      <a class="pcard glass is-extra" href="#" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/st-lawrence.png" alt="St. Lawrence" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">SL</span></span><b class="pcard__name">St. Lawrence</b><span class="pcard__tag">Education</span></a><!-- CONFIRM URL -->
-      <a class="pcard glass is-extra" href="#" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/rasbihari.png" alt="Rasbihari International School" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">RI</span></span><b class="pcard__name">Rasbihari International School</b><span class="pcard__tag">Education</span></a><!-- CONFIRM URL -->
+      <a class="pcard glass" href="#" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/wisdom-high.png" alt="Wisdom High International School" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">WH</span></span><b class="pcard__name">Wisdom High International School</b><span class="pcard__tag">Education</span></a>
     </div>
   </div>
-  <div class="more-wrap" data-reveal style="--i:4"><button class="btn btn--ghost" id="morePartners" aria-expanded="false">View more ↓</button></div>
 
   <div class="quotes" data-reveal style="--i:4">
     <div class="quote"><p class="quote__t">[Two lines from the HOD about the awareness session for students and what changed after it.]</p><p class="quote__who"><b>[Name]</b> · Head of Department, K.K. Wagh Polytechnic</p></div>
-    <div class="quote"><p class="quote__t">[Two lines from the Director about the security assessment and how the findings were reported.]</p><p class="quote__who"><b>[Name]</b> · Director, Navjeevan College</p></div>
     <div class="quote"><p class="quote__t">[Two lines from the founder about working with Apthex as a partner.]</p><p class="quote__who"><b>[Name]</b> · Founder, Micuppa</p></div>
     <div class="quote"><p class="quote__t">[Two lines from the founder about the community partnership and joint sessions.]</p><p class="quote__who"><b>[Name]</b> · Founder, The Darknet Community</p></div>
     <div class="quotes__nav"><button id="qprev" aria-label="Previous">←</button><span class="dots" id="qdots"></span><button id="qnext" aria-label="Next">→</button></div>
@@ -851,7 +855,6 @@
       </div>
     </div>
   </div>
-  <div class="fgiant" aria-hidden="true">APTHEX<span>.</span></div>
   <div class="fbottom">
     <span>© 2026 Apthex Technologies · apthex.com</span>
     <span class="fstatus"><i></i>Response &lt; 1 hour · 24/7</span>
@@ -943,15 +946,21 @@
   /* fixed hero bg: partners tak visible, uske baad fade out (scroll-driven, footer me leak nahi) */
   const svc = $('#work');
   const hv = document.querySelector('.hero__vid');
+  const spv = document.querySelector('.hero__spotvid');
   if (hv && reduce) { hv.pause(); hv.removeAttribute('autoplay'); }
+  if (spv) { spv.pause(); }
+  if (hv && !reduce) { try { hv.playbackRate = 0.55; } catch (e) {} }
+  if (spv && !reduce) { try { spv.playbackRate = 0.55; } catch (e) {} }
   const syncBg = () => {
     if (svc) document.body.classList.toggle('bg-off', svc.getBoundingClientRect().top < innerHeight * .7);
     if (hv && !reduce) { if (document.body.classList.contains('bg-off')) hv.pause(); else hv.play().catch(() => {}); }
+    if (spv && !reduce) { if (document.body.classList.contains('bg-off')) spv.pause(); else spv.play().catch(() => {}); }
   };
   addEventListener('scroll', () => requestAnimationFrame(syncBg), { passive: true }); addEventListener('load', syncBg); syncBg();
 
   /* hero floating cards — mouse parallax (lerp = smooth, CSS float ke saath milke) */
   const heroSec = $('#home'), hcards = $$('.hcard');
+  const hspot = heroSec ? heroSec.querySelector('.hero__spot') : null;
   if (heroSec && hcards.length && !reduce && matchMedia('(pointer:fine)').matches) {
     const depth = [14, 24, 18];
     let tx = 0, ty = 0, cx = 0, cy = 0, rafP = 0;
@@ -965,6 +974,7 @@
       const r = heroSec.getBoundingClientRect();
       tx = ((e.clientX - r.left) / r.width - .5) * 2;
       ty = ((e.clientY - r.top) / r.height - .5) * 2;
+      if (hspot) { hspot.style.setProperty('--sx', ((e.clientX - r.left) / r.width * 100).toFixed(2) + '%'); hspot.style.setProperty('--sy', ((e.clientY - r.top) / r.height * 100).toFixed(2) + '%'); }
       kick();
     });
     heroSec.addEventListener('mouseleave', () => { tx = 0; ty = 0; kick(); });
@@ -1065,7 +1075,7 @@
   }));
   $('#teamClose').addEventListener('click', () => closeTeam(true));
   /* dusre section par jaane se team wapas chhup jayegi */
-  $$('a[href="#home"],a[href="#threats"],a[href="#services"],a[href="#partners"],a[href="#contact-block"]').forEach(a => a.addEventListener('click', e => {
+  $$('a[href="#home"],a[href="#threats"],a[href="#services"],a[href="#partners"]').forEach(a => a.addEventListener('click', e => {
     if (!document.body.classList.contains('team-open')) return;
     const target = $(a.getAttribute('href'));
     if (!target) return;
@@ -1074,22 +1084,20 @@
     pick();
     requestAnimationFrame(() => target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }));
   }));
+  /* Contact nav — snap wale page (#work) ke start pe smooth scroll, beech me atakega nahi */
+  $$('a[href="#contact-block"]').forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    document.body.classList.remove('team-open');
+    const mb = $('#menuBtn'), mn = $('#menu');
+    if (mn && mn.classList.contains('is-open')) { mn.classList.remove('is-open'); document.body.classList.remove('no-scroll'); mb && mb.setAttribute('aria-expanded', 'false'); }
+    pick();
+    requestAnimationFrame(() => (workSec || $('#contact-block')).scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }));
+  }));
 
-  /* partner cards — auto number + tag row + arrow (ref design) */
-  $$('.pcard').forEach((c, i) => {
-    const num = document.createElement('span'); num.className = 'pnum'; num.textContent = String(i + 1).padStart(2, '0'); c.prepend(num);
-    const tag = c.querySelector('.pcard__tag');
-    if (tag) { const row = document.createElement('span'); row.className = 'pcard__row';
-      const go = document.createElement('span'); go.className = 'pcard__go'; go.textContent = '↗';
-      tag.after(row); row.append(tag, go); }
-  });
-
-  /* partners: 4 per row, 2 rows visible, baki View more se */
-  const moreBtn = $('#morePartners'), partnersSec = $('#partners');
-  if (moreBtn && partnersSec) moreBtn.addEventListener('click', () => {
-    const open = partnersSec.classList.toggle('show-all');
-    moreBtn.setAttribute('aria-expanded', open);
-    moreBtn.textContent = open ? 'View less ↑' : 'View more ↓';
+  /* partner logos — single-line infinite marquee (set duplicate for seamless loop) */
+  const track = $('#logoTrack');
+  if (track && !reduce) [...track.children].forEach(c => {
+    const d = c.cloneNode(true); d.setAttribute('aria-hidden', 'true'); d.tabIndex = -1; track.append(d);
   });
 
   /* mobile menu */
