@@ -91,15 +91,14 @@
   /* ---------- 01 home — aphex ref: globe bg + left copy + floating cards ---------- */
   /* bg fixed hai taaki 02 threats tak same bg static rahe, text uske upar scroll ho */
   .hero{align-items:stretch;text-align:left;overflow:clip;padding:150px var(--gx) 0;background:transparent}
-  .hero__bg{position:fixed;inset:0;z-index:0;background:url("design/Red%20Veins%20Across%20a%20Shattered%20World.png") 68% 38%/cover no-repeat;transition:opacity .6s ease}
-  .hero__vid{position:fixed;inset:0;z-index:0;width:100%;height:100%;object-fit:cover;object-position:68% 38%;transition:opacity .6s ease;
+  .hero__bg{position:fixed;inset:0;z-index:0;background:url("design/Red%20Veins%20Across%20a%20Shattered%20World.png") 68% 38%/cover no-repeat;transition:opacity .6s ease;
     filter:saturate(1.3) contrast(1.15) brightness(.8)}
-  /* cursor spotlight — contact wala logic, broad circle */
+  /* cursor spotlight — same hi-res img, brighter where the cursor is */
   .hero__spot{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity .5s;overflow:hidden;
+    background:url("design/Red%20Veins%20Across%20a%20Shattered%20World.png") 68% 38%/cover no-repeat;
+    filter:saturate(1.5) contrast(1.22) brightness(1.18);
     -webkit-mask-image:radial-gradient(circle 340px at var(--sx,50%) var(--sy,30%),#000 40%,transparent 74%);
     mask-image:radial-gradient(circle 340px at var(--sx,50%) var(--sy,30%),#000 40%,transparent 74%)}
-  .hero__spotvid{width:100%;height:100%;object-fit:cover;object-position:68% 38%;
-    filter:saturate(1.5) contrast(1.22) brightness(1.18)}
   .hero:hover .hero__spot{opacity:1}
   .hero__grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.25;transition:opacity .6s ease;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E")}
@@ -107,7 +106,7 @@
      linear-gradient(90deg,rgba(10,10,12,.98) 0%,rgba(10,10,12,.94) 30%,rgba(10,10,12,.75) 55%,rgba(10,10,12,.4) 78%,rgba(10,10,12,.55) 100%),
      linear-gradient(180deg,rgba(10,10,12,.88) 0%,transparent 26%),
      radial-gradient(45% 55% at 78% 45%,transparent 40%,rgba(10,10,12,.75) 100%);transition:opacity .6s ease}
-  body.bg-off .hero__bg,body.bg-off .hero__shade,body.bg-off .hero__vid,body.bg-off .hero__grain,body.bg-off .hero__spot{opacity:0}
+  body.bg-off .hero__bg,body.bg-off .hero__shade,body.bg-off .hero__grain,body.bg-off .hero__spot{opacity:0}
   main{position:relative;z-index:1}
   #services,#partners,#team,#work,.site-footer{position:relative;z-index:2;background:var(--bg)}
   #threats{position:relative;z-index:1;background:transparent}
@@ -297,7 +296,7 @@
      If an image is missing, initials show automatically via onerror -> .no-img. */
   .logos{margin-top:clamp(32px,5vh,52px)}
   .logos{margin-top:clamp(32px,5vh,52px);overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
-  .logos__track{display:flex;gap:0;width:max-content;animation:plogos 32s linear infinite}
+  .logos__track{display:flex;flex-direction:row;flex-wrap:nowrap;width:max-content;max-width:none;animation:plogos 32s linear infinite;will-change:transform}
   .logos:hover .logos__track{animation-play-state:paused}
   @keyframes plogos{to{transform:translateX(-50%)}}
   #partners .pcard{flex:0 0 auto;width:250px;margin-right:18px;text-align:center;align-items:center}
@@ -338,7 +337,8 @@
   #partners.show-all .pcard.is-extra{display:flex;animation:qin .5s var(--out)}
   .more-wrap{display:flex;justify-content:center;margin-top:26px}
   .more-wrap .btn{height:42px;padding:0 26px;font-size:10px}
-  @media (max-width:560px){#partners .pcard{width:210px}}
+  @media (max-width:560px){#partners .pcard{width:200px;margin-right:14px;flex:0 0 auto}.pavatar{height:84px}}
+  @media (max-width:560px){.logos__track{flex-direction:row;flex-wrap:nowrap;width:max-content}}
   .quotes{margin-top:clamp(36px,6vh,60px);padding-top:32px;border-top:1px solid var(--rule);text-align:center}
   .quote{display:none;min-height:96px}
   .quote.is-active{display:block;animation:qin .6s var(--out)}
@@ -421,13 +421,18 @@
   #work .btn--soft:hover{background:linear-gradient(90deg,#C41727,#F02A3B);border-color:rgba(240,42,59,.9);color:#fff}
   .legal{margin-top:40px;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);text-align:center}
   #work{padding-bottom:150px}
-  @media (max-width:640px){.contact{flex-direction:column;gap:8px}.cell+.cell{border-left:0;border-top:1px solid var(--rule);padding-top:18px;margin-top:10px}}
+  @media (max-width:640px){.contact{flex-direction:column;gap:8px}.cell+.cell{border-left:0;border-top:1px solid var(--rule);padding-top:18px;margin-top:10px}
+    #work .contact{align-items:stretch;gap:0;text-align:left;padding-top:26px}
+    #work .cell{width:100%;padding:16px 0;justify-content:flex-start}
+    #work .cell:first-child{padding-top:0}
+    #work .cell+.cell{border-left:0;border-top:1px solid rgba(255,255,255,.12);padding-top:16px;margin-top:16px}
+    #work .contact .v{white-space:normal;overflow-wrap:anywhere}}
 
   /* ---------- aesthetic site footer (sitemap vertical cards) ---------- */
   /* ---------- unique footer: red ticker + brand/cols + giant mark ---------- */
   .site-footer{border-top:1px solid rgba(51,51,62,.45);background:linear-gradient(180deg,rgba(255,255,255,.015),transparent 30%),radial-gradient(70% 90% at 50% 130%,rgba(225,29,46,.09),transparent 70%),var(--bg);padding:0 0 110px;overflow:clip}
   .ftick{overflow:hidden;border-bottom:1px solid rgba(255,255,255,.08);padding:15px 0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
-  .ftick__row{display:inline-flex;white-space:nowrap;animation:ftick 28s linear infinite}
+  .ftick__row{display:inline-flex;flex-wrap:nowrap;white-space:nowrap;width:max-content;max-width:none;animation:ftick 28s linear infinite;will-change:transform}
   .ftick__set{display:inline-flex;align-items:center;gap:34px;padding-right:34px;font-family:var(--mono);font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;color:#8E8E99}
   .ftick__set b{color:var(--red);font-weight:500}
   .ftick__set i{font-style:normal;color:var(--red)}
@@ -556,8 +561,11 @@
 
   @media (prefers-reduced-motion:reduce){
     *,*::before,*::after{transition:none!important;animation:none!important}
-    .logos{overflow:visible;-webkit-mask-image:none;mask-image:none}
-    .logos__track{flex-wrap:wrap;width:auto}
+    /* marquees must keep sliding like laptop — exempt from the global kill,
+       slower so it stays calm when the OS asks for reduced motion */
+    .logos__track{animation:plogos 48s linear infinite!important;flex-wrap:nowrap!important;width:max-content!important}
+    .ftick__row{animation:ftick 42s linear infinite!important}
+    .logos{overflow:hidden!important;-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)!important;mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)!important}
     [data-reveal],.hero .line>span,.hero .eyebrow,.hero .lead,.hero .three,.hero .cta,.nav,.foot,.scroll{opacity:1!important;transform:none!important}
     .rule{transform:none!important}
   }
@@ -590,9 +598,8 @@
 <!-- 01 HOME — ref image layout -->
 <section class="page hero" id="home" data-page="01">
   <div class="hero__bg" aria-hidden="true"></div>
-  <video class="hero__vid" autoplay muted loop playsinline preload="auto" poster="design/Red%20Veins%20Across%20a%20Shattered%20World.png" aria-hidden="true"><source src="design/hero-bg.mp4" type="video/mp4"></video>
   <div class="hero__shade" aria-hidden="true"></div>
-  <div class="hero__spot" aria-hidden="true"><video class="hero__spotvid" muted loop playsinline preload="auto" aria-hidden="true"><source src="design/hero-bg.mp4" type="video/mp4"></video></div>
+  <div class="hero__spot" aria-hidden="true"></div>
   <div class="hero__grain" aria-hidden="true"></div>
   <div class="nebula" aria-hidden="true"></div>
   <canvas class="stars" id="stars" aria-hidden="true"></canvas>
@@ -719,16 +726,20 @@
       <a class="pcard glass" href="#" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/hawk-media.png" alt="Hawk Media" loading="lazy" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">HM</span></span><b class="pcard__name">Hawk Media</b><span class="pcard__tag">Media partner</span></a>
       <a class="pcard glass" href="#" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/micuppa-alt.png" alt="Micuppa" loading="lazy" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">MI</span></span><b class="pcard__name">Micuppa</b><span class="pcard__tag">Product partner</span></a>
       <a class="pcard glass" href="#" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/Brandgoesup-static.png" alt="BrandGoesUp" loading="lazy" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">BG</span></span><b class="pcard__name">BrandGoesUp</b><span class="pcard__tag">Growth partner</span></a>
-      <a class="pcard glass" href="https://poly.kkwagh.edu.in/" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/kkwagh.png" alt="K.K. Wagh Polytechnic" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">KW</span></span><b class="pcard__name">K.K. Wagh Polytechnic</b><span class="pcard__tag">Education</span></a>
-      <a class="pcard glass" href="https://www.thedarknetcommunity.com/" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/tdc.png" alt="The Darknet Community" loading="lazy" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">TD</span></span><b class="pcard__name">The Darknet Community</b><span class="pcard__tag">Community</span></a>
-      <a class="pcard glass" href="#" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/wisdom-high.png" alt="Wisdom High International School" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">WH</span></span><b class="pcard__name">Wisdom High International School</b><span class="pcard__tag">Education</span></a>
+      <a class="pcard glass" href="https://poly.kkwagh.edu.in/" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/kkwlogo.png" alt="K.K. Wagh Polytechnic" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">KW</span></span><b class="pcard__name">K.K. Wagh Polytechnic</b><span class="pcard__tag">Education</span></a>
+      <a class="pcard glass" href="https://www.thedarknetcommunity.com/" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/tdclogo.png" alt="The Darknet Community" loading="lazy" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">TD</span></span><b class="pcard__name">The Darknet Community</b><span class="pcard__tag">Community</span></a>
+      <a class="pcard glass" href="#" target="_blank" rel="noopener"><span class="pavatar"><img src="partners/wisdom-high-logo.png" alt="Wisdom High International School" onerror="this.onerror=null;this.parentNode.classList.add('no-img')"><span class="pavatar__init">WH</span></span><b class="pcard__name">Wisdom High International School</b><span class="pcard__tag">Education</span></a>
     </div>
   </div>
 
   <div class="quotes" data-reveal style="--i:4">
-    <div class="quote"><p class="quote__t">[Two lines from the HOD about the awareness session for students and what changed after it.]</p><p class="quote__who"><b>[Name]</b> · Head of Department, K.K. Wagh Polytechnic</p></div>
-    <div class="quote"><p class="quote__t">[Two lines from the founder about working with Apthex as a partner.]</p><p class="quote__who"><b>[Name]</b> · Founder, Micuppa</p></div>
-    <div class="quote"><p class="quote__t">[Two lines from the founder about the community partnership and joint sessions.]</p><p class="quote__who"><b>[Name]</b> · Founder, The Darknet Community</p></div>
+    <div class="quote"><p class="quote__t">It’s peace of mind knowing that our users won’t be a victim of cyber attack.</p><p class="quote__who"><b>Aditya</b> · Founder, Micuppa</p></div>
+    <div class="quote"><p class="quote__t">Value addition to the cyber space is always amazing with Apthex.</p><p class="quote__who"><b>Krishna</b> · Founder, The Darknet Community</p></div>
+    <div class="quote"><p class="quote__t">All our products get a final security audit before getting dispatched to our clients.</p><p class="quote__who"><b>Gaurav</b> · Founder, BrandGoesUp</p></div>
+    <div class="quote"><p class="quote__t">Apthex gives an offensive overview towards the security approach from the start to the end of the whole pipeline.</p><p class="quote__who"><b>Omkar</b> · CEO, Deboistech</p></div>
+    <div class="quote"><p class="quote__t">Knowing things work securely is the best part of Apthex.</p><p class="quote__who"><b>Aryan</b> · Founder, Hawk Media</p></div>
+    <div class="quote"><p class="quote__t">The threats for institutes &amp; staff are real and having Apthex’s guidance &amp; awareness helped us a lot to stay defensive against all these.</p><p class="quote__who"><b>Ms. Agrawal</b> · Vice Chairperson, Wisdom High International School</p></div>
+    <div class="quote"><p class="quote__t">There is serious speedy industrial growth happening and the education system needs expert driven support which Apthex is providing very well.</p><p class="quote__who"><b>Mr. Bhosale</b> · HOD, K.K. Wagh Polytechnic</p></div>
     <div class="quotes__nav"><button id="qprev" aria-label="Previous">←</button><span class="dots" id="qdots"></span><button id="qnext" aria-label="Next">→</button></div>
   </div>
   <div class="sec-bottom" aria-hidden="true"><span>APTHEX.COM</span><i></i><span>04 — 06</span></div>
@@ -945,16 +956,8 @@
 
   /* fixed hero bg: partners tak visible, uske baad fade out (scroll-driven, footer me leak nahi) */
   const svc = $('#work');
-  const hv = document.querySelector('.hero__vid');
-  const spv = document.querySelector('.hero__spotvid');
-  if (hv && reduce) { hv.pause(); hv.removeAttribute('autoplay'); }
-  if (spv) { spv.pause(); }
-  if (hv && !reduce) { try { hv.playbackRate = 0.55; } catch (e) {} }
-  if (spv && !reduce) { try { spv.playbackRate = 0.55; } catch (e) {} }
   const syncBg = () => {
     if (svc) document.body.classList.toggle('bg-off', svc.getBoundingClientRect().top < innerHeight * .7);
-    if (hv && !reduce) { if (document.body.classList.contains('bg-off')) hv.pause(); else hv.play().catch(() => {}); }
-    if (spv && !reduce) { if (document.body.classList.contains('bg-off')) spv.pause(); else spv.play().catch(() => {}); }
   };
   addEventListener('scroll', () => requestAnimationFrame(syncBg), { passive: true }); addEventListener('load', syncBg); syncBg();
 
@@ -1094,9 +1097,10 @@
     requestAnimationFrame(() => (workSec || $('#contact-block')).scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }));
   }));
 
-  /* partner logos — single-line infinite marquee (set duplicate for seamless loop) */
+  /* partner logos — single-line infinite marquee (set duplicate for seamless loop).
+     Always duplicate: CSS keeps the marquee sliding even under prefers-reduced-motion (slower), so -50% loop needs 2x items. */
   const track = $('#logoTrack');
-  if (track && !reduce) [...track.children].forEach(c => {
+  if (track) [...track.children].forEach(c => {
     const d = c.cloneNode(true); d.setAttribute('aria-hidden', 'true'); d.tabIndex = -1; track.append(d);
   });
 
