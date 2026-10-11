@@ -24,8 +24,9 @@
   03 Services  four groups, only what Apthex actually delivers
   05 How we work + contact
   Modal        "Request security assessment" form — all buttons marked data-open trigger it.
-               FORM DELIVERY: with no backend it composes a pre-filled email to contact@apthex.com (mailto).
-               To post to an endpoint instead, replace the `send()` function in the script (one place).
+                FORM DELIVERY: posts straight to contact@apthex.com via FormSubmit AJAX (no signup, no server).
+                First submission triggers a one-time activation email to the inbox — click it once, then every lead lands directly.
+                To switch provider later, replace the `send()` function in the script (one place).
   Motion       hero rise-in · starfield · pill-nav active state · page counter 01–04 · stat count-up ·
                live CERT-In ticker · section reveals · modal open/close. All skipped under prefers-reduced-motion.
   Data sources (checked Sep 2026): Check Point Cyber Security Report 2026 & mid-2026 threat data ·
@@ -204,6 +205,10 @@
   .payoff{margin-top:clamp(40px,7vh,64px);color:var(--muted);font-size:14px;max-width:72ch;line-height:1.7}
   .payoff .eyebrow{display:block;margin-bottom:8px}
   .payoff b{color:var(--text);font-weight:600}
+  .dpdp{margin-top:clamp(28px,5vh,44px);padding:16px 18px 16px 16px;border-left:2px solid var(--red);border-radius:0 12px 12px 0;
+    background:linear-gradient(90deg,rgba(225,29,46,.1),transparent 55%),rgba(255,255,255,.02);
+    font-size:clamp(.95rem,1.4vw,1.1rem);line-height:1.6;letter-spacing:-.01em;color:var(--text);max-width:72ch}
+  .dpdp b{color:#FF5B66;font-weight:700}
   .payoff .link{margin-left:12px;font-size:10px;color:var(--text)}
   #threats{padding-top:100px;padding-bottom:84px}
   #threats>*{position:relative;z-index:1}
@@ -681,6 +686,7 @@
       <div class="threat glass" data-reveal style="--i:5"><h3><span class="num">02</span><span class="t"></span></h3><div class="stat"><span class="pre"></span><span class="val" data-count="0">0</span> <small></small></div><p class="small-lbl stat-lbl"></p><span class="src"></span><span class="ticon" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="#8E8E99" stroke-width="1.6"><ellipse cx="30" cy="12" rx="10" ry="5" stroke="#F02A3B"/><path d="M20 12v10c0 2.8 4.5 5 10 5s10-2.2 10-5V12"/><path d="M20 22v10c0 2.8 4.5 5 10 5s10-2.2 10-5V22" opacity=".65"/><path d="M20 32v6c0 2.8 4.5 5 10 5s10-2.2 10-5v-6" opacity=".4"/></svg></span></div>
       <div class="threat glass" data-reveal style="--i:6"><h3><span class="num">03</span><span class="t"></span></h3><div class="stat"><span class="pre"></span><span class="val" data-count="0">0</span> <small></small></div><p class="small-lbl stat-lbl"></p><span class="src"></span><span class="ticon" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="15" stroke="#8E8E99" stroke-width="1.6"/><path d="M24 9a15 15 0 0 1 13 7.5" stroke="#F02A3B" stroke-width="2" stroke-linecap="round"/><path d="M24 20v5l4 3" stroke="#EDEDEF" stroke-width="1.8" stroke-linecap="round"/><circle cx="24" cy="25" r="1.6" fill="#F02A3B"/></svg></span></div>
     </div>
+    <p class="dpdp" data-reveal style="--i:7">Amid the Indian government’s <b>DPDP Act</b> push (Digital Personal Data Protection Act, 2023, with the 2025 Rules), businesses are still <b>vulnerable</b>.</p>
     <p class="payoff" data-reveal style="--i:7"><span class="eyebrow eyebrow--line">What actually reduces the damage</span><span id="payoff"></span> <button class="link link--red" data-open>Request an assessment <i>↗</i></button></p>
   </div>
 </section>
@@ -920,10 +926,11 @@
           <option>Not sure yet — help me decide</option>
         </select></div>
       <div class="f"><label for="fDetails">Scope Details (Optional)</label><textarea id="fDetails" name="details" placeholder="Brief details regarding your environment, assets, or timeline…"></textarea></div>
+      <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off" aria-hidden="true">
       <button class="submit" type="submit">Send assessment request <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
       <p class="modal__note">Goes straight to contact@apthex.com. We reply within the hour, 24/7. NDA first if you need one.</p>
     </form>
-    <div class="modal__done"><h3>Request ready.</h3><p>Your email app has opened with everything filled in — just hit send. Or write to us directly at contact@apthex.com.</p></div>
+    <div class="modal__done"><h3>Request received.</h3><p>Thanks — it has landed straight in our inbox at contact@apthex.com. We reply within the hour, 24/7. Or write to us directly at contact@apthex.com.</p></div>
   </div>
 </div>
 
@@ -1132,16 +1139,33 @@
   $$('[data-close]').forEach(b => b.addEventListener('click', closeModal));
   addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.hidden) closeModal(); });
 
-  /* FORM DELIVERY — replace this one function to POST to your own endpoint instead of mailto */
+  /* FORM DELIVERY — direct to the company inbox via FormSubmit AJAX (no signup, no server).
+     First submission triggers a one-time activation email to contact@apthex.com — click it once, then every lead lands directly.
+     If the POST fails (adblock/offline), falls back to the visitor's email app so no lead is lost. */
+  const INBOX = 'contact@apthex.com';
   const send = data => {
-    const body = `Name: ${data.name}\nEmail: ${data.email}\nCompany: ${data.company}\nScope: ${data.scope}\n\nDetails:\n${data.details || '-'}`;
-    location.href = `mailto:contact@apthex.com?subject=${encodeURIComponent('Security assessment request — ' + data.company)}&body=${encodeURIComponent(body)}`;
-    return Promise.resolve(true);
+    const details = ((data.details || '-').trim() || '-');
+    return fetch('https://formsubmit.co/ajax/' + INBOX, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        name: data.name, email: data.email, company: data.company, scope: data.scope,
+        message: `Scope: ${data.scope}\nCompany: ${data.company}\nName: ${data.name}\nEmail: ${data.email}\n\nDetails:\n${details}`,
+        _subject: `Security assessment request — ${data.company}`,
+        _template: 'table', _captcha: 'false', _honey: data._honey || ''
+      })
+    }).then(r => { if (!r.ok) throw new Error('post failed'); return true; })
+    .catch(() => {
+      const body = `Name: ${data.name}\nEmail: ${data.email}\nCompany: ${data.company}\nScope: ${data.scope}\n\nDetails:\n${details}`;
+      location.href = `mailto:${INBOX}?subject=${encodeURIComponent('Security assessment request — ' + data.company)}&body=${encodeURIComponent(body)}`;
+      return true;
+    });
   };
   form.addEventListener('submit', e => { e.preventDefault();
     if (!form.checkValidity()) { form.reportValidity(); return; }
+    const btn = form.querySelector('.submit'); if (btn) btn.disabled = true;
     const data = Object.fromEntries(new FormData(form).entries());
-    send(data).then(() => modal.classList.add('is-done'));
+    send(data).then(() => modal.classList.add('is-done')).finally(() => { if (btn) btn.disabled = false; });
   });
 })();
 </script>
