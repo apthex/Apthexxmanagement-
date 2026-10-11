@@ -3,9 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>APTHEX | Defending enterprises with offensive intelligence</title>
+<title>Apthex</title>
 <meta name="description" content="APTHEX — offensive security, threat operations and zero-trust resilience, engineered to identify vulnerabilities before adversaries exploit them. Nashik, India.">
-<meta property="og:title" content="APTHEX | Defending enterprises with offensive intelligence">
+<meta property="og:title" content="Apthex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="favicon.svg">
 <meta property="og:description" content="Offensive security, threat operations and zero-trust resilience. Precise. Measured. Relentless.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://apthex.com">
@@ -511,7 +513,7 @@
   #team>*:not(.team__bg):not(.team__shade):not(.team-hud){position:relative;z-index:1}
   .team-hud{position:absolute;top:64px;right:var(--gx);z-index:0;pointer-events:none;font-family:var(--mono);font-size:9.5px;letter-spacing:.3em;line-height:2.1;text-align:right;text-transform:uppercase;color:#8E8E99}
   @media (max-width:1150px){.team-hud{display:none}}
-  .people{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(24px,3vw,48px);margin-top:clamp(40px,6vh,64px)}
+  .people{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(20px,2.5vw,32px);margin-top:clamp(32px,5vh,48px);max-width:940px;margin-left:auto;margin-right:auto}
   #team .person{padding:0;border-radius:16px;border:1px solid rgba(225,29,46,.3);
     background:radial-gradient(90% 70% at 85% 108%,rgba(225,29,46,.13),transparent 60%),linear-gradient(135deg,rgba(24,24,30,.94),rgba(11,11,15,.9))}
   #team .person.glass:hover{border-color:rgba(240,42,59,.55)}
@@ -525,12 +527,12 @@
   #team .person:hover .person__photo img{filter:none}
   #team .person__photo::before{content:"";position:absolute;left:0;right:0;bottom:0;height:42%;z-index:1;background:linear-gradient(transparent,rgba(11,11,15,.88));pointer-events:none}
   #team .person__photo::after{content:"";position:absolute;top:18%;bottom:8%;right:14%;width:2px;z-index:1;background:linear-gradient(180deg,transparent,var(--red-2),transparent);box-shadow:0 0 26px 5px rgba(225,29,46,.4);pointer-events:none}
-  #team .person__meta{padding:22px 22px 20px}
-  #team .person h3{margin-top:0}
-  #team .person__bio{max-width:none}
+  #team .person__meta{padding:18px 18px 16px}
+  #team .person h3{margin-top:0;font-size:1.15rem}
+  #team .person__bio{max-width:none;font-size:12.5px;line-height:1.65}
   .person__row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px}
   .plink{font-size:15px;font-weight:700;color:#fff;border-bottom:1px solid var(--red);padding-bottom:3px}
-  #team .tclose{margin-top:clamp(32px,5vh,48px);padding:20px 22px;border:1px solid rgba(225,29,46,.35);border-radius:14px;
+  #team .tclose{margin-top:clamp(28px,4vh,40px);margin-left:auto;margin-right:auto;max-width:940px;padding:18px 20px;border:1px solid rgba(225,29,46,.35);border-radius:14px;
     background:linear-gradient(90deg,rgba(225,29,46,.08),transparent 40%),linear-gradient(135deg,rgba(24,24,30,.94),rgba(11,11,15,.9));
     display:flex;align-items:center;gap:20px}
   .sup-ic{display:grid;place-items:center;width:46px;height:46px;flex:0 0 auto;border-radius:12px;color:var(--red-2);
@@ -552,7 +554,7 @@
   .tclose{margin-top:clamp(40px,7vh,64px);padding-top:32px;border-top:1px solid var(--rule);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:20px 40px}
   .tclose p{color:var(--muted);font-size:14.5px;max-width:58ch}
   .tclose p b{color:var(--text);font-weight:500}
-  @media (max-width:900px){.people{grid-template-columns:1fr;gap:40px}.person__bio{max-width:none}}
+  @media (max-width:900px){.people{grid-template-columns:1fr;gap:28px;max-width:360px;margin-left:auto;margin-right:auto}.person__bio{max-width:none}#team .tclose{max-width:360px;margin-left:auto;margin-right:auto}}
   /* team on-demand — scroll me hidden, sirf Team nav click par dikhega */
   #team{display:none}
   body.team-open #team{display:flex;animation:teamIn .55s var(--out)}
@@ -752,7 +754,7 @@
   <div class="team-hud" aria-hidden="true"><span>Strategy.<br>Technology.<br>People.<br>A safer tomorrow.</span></div>
   <p class="eyebrow eyebrow--line" data-reveal>Leadership</p>
   <h2 class="h2 h2--split" data-reveal style="--i:1">The people behind <span>APTHEX</span></h2>
-  <p class="lead" data-reveal style="--i:2">The leadership team behind APTHEX — <b>Pranav Patil, Devendra Hyalij and Yukta Geete.</b></p>
+  <p class="lead" data-reveal style="--i:2">The leadership team behind APTHEX.</p>
 
   <div class="people">
     <article class="person glass" data-reveal style="--i:3">
