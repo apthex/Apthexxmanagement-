@@ -76,6 +76,9 @@ export const env = {
   get devShowSetupLinks(): boolean {
     return !this.isProduction && optional("DEV_SHOW_SETUP_LINKS", "true") === "true";
   },
+  get mongodbUri(): string {
+    return optional("MONGODB_URI");
+  },
 } as const;
 
 export const SESSION_COOKIE = "__Host-apt_session";
