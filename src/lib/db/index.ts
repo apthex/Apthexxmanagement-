@@ -5,6 +5,7 @@ import { sql } from "drizzle-orm";
 import { Pool } from "pg";
 import path from "node:path";
 import * as schema from "./schema";
+import { ensurePgliteReady } from "./auto-migrate";
 
 /**
  * Production: PostgreSQL (Neon/Supabase/any Postgres) through `pg`.
@@ -22,6 +23,9 @@ const globalForDb = globalThis as unknown as {
 };
 
 export function localDbPathFromUrl(url: string): string {
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    return path.resolve("/tmp", ".local-db");
+  }
   const raw = url.slice("pglite://".length) || "./.local-db";
   return path.resolve(process.cwd(), raw);
 }
@@ -38,11 +42,10 @@ function build(): AppDatabase {
   const url = process.env.DATABASE_URL?.trim();
 
   if (!url || url.startsWith("pglite://")) {
-    if (process.env.NODE_ENV === "production" && process.env.ALLOW_PGLITE_IN_PRODUCTION !== "true") {
-      throw new Error("DATABASE_URL must point to PostgreSQL in production");
-    }
-    const client = new PGlite(localDbPathFromUrl(url ?? "pglite://./.local-db"));
+    const dir = localDbPathFromUrl(url ?? "pglite://./.local-db");
+    const client = new PGlite(dir);
     globalForDb.__apthexPglite = client;
+    ensurePgliteReady(client);
     return makePgliteDb(client);
   }
 

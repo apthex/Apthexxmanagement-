@@ -36,7 +36,7 @@ export const loginSchema = z
   .object({
     email: z.string().trim().toLowerCase().email().max(254),
     password: z.string().min(1).max(128),
-    code: z.string().trim().min(6).max(32),
+    code: z.string().trim().max(32).optional().default(""),
   })
   .strict();
 

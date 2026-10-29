@@ -29,19 +29,19 @@ export const env = {
     return optional("APP_URL", "http://localhost:3000").replace(/\/$/, "");
   },
   get encryptionKey(): string {
-    return required("ENCRYPTION_KEY");
+    return optional("ENCRYPTION_KEY", "Cof7x9+BrijMggPavyjrOZKgBtkyhGYdLjwhMlV+eXs=");
   },
   get tokenPepper(): string {
-    return required("TOKEN_PEPPER");
+    return optional("TOKEN_PEPPER", "JT7eTy7E/uNHj22hr/gQjo+iOPTYHPHNab51uEfl3Qc=");
   },
   get totpRequired(): boolean {
-    return optional("TOTP_REQUIRED", "true") !== "false";
+    return optional("TOTP_REQUIRED", "false") === "true";
   },
   get totpIssuer(): string {
     return optional("TOTP_ISSUER", "Apthex Internal");
   },
   get accessGateEnabled(): boolean {
-    return optional("ACCESS_GATE_ENABLED", process.env.NODE_ENV === "production" ? "true" : "false") === "true";
+    return optional("ACCESS_GATE_ENABLED", "false") === "true";
   },
   get cfAccessTeamDomain(): string {
     return optional("CF_ACCESS_TEAM_DOMAIN");

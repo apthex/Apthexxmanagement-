@@ -16,7 +16,9 @@
     "otp": "tsx scripts/otp.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "security:audit": "npm audit --audit-level=high"
+    "security:audit": "npm audit --audit-level=high",
+    "db:sync-mongo": "tsx scripts/sync-mongo.ts",
+    "vercel:push-env": "bash scripts/push-vercel-env.sh"
   },
   "dependencies": {
     "@electric-sql/pglite": "0.3.16",

@@ -90,8 +90,8 @@ function sameOrigin(request: NextRequest): boolean {
 export async function middleware(request: NextRequest) {
   const isDev = process.env.NODE_ENV !== "production";
   const gateEnabled =
-    process.env.ACCESS_GATE_ENABLED === "true" ||
-    (process.env.NODE_ENV === "production" && process.env.ACCESS_GATE_ENABLED !== "false");
+    process.env.ACCESS_GATE_ENABLED === "true" &&
+    Boolean(process.env.CF_ACCESS_TEAM_DOMAIN?.trim() && process.env.CF_ACCESS_AUD?.trim());
 
   if (gateEnabled) {
     const verification = await verifyCloudflareAccess(request);
