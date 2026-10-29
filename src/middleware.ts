@@ -89,23 +89,6 @@ function sameOrigin(request: NextRequest): boolean {
 
 export async function middleware(request: NextRequest) {
   const isDev = process.env.NODE_ENV !== "production";
-  const gateEnabled =
-    process.env.ACCESS_GATE_ENABLED === "true" &&
-    Boolean(process.env.CF_ACCESS_TEAM_DOMAIN?.trim() && process.env.CF_ACCESS_AUD?.trim());
-
-  if (gateEnabled) {
-    const verification = await verifyCloudflareAccess(request);
-    if (!verification.ok) {
-      return new NextResponse("Forbidden", {
-        status: 403,
-        headers: {
-          "Content-Type": "text/plain; charset=utf-8",
-          "Cache-Control": "no-store",
-          "X-Robots-Tag": "noindex, nofollow",
-        },
-      });
-    }
-  }
 
   if (isMutation(request) && request.nextUrl.pathname.startsWith("/api/") && !sameOrigin(request)) {
     return NextResponse.json({ error: "Origin check failed" }, { status: 403, headers: { "Cache-Control": "no-store" } });
