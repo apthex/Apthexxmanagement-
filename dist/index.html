@@ -66,8 +66,8 @@
   .nav{position:fixed;top:22px;left:0;right:0;z-index:30;display:flex;justify-content:center;padding:0 16px;opacity:0;transform:translateY(-10px);transition:opacity .8s .2s,transform .9s .2s var(--out)}
   body.is-live .nav{opacity:1;transform:none}
   .pill{display:flex;align-items:center;gap:4px;padding:6px;border-radius:999px;background:rgba(14,14,17,.72);border:1px solid rgba(255,255,255,.09);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 20px 60px rgba(0,0,0,.45)}
-  .pill__logo{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;border:1px solid rgba(225,29,46,.55);background:#0A0A0C;margin-right:6px}
-  .pill__logo svg{width:16px;height:17px}
+  .pill__logo{display:flex;align-items:center;justify-content:center;width:44px;height:44px;flex:0 0 auto;border-radius:50%;border:1px solid rgba(225,29,46,.55);background:#0A0A0C;margin-right:6px;overflow:hidden;line-height:0}
+  .pill__logo svg{width:30px;height:30px;display:block;transform:translate(.5px,1px)}
   .pill__links{display:flex}
   .pill__links a{padding:0 18px;height:40px;display:inline-flex;align-items:center;border-radius:999px;font-size:14px;font-weight:500;color:var(--muted);transition:color .3s,background .3s}
   .pill__links a:hover{color:var(--text)}
@@ -81,6 +81,13 @@
   .menu a{font-size:clamp(2rem,8vw,3rem);font-weight:700;letter-spacing:-.03em;line-height:1.2;padding:10px 0;border-bottom:1px solid var(--rule)}
   .menu button{margin-top:28px;align-self:flex-start}
   @media (max-width:820px){.pill__links,.pill__div,.pill__cta{display:none}.pill__menu{display:inline-flex;align-items:center}.pill__logo{margin-right:0}}
+  /* hover spotlights are laptop-only — on touch they stick as an ugly blob/popup, so kill them */
+  @media (hover:none),(pointer:coarse){
+    .hero__spot,.work__spot{display:none!important}
+    .hero:hover .hero__spot,#work:hover .work__spot{opacity:0!important}
+    .glass:hover{transform:none}
+    #threats .threat.glass:hover,#partners .pcard.glass:hover,#services .group.glass:hover,#work .step:hover{transform:none}
+  }
 
   /* ---------- pages ---------- */
   .page{min-height:100svh;display:flex;flex-direction:column;justify-content:center;padding:150px var(--gx) 110px;position:relative}
@@ -446,8 +453,8 @@
   @keyframes ftick{to{transform:translateX(-50%)}}
   .fwrap{display:grid;grid-template-columns:1.2fr 2fr;gap:44px;padding:clamp(44px,6vh,64px) var(--gx) 0}
   .fbrand{display:flex;align-items:center;gap:12px}
-  .fbrand__mark{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;border:1px solid rgba(225,29,46,.55);background:#0A0A0C;flex:0 0 auto;box-shadow:0 0 20px rgba(225,29,46,.25)}
-  .fbrand__mark svg{width:16px;height:17px}
+  .fbrand__mark{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;border:1px solid rgba(225,29,46,.55);background:#0A0A0C;flex:0 0 auto;box-shadow:0 0 20px rgba(225,29,46,.25);overflow:hidden}
+  .fbrand__mark svg{width:28px;height:29px}
   .fbrand b{font-size:16px;font-weight:700;letter-spacing:.14em}
   .ftag{margin-top:16px;color:var(--muted);font-size:14px;line-height:1.7;max-width:34ch}
   .fcta{margin-top:24px;height:44px;padding:0 26px;font-size:10px}
@@ -488,8 +495,8 @@
   .modal__card{position:relative;width:min(600px,100%);max-height:calc(100svh - 40px);overflow:auto;background:#151518;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:clamp(20px,3vw,32px);box-shadow:0 40px 120px rgba(0,0,0,.6);opacity:0;transform:translateY(16px) scale(.98);transition:opacity .45s,transform .55s var(--out)}
   .modal.is-open .modal__card{opacity:1;transform:none}
   .modal__head{display:flex;align-items:center;gap:14px;padding-bottom:22px;border-bottom:1px solid rgba(255,255,255,.1)}
-  .modal__mark{display:grid;place-items:center;width:34px;height:34px;border-radius:6px;background:#0A0A0C;border:1px solid rgba(255,255,255,.08)}
-  .modal__mark svg{width:16px;height:17px}
+  .modal__mark{display:grid;place-items:center;width:34px;height:34px;border-radius:6px;background:#0A0A0C;border:1px solid rgba(255,255,255,.08);overflow:hidden}
+  .modal__mark svg{width:24px;height:25px}
   .modal__title{font:500 14px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase}
   .modal__close{margin-left:auto;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--muted);transition:background .3s,color .3s}
   .modal__close:hover{background:rgba(255,255,255,.08);color:var(--text)}
@@ -522,7 +529,7 @@
   #team>*:not(.team__bg):not(.team__shade):not(.team-hud){position:relative;z-index:1}
   .team-hud{position:absolute;top:64px;right:var(--gx);z-index:0;pointer-events:none;font-family:var(--mono);font-size:9.5px;letter-spacing:.3em;line-height:2.1;text-align:right;text-transform:uppercase;color:#8E8E99}
   @media (max-width:1150px){.team-hud{display:none}}
-  .people{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(20px,2.5vw,32px);margin-top:clamp(32px,5vh,48px);max-width:940px;margin-left:auto;margin-right:auto}
+  .people{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(20px,2.5vw,32px);margin-top:clamp(32px,5vh,48px);max-width:720px;margin-left:auto;margin-right:auto}
   #team .person{padding:0;border-radius:16px;border:1px solid rgba(225,29,46,.3);
     background:radial-gradient(90% 70% at 85% 108%,rgba(225,29,46,.13),transparent 60%),linear-gradient(135deg,rgba(24,24,30,.94),rgba(11,11,15,.9))}
   #team .person.glass:hover{border-color:rgba(240,42,59,.55)}
@@ -541,7 +548,7 @@
   #team .person__bio{max-width:none;font-size:12.5px;line-height:1.65}
   .person__row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px}
   .plink{font-size:15px;font-weight:700;color:#fff;border-bottom:1px solid var(--red);padding-bottom:3px}
-  #team .tclose{margin-top:clamp(28px,4vh,40px);margin-left:auto;margin-right:auto;max-width:940px;padding:18px 20px;border:1px solid rgba(225,29,46,.35);border-radius:14px;
+  #team .tclose{margin-top:clamp(28px,4vh,40px);margin-left:auto;margin-right:auto;max-width:720px;padding:18px 20px;border:1px solid rgba(225,29,46,.35);border-radius:14px;
     background:linear-gradient(90deg,rgba(225,29,46,.08),transparent 40%),linear-gradient(135deg,rgba(24,24,30,.94),rgba(11,11,15,.9));
     display:flex;align-items:center;gap:20px}
   .sup-ic{display:grid;place-items:center;width:46px;height:46px;flex:0 0 auto;border-radius:12px;color:var(--red-2);
@@ -601,7 +608,6 @@
 </header>
 <div class="menu" id="menu">
   <a href="#home">Home</a><a href="#threats">Threats</a><a href="#services">Services</a><a href="#team">Team</a><a href="#contact-block">Contact</a>
-  <button class="btn" data-open>Request assessment</button>
 </div>
 
 <main>
@@ -787,19 +793,9 @@
         <div class="person__row"><a class="plink" href="https://www.linkedin.com/in/devendrahyalij/" target="_blank" rel="noopener">in</a><a class="pcard__go" href="https://www.linkedin.com/in/devendrahyalij/" target="_blank" rel="noopener" aria-label="Devendra Hyalij on LinkedIn">→</a></div>
       </div>
     </article>
-    <article class="person glass" data-reveal style="--i:5">
-      <div class="person__top"><span class="num">03</span><span class="person__focus">Brand<br>Partnerships<br>Community</span></div>
-      <a class="person__photo" href="#team"><img src="team/yukta.jpg" alt="Yukta Geete" onerror="this.parentNode.classList.add('no-img')"><span>YG</span></a>
-      <div class="person__meta">
-        <h3>Yukta Geete</h3>
-        <p class="person__role">Director &amp; CMO</p>
-        <p class="person__bio">Leads brand, marketing and partnerships. Entrepreneur running multiple businesses; certified in cybersecurity. Owns APTHEX's institutional and community relationships.</p>
-        <div class="person__row"><a class="plink" href="#">in</a><a class="pcard__go" href="#" aria-label="Yukta Geete on LinkedIn">→</a></div>
-      </div>
-    </article>
   </div>
 
-  <div class="tclose glass" data-reveal style="--i:6">
+  <div class="tclose glass" data-reveal style="--i:5">
     <span class="sup-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v5c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6l7-3z"/><path d="M9.5 12l2 2 3.5-4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
     <p>Supported by a <b>team of certified security researchers</b><br>across offensive security, security operations and compliance.</p>
     <div class="sup-btns">
@@ -859,7 +855,7 @@
           <li><a href="#threats">Threats <i>↗</i></a></li>
           <li><a href="#services">Services <i>↗</i></a></li>
           <li><a href="#partners">Partners <i>↗</i></a></li>
-          <li><a href="#team">Team <i>↗</i></a></li>
+          <li><a href="/careers">Careers <i>↗</i></a></li>
           <li><a href="#contact-block">Contact <i>↗</i></a></li>
         </ul>
       </div>

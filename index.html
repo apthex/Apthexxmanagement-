@@ -529,7 +529,7 @@
   #team>*:not(.team__bg):not(.team__shade):not(.team-hud){position:relative;z-index:1}
   .team-hud{position:absolute;top:64px;right:var(--gx);z-index:0;pointer-events:none;font-family:var(--mono);font-size:9.5px;letter-spacing:.3em;line-height:2.1;text-align:right;text-transform:uppercase;color:#8E8E99}
   @media (max-width:1150px){.team-hud{display:none}}
-  .people{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(20px,2.5vw,32px);margin-top:clamp(32px,5vh,48px);max-width:940px;margin-left:auto;margin-right:auto}
+  .people{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(20px,2.5vw,32px);margin-top:clamp(32px,5vh,48px);max-width:720px;margin-left:auto;margin-right:auto}
   #team .person{padding:0;border-radius:16px;border:1px solid rgba(225,29,46,.3);
     background:radial-gradient(90% 70% at 85% 108%,rgba(225,29,46,.13),transparent 60%),linear-gradient(135deg,rgba(24,24,30,.94),rgba(11,11,15,.9))}
   #team .person.glass:hover{border-color:rgba(240,42,59,.55)}
@@ -548,7 +548,7 @@
   #team .person__bio{max-width:none;font-size:12.5px;line-height:1.65}
   .person__row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px}
   .plink{font-size:15px;font-weight:700;color:#fff;border-bottom:1px solid var(--red);padding-bottom:3px}
-  #team .tclose{margin-top:clamp(28px,4vh,40px);margin-left:auto;margin-right:auto;max-width:940px;padding:18px 20px;border:1px solid rgba(225,29,46,.35);border-radius:14px;
+  #team .tclose{margin-top:clamp(28px,4vh,40px);margin-left:auto;margin-right:auto;max-width:720px;padding:18px 20px;border:1px solid rgba(225,29,46,.35);border-radius:14px;
     background:linear-gradient(90deg,rgba(225,29,46,.08),transparent 40%),linear-gradient(135deg,rgba(24,24,30,.94),rgba(11,11,15,.9));
     display:flex;align-items:center;gap:20px}
   .sup-ic{display:grid;place-items:center;width:46px;height:46px;flex:0 0 auto;border-radius:12px;color:var(--red-2);
@@ -608,7 +608,6 @@
 </header>
 <div class="menu" id="menu">
   <a href="#home">Home</a><a href="#threats">Threats</a><a href="#services">Services</a><a href="#team">Team</a><a href="#contact-block">Contact</a>
-  <button class="btn" data-open>Request assessment</button>
 </div>
 
 <main>
@@ -794,19 +793,9 @@
         <div class="person__row"><a class="plink" href="https://www.linkedin.com/in/devendrahyalij/" target="_blank" rel="noopener">in</a><a class="pcard__go" href="https://www.linkedin.com/in/devendrahyalij/" target="_blank" rel="noopener" aria-label="Devendra Hyalij on LinkedIn">→</a></div>
       </div>
     </article>
-    <article class="person glass" data-reveal style="--i:5">
-      <div class="person__top"><span class="num">03</span><span class="person__focus">Brand<br>Partnerships<br>Community</span></div>
-      <a class="person__photo" href="#team"><img src="team/yukta.jpg" alt="Yukta Geete" onerror="this.parentNode.classList.add('no-img')"><span>YG</span></a>
-      <div class="person__meta">
-        <h3>Yukta Geete</h3>
-        <p class="person__role">Director &amp; CMO</p>
-        <p class="person__bio">Leads brand, marketing and partnerships. Entrepreneur running multiple businesses; certified in cybersecurity. Owns APTHEX's institutional and community relationships.</p>
-        <div class="person__row"><a class="plink" href="#">in</a><a class="pcard__go" href="#" aria-label="Yukta Geete on LinkedIn">→</a></div>
-      </div>
-    </article>
   </div>
 
-  <div class="tclose glass" data-reveal style="--i:6">
+  <div class="tclose glass" data-reveal style="--i:5">
     <span class="sup-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v5c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6l7-3z"/><path d="M9.5 12l2 2 3.5-4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
     <p>Supported by a <b>team of certified security researchers</b><br>across offensive security, security operations and compliance.</p>
     <div class="sup-btns">
@@ -866,7 +855,7 @@
           <li><a href="#threats">Threats <i>↗</i></a></li>
           <li><a href="#services">Services <i>↗</i></a></li>
           <li><a href="#partners">Partners <i>↗</i></a></li>
-          <li><a href="#team">Team <i>↗</i></a></li>
+          <li><a href="/careers">Careers <i>↗</i></a></li>
           <li><a href="#contact-block">Contact <i>↗</i></a></li>
         </ul>
       </div>
