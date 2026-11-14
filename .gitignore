@@ -1,0 +1,11 @@
+# Local tooling / binaries — never commit
+ngrok
+ngrok-*.tgz
+
+# Retired prototype (old :3001 portal app) — kept on disk only, never runs again
+nextjs-site/
+
+# OS junk
+.DS_Store
+Thumbs.db
+*.swp
