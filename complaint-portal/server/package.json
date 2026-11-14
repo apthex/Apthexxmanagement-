@@ -1,0 +1,38 @@
+{
+  "name": "apthex-portal-server",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "build": "node -e \"console.log('no build step')\"",
+    "test": "node --test",
+    "test:smoke": "node scripts/smoke.js",
+    "seed": "node src/scripts/seed.js"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.8.2",
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^5.0.1",
+    "express-rate-limit": "^7.4.1",
+    "helmet": "^8.0.0",
+    "mongoose": "^9.0.0",
+    "multer": "^2.0.2",
+    "music-metadata": "^11.16.1",
+    "node-cron": "^4.6.0",
+    "nodemailer": "^10.5.0",
+    "pdfkit": "^0.15.0",
+    "resend": "^6.37.0",
+    "sharp": "^0.35.5",
+    "speakeasy": "^2.0.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^10.1.4",
+    "supertest": "^7.0.0"
+  }
+}

@@ -1,0 +1,5 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+body { background: #0A0A0C; color: #F4F4F6; font-family: "Space Grotesk", system-ui, sans-serif; }
+button:focus-visible { outline: 2px solid #E11D2E; outline-offset: 2px; }
