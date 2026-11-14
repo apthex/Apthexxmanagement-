@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>APTHEX Technologies — Complete System Architecture Explorer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/mermaid@10.9.0/dist/mermaid.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    .status-implemented {
+      background: #10b981;
+      color: white;
+    }
+
+    .status-connected {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .status-verified {
+      background: #8b5cf6;
+      color: white;
+    }
+
+    .status-planned {
+      background: #f59e0b;
+      color: white;
+    }
+
+    .status-not-implemented {
+      background: #ef4444;
+      color: white;
+    }
+
+    .status-blocked {
+      background: #6b7280;
+      color: white;
+    }
+
+    .node-card {
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .node-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .arrow-up {
+      transition: transform 0.2s ease;
+    }
+
+    .arrow-up.rotated {
+      transform: rotate(180deg);
+    }
+
+    .mermaid {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 20px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .zoom-container {
+      cursor: grab;
+    }
+
+    .zoom-container:active {
+      cursor: grabbing;
+    }
+
+    .scrollbar-hide::-webkit-scrollbar {
+      display: none;
+    }
+
+    .scrollbar-hide {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 text-gray-900">
+
+  <!-- Navigation -->
+  <nav class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16 items-center">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z">
+              </path>
+            </svg>
+          </div>
+          <h1 class="text-xl font-bold text-gray-900 tracking-tight">APTHEX Technologies</h1>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="showSection('overview')"
+            class="px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition-colors"
+            id="btn-overview">Overview</button>
+          <button onclick="showSection('architecture')"
+            class="px-4 py-2 text-sm font-medium text-gray-600 bg-white rounded-md hover:bg-gray-100 transition-colors"
+            id="btn-architecture">Architecture</button>
+          <button onclick="showSection('workflows')"
+            class="px-4 py-2 text-sm font-medium text-gray-600 bg-white rounded-md hover:bg-gray-100 transition-colors"
+            id="btn-workflows">Workflows</button>
+          <button onclick="showSection('structure')"
+            class="px-4 py-2 text-sm font-medium text-gray-600 bg-white rounded-md hover:bg-gray-100 transition-colors"
+            id="btn-structure">Structure</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero / Overview Section -->
+  <section id="section-overview" class="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="mb-8">
+      <h2 class="text-3xl font-bold text-gray-900 mb-2">Complete System Architecture</h2>
+      <p class="text-gray-600">APTHEX Technologies digital ecosystem — public website, complaint portal, staff case
+        desk, and shared infrastructure.</p>
+    </div>
+
+    <!-- Status Legend -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="badge-dot status-implemented"></div>
+          <span class="text-sm font-medium text-gray-900">Implemented</span>
+        </div>
+        <p class="text-xs text-gray-500">Code written and deployed</p>
+      </div>
+      <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="badge-dot status-connected"></div>
+          <span class="text-sm font-medium text-gray-900">Connected</span>
+        </div>
+        <p class="text-xs text-gray-500">Services linked together</p>
+      </div>
+      <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="badge-dot status-verified"></div>
+          <span class="text-sm font-medium text-gray-900">Verified</span>
+        </div>
+        <p class="text-xs text-gray-500">Tested and confirmed working</p>
+      </div>
+      <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="badge-dot status-blocked"></div>
+          <span class="text-sm font-medium text-gray-900">Blocked</span>
+        </div>
+        <p class="text-xs text-gray-500">Requires external provisioning</p>
+      </div>
+    </div>
+
+    <!-- Project Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="node-card bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:border-blue-300">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2h2a2 2 0 012-4 2 2 0 002-4 2 2 0 01-2-4H3.055">
+              </path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12a90 90 0 00-9.055 9.556M3.055 6h18m-11 6h.01"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="font-bold text-gray-900">Public Website</h3>
+            <p class="text-sm text-gray-500 mt-1">Marketing site at apthex.com — 6 sections: Home, Threats, Services,
+              Partners, Team, Contact/Assessment</p>
+            <div class="mt-3 flex gap-2">
+              <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Implemented</span>
+              <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">Verified</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="node-card bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:border-blue-300">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-lg bg-red-100 text-red-600 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+              </path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="font-bold text-gray-900">Complaint Portal</h3>
+            <p class="text-sm text-gray-500 mt-1">Privacy-first complaint reporting at /help — public reporting, status
+              tracking, staff Case Desk</p>
+            <div class="mt-3 flex gap-2">
+              <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Implemented</span>
+              <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">Verified</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="node-card bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:border-orange-300">
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+              </path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="font-bold text-gray-900">Shared Infrastructure</h3>
+            <p class="text-sm text-gray-500 mt-1">MongoDB Atlas, Resend email, Cloudflare Turnstile, AWS S3, AWS
+              Lightsail, DNS</p>
+            <div class="mt-3 flex gap-2">
+              <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">Blocked</span>
+              <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">Verified</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Architecture Section -->
+  <section id="section-architecture" class="hidden py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="mb-8">
+      <h2 class="text-3xl font-bold text-gray-900 mb-2">System Architecture</h2>
+      <p class="text-gray-600">Complete APTHEX Technologies ecosystem with all components and their relationships.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Ecosystem Tree -->
+      <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Ecosystem Tree</h3>
+        <div class="mermaid">
+          graph TB
+          classDef implemented fill:#10b981,stroke:#059669,color:#fff
+          classDef connected fill:#3b82f6,stroke:#2563eb,color:#fff
+          classDef verified fill:#8b5cf6,stroke:#7c3aed,color:#fff
+          classDef blocked fill:#ef4444,stroke:#dc2626,color:#fff
+          classDef planned fill:#f59e0b,stroke:#d97706,color:#fff
+
+          A[APTHEX Technologies]:::implemented
+          A --> B[Public Website<br />apthex.com]:::verified
+          A --> C[Complaint Portal<br />/help]:::verified
+          A --> D[Shared Infrastructure]:::implemented
+
+          B --> B1[Home / Threats / Services / Partners / Team / Contact]
+          B --> B2[Assessment Request Modal<br />→ FormSubmit]
+          C --> C1[Public Reporting<br />Identified / Anonymous]
+          C --> C2[Status Tracking<br />Reference ID lookup]
+          C --> C3[Staff Case Desk<br />Owner / Case Team]
+          D --> D1[MongoDB Atlas<br />Apethexhelpportal]
+          D --> D2[Resend Email<br />mail.apthex.com]
+          D --> D3[Cloudflare Turnstile<br />CAPTCHA]
+          D --> D4[AWS S3<br />ap-south-1 Private]
+          D --> D5[AWS Lightsail<br />Ubuntu 24.04 + Caddy]
+          D --> D6[DNS<br />apthex.com zone]
+
+          C --> D
+          B -.-> D2
+        </div>
+      </div>
+
+      <!-- Frontend-Backend Communication -->
+      <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Frontend ↔ Backend</h3>
+        <div class="mermaid">
+          sequenceDiagram
+          autonumber
+          participant U as User
+          participant FE as Next.js Frontend<br />(nextjs-site:3000)
+          participant BE as Express API<br />(complaint-portal/server:4000)
+          participant DB as MongoDB Atlas
+          participant S3 as AWS S3
+          participant RS as Resend
+          participant CT as Cloudflare Turnstile
+
+          U->>FE: Visit /help
+          FE->>BE: GET /api/institutes/validate
+          BE->>DB: Query Institute
+          DB-->>BE: Institute data
+          BE-->>FE: 200 OK
+          U->>FE: Submit complaint + evidence
+          FE->>CT: Verify CAPTCHA token
+          CT-->>FE: Valid / Invalid
+          FE->>BE: POST /api/complaints (multipart)
+          BE->>S3: PutObject (evidence)
+          BE->>DB: Create Complaint + Contact + Attachment
+          BE->>RS: Queue email notification
+          DB-->>BE: Confirm
+          BE-->>FE: 201 + Reference ID
+          FE-->>U: Show reference ID
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-8">
+      <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Authentication & Role Flow</h3>
+        <div class="mermaid">
+          graph TD
+          classDef owner fill:#dc2626,color:#fff
+          classDef caseTeam fill:#2563eb,color:#fff
+          classDef public fill:#6b7280,color:#fff
+
+          U[Public User]:::public
+          U -->|No login| P[Public Portal /help]
+          U -->|Submit complaint| CS[Case Created<br />ref_id APX-YYYY-XXXXXX]
+
+          S[Staff User]:::caseTeam
+          S -->|Email + Password + TOTP| LG[/api/auth/login]
+          LG -->|2FA required| TOTP[TOTP Enrolment<br />First time only]
+          LG -->|Session created| SESS[HttpOnly Cookie<br />apthex_session]
+          SESS --> CSD[Case Desk /help/desk]
+
+          O[Owner User]:::owner
+          O -->|Email + Password + TOTP| LG2[/api/auth/login]
+          LG2 --> SESS2[Session + CSRF Token]
+          SESS2 --> CSD
+          CSD --> SM[Staff Management<br />Create/Deactivate/Reset]
+          CSD --> AL[Audit Log<br />Append-only]
+          CSD --> EO[Email Outbox<br />Queue/Process]
+          CSD --> MR[Monthly Reports<br />PDF + Email]
+
+          CSD --> CD[Complaint Detail<br />View/Edit]
+          CD --> |Complete/Reopen| COMP[Status Change<br />+ Retention Timer]
+          CD --> |Assign| ASG[Assign to Staff]
+          CD --> |Note| NOTE[Internal Note]
+          CD --> |Spam| SPAM[Flag/Unflag]
+
+          style U fill:#f3f4f6,stroke:#9ca3af
+          style S fill:#dbeafe,stroke:#2563eb
+          style O fill:#fee2e2,stroke:#dc2626
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Workflows Section -->
+  <section id="section-workflows" class="hidden py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="mb-8">
+      <h2 class="text-3xl font-bold text-gray-900 mb-2">Workflow Diagrams</h2>
+      <p class="text-gray-600">Step-by-step user journeys through the APTHEX ecosystem.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Complaint Submission Flow</h3>
+        <div class="mermaid">
+          flowchart TD
+          classDef step fill:#e5edff,stroke:#4f46e5,color:#1e1b4b
+          classDef decision fill:#fef3c7,stroke:#d97706,color:#92400e
+          classDef terminal fill:#d1fae5,stroke:#059669,color:#064e3b
+
+          A[User visits /help]:::step
+          B[Enter institute code]:::step
+          C{Valid institute?}:::decision
+          D[Select category<br />+ Urgent?]:::step
+          E[Fill details<br />Identified or Anonymous]:::step
+          F[Upload evidence<br />Images + Voice]:::step
+          G[Complete CAPTCHA]:::step
+          H[Review & Submit]:::step
+          I[POST /api/complaints]:::step
+          J[Generate ref_id<br />APX-YYYY-XXXXXX]:::step
+          K[Store complaint + contact<br />+ attachments]:::step
+          L[Queue email notifications]:::step
+          M[Show thank-you page<br />with reference ID]:::terminal
+
+          A --> B
+          B --> C
+          C -->|No| B
+          C -->|Yes| D
+          D --> E
+          E --> F
+          F --> G
+          G --> H
+          H --> I
+          I --> J
+          J --> K
+          K --> L
+          L --> M
+
+          linkStyle default stroke:#94a3b8,stroke-width:2px
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Staff Case Desk Flow</h3>
+        <div class="mermaid">
+          flowchart TD
+          classDef step fill:#e5edff,stroke:#4f46e5,color:#1e1b4b
+          classDef decision fill:#fef3c7,stroke:#d97706,color:#92400e
+          classDef owner fill:#fee2e2,stroke:#dc2626,color:#991b1b
+          classDef terminal fill:#d1fae5,stroke:#059669,color:#064e3b
+
+          A[Staff visits /help/staff/login]:::step
+          B[Email + Password + TOTP]:::step
+          C{2FA Enrolled?}:::decision
+          D[Enrol TOTP<br />Setup token + QR]:::step
+          E[Session created<br />HttpOnly cookie]:::step
+          F[Case Desk Dashboard]:::step
+          G[View complaint list<br />Filters + pagination]:::step
+          H[Open complaint detail]:::step
+          I{Owner?}:::decision
+          J[Staff Management<br />Create/Reset/Revoke]:::owner
+          K[Audit Log<br />Append-only]:::owner
+          L[Email Outbox<br />Queue/Process]:::owner
+          M[Complete/Reopen case]:::step
+          N[Add internal note]:::step
+          O[Flag/Unflag spam]:::step
+          P[Assign to staff]:::step
+          Q[Retention deletion<br />After RETENTION_DAYS]:::terminal
+
+          A --> B
+          B --> C
+          C -->|No| D
+          C -->|Yes| E
+          D --> E
+          E --> F
+          F --> G
+          G --> H
+          H --> I
+          I -->|Yes| J
+          I -->|Yes| K
+          I -->|Yes| L
+          H --> M
+          H --> N
+          H --> O
+          H --> P
+          M --> Q
+
+          linkStyle default stroke:#94a3b8,stroke-width:2px
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Status Tracking & Follow-up</h3>
+        <div class="mermaid">
+          flowchart TD
+          classDef step fill:#e5edff,stroke:#4f46e5,color:#1e1b4b
+          classDef decision fill:#fef3c7,stroke:#d97706,color:#92400e
+          classDef terminal fill:#d1fae5,stroke:#059669,color:#064e3b
+
+          A[Reporter visits /help/status]:::step
+          B[Enter reference ID<br />APX-YYYY-XXXXXX]:::step
+          C{Valid format?}:::decision
+          D[POST /api/status/lookup]:::step
+          E{Complaint found?}:::decision
+          F[Show: In Process / Completed]:::step
+          G[Deleted? Show data_deleted]:::step
+          H[Not found error]:::terminal
+          I[Add follow-up text<br />Min 5 chars]:::step
+          J[Complete CAPTCHA]:::step
+          K[POST /api/status/followup]:::step
+          L[Create CaseEvent<br />reporter_followup]:::step
+          M[Audit log entry]:::step
+          N[Show success message]:::terminal
+
+          A --> B
+          B --> C
+          C -->|No| H
+          C -->|Yes| D
+          D --> E
+          E -->|No| H
+          E -->|Yes| F
+          E -->|Deleted| G
+          F --> I
+          G --> H
+          I --> J
+          J --> K
+          K --> L
+          L --> M
+          M --> N
+
+          linkStyle default stroke:#94a3b8,stroke-width:2px
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Assessment Request (Marketing Site)</h3>
+        <div class="mermaid">
+          flowchart TD
+          classDef step fill:#e5edff,stroke:#4f46e5,color:#1e1b4b
+          classDef external fill:#f3f4f6,stroke:#6b7280,color:#374151
+
+          A[Visitor clicks "Request assessment"]:::step
+          B[Modal opens with form]:::step
+          C[Fill: Name, Email, Company, Scope]:::step
+          D[Submit form]:::step
+          E[POST to FormSubmit AJAX<br />formsubmit.co/ajax/contact@apthex.com]:::external
+          F{POST success?}:::decision
+          G[Show "Request received"]:::step
+          H[Fallback: mailto: link<br />Open email client]:::step
+
+          A --> B
+          B --> C
+          C --> D
+          D --> E
+          E --> F
+          F -->|Yes| G
+          F -->|No| H
+
+          linkStyle default stroke:#94a3b8,stroke-width:2px
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Structure Section -->
+  <section id="section-structure" class="hidden py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="mb-8">
+      <h2 class="text-3xl font-bold text-gray-900 mb-2">Project Structure</h2>
+      <p class="text-gray-600">File and module organization across all APTHEX projects.</p>
+    </div>
+
+    <div class="space-y-4">
+      <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <h4 class="text-lg font-bold text-gray-900 mb-2">complaint-portal/</h4>
+        <pre class="text-sm font-mono text-gray-700 overflow-x-auto bg-gray-50 p-4 rounded">
+complaint-portal/
+├── client-next/          Next.js 16.4.5 frontend (canonical)
+│   ├── src/app/
+│   │   ├── page.js          /help — Welcome (institute validation)
+│   │   ├── category/page.js /help/category
+│   │   ├── details/page.js  /help/details
+│   │   ├── thanks/page.js   /help/thanks
+│   │   ├── status/page.js   /help/status
+│   │   ├── staff/login/page.js /help/staff/login
+│   │   ├── desk/page.js     /help/desk (dashboard)
+│   │   ├── desk/complaint/[ref]/page.js /help/desk/complaint/[ref]
+│   │   ├── desk/stats/page.js /help/desk/stats
+│   │   ├── desk/staff/page.js /help/desk/staff (owner)
+│   │   ├── desk/audit/page.js /help/desk/audit (owner)
+│   │   └── desk/email/page.js /help/desk/email (owner)
+│   ├── src/components/     PublicShell, DeskShell, Protected, Turnstile, etc.
+│   ├── src/lib/            api.js, session.js, lang.js, format.js
+│   ├── src/i18n/           en, hi, mr translations
+│   └── next.config.mjs     API rewrites to Express backend
+├── client/               Legacy Vite client (unused)
+├── server/               Express 5 + MongoDB backend (port 4000)
+│   ├── src/app.js          Express app setup (CORS, Helmet, rate limiting)
+│   ├── src/index.js        Server entry (DB connect, seed, scheduler)
+│   ├── src/config/env.js   Zod schema validation
+│   ├── src/db/connect.js   MongoDB connection
+│   ├── src/models/         12 Mongoose models
+│   ├── src/routes/         10 route modules (/api/*)
+│   ├── src/services/       email, storage, captcha, stats, purge, report
+│   ├── src/middleware/     auth, error
+│   ├── src/jobs/scheduler.js Cron jobs (outbox, deletion, reports, escalation)
+│   ├── src/scripts/        seed, seed-data
+│   └── src/tests/api.test.js 31 integration tests
+├── .env.example          Environment template (gitignored .env)
+├── OPEN_DECISIONS.md     Owner approvals required
+├── PRODUCTION_INPUTS.md  Production handover checklist
+├── TEST_REPORT.md        Test results and limitations
+└── README.md             Project documentation
+        </pre>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <h4 class="text-lg font-bold text-gray-900 mb-2">nextjs-site/</h4>
+        <pre class="text-sm font-mono text-gray-700 overflow-x-auto bg-gray-50 p-4 rounded">
+nextjs-site/
+├── app/
+│   ├── layout.js          Root layout (metadata, fonts)
+│   ├── page.js            Homepage — inlines content.js (BODY_HTML + SCRIPT_JS)
+│   ├── content.js         BODY_HTML + SCRIPT_JS (6-section static site)
+│   ├── globals.css        Global styles
+│   └── help/              Complaint Portal integration (14 routes)
+│       ├── layout.js
+│       ├── layout-shell.jsx
+│       ├── page.js
+│       ├── category/page.js
+│       ├── details/page.js
+│       ├── thanks/page.js
+│       ├── status/page.js
+│       ├── staff/login/page.js
+│       └── desk/
+├── components/            Copied portal components with /help links
+├── lib/                   Copied portal lib files
+├── i18n/                  en, hi, mr translations
+├── next.config.mjs        API rewrites + CSP + headers
+├── package.json           Next.js 16.4.5, React 19.3.0
+└── AGENTS.md              Next.js 16 breaking changes warning
+        </pre>
+      </div>
+
+      <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+        <h4 class="text-lg font-bold text-gray-900 mb-2">Database Models (12 Collections)</h4>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="text-sm">
+            <ul class="list-disc list-inside text-gray-600 space-y-1">
+              <li>institutes — code, name, type, head_email, status</li>
+              <li>complaints — ref_id, category, details_text, mode, status, delete_after</li>
+              <li>contacts — complaint_id, name, roll_no, mobile, email (identified only)</li>
+              <li>attachments — complaint_id, type, storage_key, mime, size_bytes</li>
+              <li>case_events — complaint_id, event, note, member_id</li>
+              <li>members — email, password_hash, role, status, totp_enabled</li>
+            </ul>
+          </div>
+          <div class="text-sm">
+            <ul class="list-disc list-inside text-gray-600 space-y-1">
+              <li>staff_sessions — token_hash, member_id, csrf_hash, expires_at</li>
+              <li>audit_events — action, entity, outcome, ip (hashed), detail</li>
+              <li>rate_limits — key, window_start, count, expires_at</li>
+              <li>stats_monthly — institute_code, month, received, completed, escalated</li>
+              <li>deletion_log — ref_id, institute_code, deleted_by, reason</li>
+              <li>email_outbox — dedupe_key, to, subject, kind, status, attempts</li>
+            </ul>
+          </div>
+          </pre>
+        </div>
+      </div>
+  </section>
+
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: 'base', securityLevel: 'loose' });
+
+    function showSection(sectionId) {
+      // Hide all sections
+      document.querySelectorAll('section[id^="section-"]').forEach(s => s.classList.add('hidden'));
+      // Show target
+      document.getElementById('section-' + sectionId).classList.remove('hidden');
+      // Update buttons
+      document.querySelectorAll('nav button').forEach(b => {
+        b.classList.remove('text-blue-600', 'bg-blue-50');
+        b.classList.add('text-gray-600', 'bg-white');
+      });
+      document.getElementById('btn-' + sectionId).classList.remove('text-gray-600', 'bg-white');
+      document.getElementById('btn-' + sectionId).classList.add('text-blue-600', 'bg-blue-50');
+    }
+
+    // Re-render mermaid when section becomes visible
+    const observer = new MutationObserver(() => {
+      if (document.getElementById('section-architecture').classList.contains('hidden') === false) {
+        mermaid.init(undefined, document.querySelectorAll('#section-architecture .mermaid'));
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  </script>
+</body>
+
+</html>
