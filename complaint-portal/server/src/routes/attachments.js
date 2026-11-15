@@ -3,12 +3,14 @@ import Attachment from "../models/Attachment.js";
 import Complaint from "../models/Complaint.js";
 import CaseEvent from "../models/CaseEvent.js";
 import { loadMemberFromSession, requireAuth, requireCsrf, requireRole } from "../middleware/auth.js";
-import { readObject, deleteObject, signAttachmentUrl, verifyLocalSignature, storageDriver } from "../services/storage.js";
 import { audit } from "../utils/audit.js";
 import { sanitizeText } from "../utils/sanitize.js";
 
 const router = express.Router();
 
+// Staff requests a download link for an attachment.
+// Returns a server-proxied path; the actual binary is served through /download/:id
+// and never exposes a raw storage URL to the client.
 router.get("/:id/url", requireAuth, requireRole("owner"), async (req, res, next) => {
   try {
     const attachment = await Attachment.findById(req.params.id).lean();
@@ -16,7 +18,6 @@ router.get("/:id/url", requireAuth, requireRole("owner"), async (req, res, next)
     const complaint = await Complaint.exists({ _id: attachment.complaint_id });
     if (!complaint) return res.status(404).json({ error: "Not found" });
 
-    const signed = await signAttachmentUrl(attachment);
     await audit({
       member_id: req.member._id,
       action: "attachment_url_issued",
@@ -26,62 +27,32 @@ router.get("/:id/url", requireAuth, requireRole("owner"), async (req, res, next)
       ip: req.ip,
     });
     res.set("Cache-Control", "no-store");
-    res.json({ ...signed, mime: attachment.mime, type: attachment.type });
+    res.json({
+      url: `/api/attachments/download/${attachment._id}`,
+      mime: attachment.mime,
+      type: attachment.type,
+      expires_at: new Date(Date.now() + 300 * 1000).toISOString(),
+    });
   } catch (error) {
     next(error);
   }
 });
 
-// Short-lived download endpoint for local and Vercel Blob private storage.
-// The Vercel Blob token never leaves the server; clients fetch through this
-// session-protected route. Vercel Blob private URLs are never returned
-// directly to clients; downloads always route through this endpoint.
-router.get("/download/:id", async (req, res, next) => {
+// Download endpoint — serves the attachment binary directly from MongoDB.
+// Requires an authenticated staff session with owner or case_team role.
+router.get("/download/:id", requireAuth, requireRole("owner", "case_team"), async (req, res, next) => {
   try {
-    if (storageDriver === "vercel-blob") {
-      const loaded = await loadMemberFromSession(req);
-      if (!loaded) return res.status(401).json({ error: "Authentication required" });
-      if (!["owner", "case_team"].includes(loaded.member.role)) {
-        return res.status(404).json({ error: "Not found" });
-      }
-      const attachment = await Attachment.findById(req.params.id).lean();
-      if (!attachment) return res.status(404).json({ error: "Not found" });
-      const complaint = await Complaint.exists({ _id: attachment.complaint_id });
-      if (!complaint) return res.status(404).json({ error: "Not found" });
-
-      const buffer = await readObject(attachment.storage_key);
-      await audit({
-        member_id: loaded.member._id,
-        action: "attachment_download",
-        entity: "attachment",
-        entity_id: String(attachment._id),
-        detail: `complaint=${attachment.complaint_id}; type=${attachment.type}; via=vercel`,
-        ip: req.ip,
-      });
-      res.set("Content-Type", attachment.mime);
-      res.set("Content-Disposition", "inline");
-      res.set("X-Content-Type-Options", "nosniff");
-      res.set("Cache-Control", "private, no-store");
-      res.set("Content-Security-Policy", "default-src 'none'; sandbox");
-      res.send(buffer);
-      return;
-    }
-    if (storageDriver !== "local") return res.status(404).json({ error: "Not found" });
-    const { expires, signature } = req.query;
-    if (!verifyLocalSignature(req.params.id, expires, signature)) {
-      return res.status(404).json({ error: "Not found" });
-    }
     const attachment = await Attachment.findById(req.params.id).lean();
     if (!attachment) return res.status(404).json({ error: "Not found" });
     const complaint = await Complaint.exists({ _id: attachment.complaint_id });
     if (!complaint) return res.status(404).json({ error: "Not found" });
 
-    const buffer = await readObject(attachment.storage_key);
     await audit({
+      member_id: req.member._id,
       action: "attachment_download",
       entity: "attachment",
       entity_id: String(attachment._id),
-      detail: `complaint=${attachment.complaint_id}; type=${attachment.type}; via=signed_url`,
+      detail: `complaint=${attachment.complaint_id}; type=${attachment.type}; via=mongodb`,
       ip: req.ip,
     });
     res.set("Content-Type", attachment.mime);
@@ -89,16 +60,14 @@ router.get("/download/:id", async (req, res, next) => {
     res.set("X-Content-Type-Options", "nosniff");
     res.set("Cache-Control", "private, no-store");
     res.set("Content-Security-Policy", "default-src 'none'; sandbox");
-    res.send(buffer);
+    res.send(attachment.data);
   } catch (error) {
     next(error);
   }
 });
 
-// Owner / case_team removal of a single evidence attachment. The private
-// object is deleted from Vercel Blob first (idempotent), so a failed write
-// never removes the record without the blob being gone. The change is
-// recorded as a case event and an audit event.
+// Owner / case_team removal of a single evidence attachment.
+// The binary data is stored in MongoDB and deleted together with the Attachment record.
 router.delete("/:id", requireAuth, requireCsrf, requireRole("owner", "case_team"), async (req, res, next) => {
   try {
     const attachment = await Attachment.findById(req.params.id).lean();
@@ -106,7 +75,6 @@ router.delete("/:id", requireAuth, requireCsrf, requireRole("owner", "case_team"
     const complaintExists = await Complaint.exists({ _id: attachment.complaint_id });
     if (!complaintExists) return res.status(404).json({ error: "Not found" });
 
-    await deleteObject(attachment.storage_key);
     const removed = await Attachment.deleteOne({ _id: attachment._id });
     await CaseEvent.create({
       complaint_id: attachment.complaint_id,

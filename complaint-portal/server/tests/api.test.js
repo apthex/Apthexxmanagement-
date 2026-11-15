@@ -497,22 +497,22 @@ test("case completion, reopening, notes, spam and assignment are audited", async
   assert.ok(detail.body.events.some((event) => event.event === "flagged_spam"));
 });
 
-test("signed attachment URLs work, expire-protected links reject tampering", async () => {
+test("attachment download URLs work and require staff authentication", async () => {
   const signed = await ownerAgent.get(`/api/attachments/${imageAttachmentId}/url`);
   assert.equal(signed.status, 200);
-  assert.match(signed.body.url, /signature=/);
+  assert.equal(signed.body.url, `/api/attachments/download/${imageAttachmentId}`);
   assert.ok(signed.body.expires_at);
 
-  const download = await request(app).get(signed.body.url);
+  const download = await ownerAgent.get(signed.body.url);
   assert.equal(download.status, 200);
   assert.match(download.headers["content-type"], /image\/jpeg/);
   assert.equal(download.headers["x-content-type-options"], "nosniff");
 
-  const tampered = await request(app).get(`${signed.body.url.slice(0, -3)}bad`);
-  assert.equal(tampered.status, 404);
-
   const unauth = await request(app).get(`/api/attachments/${voiceAttachmentId}/url`);
   assert.equal(unauth.status, 401);
+
+  const nonexistent = await ownerAgent.get("/api/attachments/000000000000000000000000/url");
+  assert.equal(nonexistent.status, 404);
 });
 
 test("signed attachment access is audit logged", async () => {
@@ -944,8 +944,7 @@ test("case_team can delete an individual attachment; blob object, record, case e
 
   const complaint = await Complaint.findOne({ ref_id: deleteRef }).lean();
   const row = await Attachment.findOne({ complaint_id: complaint._id }).lean();
-  assert.ok(row);
-  assert.ok(fs.existsSync(path.join(storageDir, row.storage_key)), "attachment object must exist before deletion");
+  assert.ok(row, "attachment record must exist before deletion");
 
   // Unauthenticated deletion is rejected.
   assert.equal((await request(app).delete(`/api/attachments/${row._id}`)).status, 401);
@@ -958,8 +957,9 @@ test("case_team can delete an individual attachment; blob object, record, case e
   assert.equal(del.status, 200, JSON.stringify(del.body));
   assert.equal(del.body.remaining_attachments, 0);
 
-  // The private object is deleted from storage and the record is gone.
-  assert.equal(fs.existsSync(path.join(storageDir, row.storage_key)), false);
+  // The binary data is deleted from MongoDB together with the Attachment record.
+  const afterDelete = await Attachment.findOne({ _id: row._id }).lean();
+  assert.equal(afterDelete, null);
   assert.equal(await Attachment.countDocuments({ complaint_id: complaint._id }), 0);
   // Repeating the request 404s (no information leak, idempotent blind).
   assert.equal((await ownerAgent.delete(`/api/attachments/${row._id}`).set("X-CSRF-Token", ownerCsrf)).status, 404);

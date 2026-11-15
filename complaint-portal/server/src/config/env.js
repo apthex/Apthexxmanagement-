@@ -55,16 +55,10 @@ const schema = z.object({
   CLOUDFLARE_TURNSTILE_SECRET_KEY: z.string().optional(),
   CAPTCHA_DEV_BYPASS: bool,
 
-  STORAGE_DRIVER: z.enum(["local", "vercel-blob"]).default("local"),
-  STORAGE_LOCAL_DIR: z.string().optional(),
-  BLOB_READ_WRITE_TOKEN: z.string().optional(),
   STORAGE_SIGNED_URL_TTL_SECONDS: z.coerce.number().int().positive().default(300),
 
   MAX_IMAGE_BYTES: z.coerce.number().int().positive().default(2 * 1024 * 1024),
-  // Vercel Blob `put()` (server upload) is capped at 4.5 MB, so voice recordings
-  // must fit a single private `put`. Voice is also limited to 60 seconds by
-  // processVoice(); this is a platform ceiling, not an increase of any limit.
-  MAX_VOICE_BYTES: z.coerce.number().int().positive().default(4.5 * 1024 * 1024),
+  MAX_VOICE_BYTES: z.coerce.number().int().positive().default(25 * 1024 * 1024),
   MAX_VIDEO_BYTES: z.coerce.number().int().positive().default(50 * 1024 * 1024),
   MAX_VOICE_SECONDS: z.coerce.number().int().positive().default(60),
   MAX_IMAGES: z.coerce.number().int().min(0).max(10).default(5),
@@ -117,11 +111,6 @@ export function configWarnings() {
           : "CAPTCHA is not configured and CAPTCHA_DEV_BYPASS is false; public submissions will be rejected."
       );
     }
-    if (env.STORAGE_DRIVER === "local") warnings.push("Using local private file storage. Production must use Vercel Blob private storage (STORAGE_DRIVER=vercel-blob).");
-    if (env.STORAGE_DRIVER === "vercel-blob") {
-      if (!env.BLOB_READ_WRITE_TOKEN) warnings.push("BLOB_READ_WRITE_TOKEN is not set; private Vercel Blob uploads will fail.");
-      if (env.MAX_VOICE_BYTES > 4.5 * 1024 * 1024) warnings.push(`MAX_VOICE_BYTES (${env.MAX_VOICE_BYTES}) exceeds the 4.5 MB Vercel Blob server upload limit; voice uploads will fail.`);
-    }
     if (env.SESSION_SECRET === DEFAULT_SESSION_SECRET) warnings.push("Using the development session secret. Set SESSION_SECRET before deployment.");
     if (env.TOTP_ENCRYPTION_KEY === DEFAULT_TOTP_KEY) warnings.push("Using the development TOTP encryption key. Set TOTP_ENCRYPTION_KEY before deployment.");
     warnings.push("RETENTION_DAYS and ESCALATION_DAYS are development placeholders until the owner approves production values.");
@@ -145,11 +134,6 @@ export function assertProductionConfig() {
   if (env.CAPTCHA_DEV_BYPASS) missing.push("CAPTCHA_DEV_BYPASS must be false in production");
   if (!env.AUTH_REQUIRE_2FA) missing.push("AUTH_REQUIRE_2FA must be true in production");
   if (env.AUTO_SEED) missing.push("AUTO_SEED must be false in production");
-  // Production must use Vercel Blob as its only storage provider.
-  if (env.STORAGE_DRIVER !== "vercel-blob") missing.push("STORAGE_DRIVER=vercel-blob");
-  if (env.STORAGE_DRIVER === "vercel-blob") {
-    if (!env.BLOB_READ_WRITE_TOKEN) missing.push("BLOB_READ_WRITE_TOKEN");
-  }
   if (!env.APP_BASE_URL.startsWith("https://")) missing.push("APP_BASE_URL (https)");
   if (missing.length) {
     throw new Error(`Production configuration is incomplete:\n- ${missing.join("\n- ")}`);

@@ -3,7 +3,6 @@ import Contact from "../models/Contact.js";
 import Attachment from "../models/Attachment.js";
 import CaseEvent from "../models/CaseEvent.js";
 import DeletionLog from "../models/DeletionLog.js";
-import { deleteObject } from "./storage.js";
 import { audit } from "../utils/audit.js";
 
 let lastSweepAt = 0;
@@ -13,14 +12,7 @@ export async function purgeComplaint(complaint, { deletedBy = "system" } = {}) {
   const deleted = await Complaint.findOneAndDelete({ _id: complaint._id });
   if (!deleted) return false;
 
-  const attachments = await Attachment.find({ complaint_id: deleted._id }).lean();
-  for (const attachment of attachments) {
-    try {
-      await deleteObject(attachment.storage_key);
-    } catch (error) {
-      console.error("[deletion] failed to delete attachment object:", error.message);
-    }
-  }
+  // Attachment binary data lives in MongoDB, so deleting the documents removes the data too.
   await Promise.all([
     Attachment.deleteMany({ complaint_id: deleted._id }),
     Contact.deleteMany({ complaint_id: deleted._id }),

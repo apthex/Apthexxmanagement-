@@ -18,7 +18,7 @@ import {
   processOutbox,
 } from "../services/email.js";
 import { applyStatsDelta } from "../services/stats.js";
-import { processImage, processVoice, processVideo, newStorageKey, saveObject, deleteObject } from "../services/storage.js";
+import { processImage, processVoice, processVideo, newStorageKey } from "../services/storage.js";
 import { audit } from "../utils/audit.js";
 import { sanitizeText, normalizeEmail, normalizePhone, escapeRegex } from "../utils/sanitize.js";
 import { requireAuth, requireCsrf, requireRole } from "../middleware/auth.js";
@@ -73,15 +73,7 @@ function parseBody(body) {
   };
 }
 
-async function cleanupStored(keys) {
-  for (const key of keys) {
-    try {
-      await deleteObject(key);
-    } catch (error) {
-      console.error("[upload] cleanup failed:", error.message);
-    }
-  }
-}
+// No external storage cleanup needed — attachment binary data lives in MongoDB.
 
 router.post("/", upload.fields([{ name: "images", maxCount: env.MAX_IMAGES }, { name: "voice", maxCount: 1 }, { name: "videos", maxCount: 1 }]), async (req, res, next) => {
   try {
@@ -183,14 +175,10 @@ router.post("/", upload.fields([{ name: "images", maxCount: env.MAX_IMAGES }, { 
         }
       : null;
 
-    const storedKeys = [];
     let complaint = null;
     try {
       for (const file of processedFiles) {
-        const key = newStorageKey(file.type, file.ext);
-        await saveObject(key, file.buffer, file.mime);
-        storedKeys.push(key);
-        file.storageKey = key;
+        file.storageKey = newStorageKey(file.type, file.ext);
       }
 
       const now = new Date();
@@ -233,6 +221,7 @@ router.post("/", upload.fields([{ name: "images", maxCount: env.MAX_IMAGES }, { 
             complaint_id: complaint._id,
             type: file.type,
             storage_key: file.storageKey,
+            data: file.buffer,
             mime: file.mime,
             size_bytes: file.buffer.length,
           }))
@@ -246,7 +235,6 @@ router.post("/", upload.fields([{ name: "images", maxCount: env.MAX_IMAGES }, { 
           Attachment.deleteMany({ complaint_id: complaint._id }),
         ]).catch(() => {});
       }
-      await cleanupStored(storedKeys);
       throw error;
     }
 

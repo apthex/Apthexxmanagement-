@@ -5,6 +5,7 @@ const schema = new mongoose.Schema(
     complaint_id: { type: mongoose.Schema.Types.ObjectId, ref: "Complaint", required: true, index: true },
     type: { type: String, enum: ["image", "voice", "video"], required: true },
     storage_key: { type: String, required: true },
+    data: { type: Buffer, required: true },
     mime: { type: String, required: true },
     size_bytes: { type: Number, required: true },
     created_at: { type: Date, default: Date.now },
