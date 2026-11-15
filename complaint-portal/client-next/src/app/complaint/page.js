@@ -240,6 +240,10 @@ export default function ComplaintPage() {
                 </p>
               </>
             )}
+            <p className="quick-help-line">
+              Any question about this case? <a href="tel:+919421161446">94211 61446</a> ·{" "}
+              <a href="mailto:help@apthex.com">help@apthex.com</a>
+            </p>
           </div>
         ) : (
           <form className="card quick-form" onSubmit={handleSubmit} noValidate>
@@ -290,6 +294,19 @@ export default function ComplaintPage() {
                 </span>
               </p>
             )}
+
+            <div className="form-help" role="note">
+              <span className="form-help-label">APTHEX help desk</span>
+              <div className="form-help-rows">
+                <a href="tel:+919421161446">
+                  <Icon name="phone" size={15} /> 94211 61446
+                </a>
+                <a href="mailto:help@apthex.com">
+                  <Icon name="mail" size={15} /> help@apthex.com
+                </a>
+              </div>
+              <p className="form-help-note">Stuck while filling the form? Call or email us — we reply quickly.</p>
+            </div>
 
             {error && <p className="alert alert-error" role="alert">{error}</p>}
 
