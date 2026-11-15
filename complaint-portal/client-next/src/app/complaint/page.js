@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import CaptchaField from "../../components/CaptchaField.jsx";
 import Icon from "../../components/Icon.jsx";
 import { submitComplaint } from "../../lib/api.js";
@@ -45,6 +46,8 @@ function getDeviceId() {
 
 export default function ComplaintPage() {
   const [form, setForm] = useState(EMPTY_FORM);
+  const [mode, setMode] = useState("identified");
+  const [copied, setCopied] = useState(false);
   const [colleges, setColleges] = useState([]);
   const [config, setConfig] = useState(null);
   const [captcha, setCaptcha] = useState({ token: null, answer: "" });
@@ -57,6 +60,10 @@ export default function ComplaintPage() {
   const [fileNotice, setFileNotice] = useState("");
 
   useEffect(() => {
+    // Deep link support: /complaint?anon=1 opens the form in anonymous mode.
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("anon") === "1") {
+      setMode("anonymous");
+    }
     fetch("/api/institutes/list", { headers: { Accept: "application/json" } })
       .then((response) => response.json())
       .then((data) => setColleges(data.institutes || []))
@@ -74,6 +81,26 @@ export default function ComplaintPage() {
       setForm((current) => ({ ...current, [key]: event.target.value }));
       setFieldErrors((current) => ({ ...current, [key]: undefined }));
     };
+  }
+
+  function switchMode(next) {
+    if (next === mode) return;
+    setMode(next);
+    // Personal fields never carry across modes: anonymous mode must not retain
+    // (or send) any of them, and identified mode starts clean.
+    setForm((current) => ({ ...current, name: "", class_label: "", roll_no: "", mobile: "", email: "" }));
+    setFieldErrors({});
+  }
+
+  async function copyRefId() {
+    if (!result?.refId) return;
+    try {
+      await navigator.clipboard.writeText(result.refId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard unavailable — the ID stays visible for manual copying.
+    }
   }
 
   function addPhotos(fileList) {
@@ -129,12 +156,16 @@ export default function ComplaintPage() {
     data.set("institute_code", form.institute_code);
     data.set("category", form.category);
     data.set("details_text", form.details_text);
-    data.set("mode", "identified");
-    data.set("name", form.name);
-    data.set("class_label", form.class_label);
-    if (form.roll_no.trim()) data.set("roll_no", form.roll_no);
-    data.set("mobile", form.mobile);
-    data.set("email", form.email);
+    data.set("mode", mode);
+    // Anonymous reports never include personal fields — the API rejects any
+    // personal data in anonymous mode, so it is simply not sent.
+    if (mode === "identified") {
+      data.set("name", form.name);
+      data.set("class_label", form.class_label);
+      if (form.roll_no.trim()) data.set("roll_no", form.roll_no);
+      data.set("mobile", form.mobile);
+      data.set("email", form.email);
+    }
     data.set("deviceId", getDeviceId());
     if (captchaRequired && captcha.token) {
       data.set("captchaToken", captcha.token);
@@ -153,7 +184,11 @@ export default function ComplaintPage() {
     setSubmitting(true);
     try {
       const data = await submitComplaint(buildFormData());
-      setResult({ refId: data.ref_id, email: form.email.trim() });
+      setResult({
+        refId: data.ref_id,
+        email: mode === "identified" ? form.email.trim() : "",
+        anonymous: mode === "anonymous",
+      });
     } catch (requestError) {
       const details = requestError.fields || {};
       if (Object.keys(details).length) {
@@ -188,18 +223,80 @@ export default function ComplaintPage() {
               <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2"><path d="m5 12 4 4L19 6" /></svg>
             </span>
             <h1 className="quick-title">Complaint registered.</h1>
-            <p className="quick-sub">Save this reference ID — it stays fully confidential.</p>
-            <span className="quick-ref">{result.refId}</span>
-            <p className="quick-sub">
-              A confirmation has been sent from our side to <strong>{result.email}</strong>.
-            </p>
+            {result.anonymous ? (
+              <>
+                <p className="quick-sub">
+                  You reported this anonymously — no name, email or mobile was collected or stored.
+                </p>
+                <span className="quick-ref">{result.refId}</span>
+                <button type="button" className="btn btn-secondary btn-small" onClick={copyRefId}>
+                  <Icon name={copied ? "check" : "copy"} size={14} /> {copied ? "Copied" : "Copy reference ID"}
+                </button>
+                <p className="quick-sub">
+                  <strong>Save this reference ID now.</strong> It is the only way to check the status
+                  or add follow-up details later — no email will be sent for this report.
+                </p>
+                <Link className="btn btn-secondary btn-small" href="/status">Check status / add follow-up</Link>
+              </>
+            ) : (
+              <>
+                <p className="quick-sub">Save this reference ID — it stays fully confidential.</p>
+                <span className="quick-ref">{result.refId}</span>
+                <p className="quick-sub">
+                  A confirmation has been sent from our side to <strong>{result.email}</strong>.
+                </p>
+              </>
+            )}
           </div>
         ) : (
           <form className="card quick-form" onSubmit={handleSubmit} noValidate>
             <h1 className="quick-title">Report a complaint</h1>
-            <p className="quick-sub">
-              Fill this once. Your details stay confidential, and you get an email confirmation from APTHEX.
-            </p>
+            {mode === "identified" ? (
+              <p className="quick-sub">
+                Fill this once. Your details stay confidential, and you get an email confirmation from APTHEX.
+              </p>
+            ) : (
+              <p className="quick-sub">
+                No name, no email, no mobile — only your institute and what happened.
+              </p>
+            )}
+
+            <div className="mode-cards">
+              <button
+                type="button"
+                className={`mode-card${mode === "identified" ? " mode-card-active" : ""}`}
+                aria-pressed={mode === "identified"}
+                onClick={() => switchMode("identified")}
+              >
+                <Icon name="user" size={18} />
+                <span>
+                  <b>Report with my details</b>
+                  <small>Name, class, mobile &amp; email — get email updates</small>
+                </span>
+              </button>
+              <button
+                type="button"
+                className={`mode-card${mode === "anonymous" ? " mode-card-active" : ""}`}
+                aria-pressed={mode === "anonymous"}
+                onClick={() => switchMode("anonymous")}
+              >
+                <Icon name="shield" size={18} />
+                <span>
+                  <b>Report anonymously</b>
+                  <small>No name, no email — just institute &amp; complaint</small>
+                </span>
+              </button>
+            </div>
+
+            {mode === "anonymous" && (
+              <p className="anon-note" role="note">
+                <Icon name="lock" size={14} />
+                <span>
+                  Your identity is never collected. <strong>Save the reference ID you receive</strong> —
+                  it is the only way to follow up on this report.
+                </span>
+              </p>
+            )}
 
             {error && <p className="alert alert-error" role="alert">{error}</p>}
 
@@ -215,35 +312,39 @@ export default function ComplaintPage() {
                 {fieldError("institute_code") && <p className="error-text">{fieldError("institute_code")}</p>}
               </div>
 
-              <div className="field">
-                <label className="field-label" htmlFor="qf-name">Full name <i aria-hidden="true">*</i></label>
-                <input id="qf-name" className="input" value={form.name} onChange={setField("name")} autoComplete="name" required />
-                {fieldError("name") && <p className="error-text">{fieldError("name")}</p>}
-              </div>
+              {mode === "identified" && (
+                <>
+                  <div className="field">
+                    <label className="field-label" htmlFor="qf-name">Full name <i aria-hidden="true">*</i></label>
+                    <input id="qf-name" className="input" value={form.name} onChange={setField("name")} autoComplete="name" required />
+                    {fieldError("name") && <p className="error-text">{fieldError("name")}</p>}
+                  </div>
 
-              <div className="field">
-                <label className="field-label" htmlFor="qf-class">Class / Course / Division <i aria-hidden="true">*</i></label>
-                <input id="qf-class" className="input" value={form.class_label} onChange={setField("class_label")} placeholder="e.g. FY BSc CS - A" required />
-                {fieldError("class_label") && <p className="error-text">{fieldError("class_label")}</p>}
-              </div>
+                  <div className="field">
+                    <label className="field-label" htmlFor="qf-class">Class / Course / Division <i aria-hidden="true">*</i></label>
+                    <input id="qf-class" className="input" value={form.class_label} onChange={setField("class_label")} placeholder="e.g. FY BSc CS - A" required />
+                    {fieldError("class_label") && <p className="error-text">{fieldError("class_label")}</p>}
+                  </div>
 
-              <div className="field">
-                <label className="field-label" htmlFor="qf-roll">Roll number (optional)</label>
-                <input id="qf-roll" className="input" value={form.roll_no} onChange={setField("roll_no")} />
-              </div>
+                  <div className="field">
+                    <label className="field-label" htmlFor="qf-roll">Roll number (optional)</label>
+                    <input id="qf-roll" className="input" value={form.roll_no} onChange={setField("roll_no")} />
+                  </div>
 
-              <div className="field">
-                <label className="field-label" htmlFor="qf-mobile">Mobile number <i aria-hidden="true">*</i></label>
-                <input id="qf-mobile" className="input" type="tel" value={form.mobile} onChange={setField("mobile")} autoComplete="tel" placeholder="+91 98765 43210" required />
-                {fieldError("mobile") && <p className="error-text">{fieldError("mobile")}</p>}
-              </div>
+                  <div className="field">
+                    <label className="field-label" htmlFor="qf-mobile">Mobile number <i aria-hidden="true">*</i></label>
+                    <input id="qf-mobile" className="input" type="tel" value={form.mobile} onChange={setField("mobile")} autoComplete="tel" placeholder="+91 98765 43210" required />
+                    {fieldError("mobile") && <p className="error-text">{fieldError("mobile")}</p>}
+                  </div>
 
-              <div className="field field-wide">
-                <label className="field-label" htmlFor="qf-email">Email <i aria-hidden="true">*</i></label>
-                <input id="qf-email" className="input" type="email" value={form.email} onChange={setField("email")} autoComplete="email" placeholder="you@example.com" required />
-                <p className="field-hint">The “your complaint is registered” confirmation goes to this email.</p>
-                {fieldError("email") && <p className="error-text">{fieldError("email")}</p>}
-              </div>
+                  <div className="field field-wide">
+                    <label className="field-label" htmlFor="qf-email">Email <i aria-hidden="true">*</i></label>
+                    <input id="qf-email" className="input" type="email" value={form.email} onChange={setField("email")} autoComplete="email" placeholder="you@example.com" required />
+                    <p className="field-hint">The “your complaint is registered” confirmation goes to this email.</p>
+                    {fieldError("email") && <p className="error-text">{fieldError("email")}</p>}
+                  </div>
+                </>
+              )}
 
               <div className="field field-wide">
                 <label className="field-label" htmlFor="qf-category">What is the complaint about? <i aria-hidden="true">*</i></label>
@@ -338,10 +439,12 @@ export default function ComplaintPage() {
             </div>
 
             <button type="submit" className="btn btn-primary btn-large btn-block" disabled={submitting}>
-              {submitting ? "Registering…" : "Register complaint"}
+              {submitting ? "Registering…" : mode === "anonymous" ? "Submit anonymous report" : "Register complaint"}
             </button>
             <p className="field-hint quick-consent">
-              By submitting you confirm the details are true. APTHEX shares the complaint only with the authorised college contact.
+              {mode === "anonymous"
+                ? "By submitting you confirm the details are true. No identity data is collected; APTHEX shares the report only with the authorised college contact."
+                : "By submitting you confirm the details are true. APTHEX shares the complaint only with the authorised college contact."}
             </p>
           </form>
         )}

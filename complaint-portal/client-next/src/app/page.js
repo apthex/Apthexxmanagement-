@@ -92,6 +92,10 @@ export default function WelcomePage() {
             <div>
               <strong>{t(lang, "anonymousCardTitle")}</strong>
               <p>{t(lang, "anonymousCardText")}</p>
+              <Link className="welcome-anon-link" href="/complaint?anon=1">
+                {t(lang, "anonymousCta")}
+                <Icon name="arrowRight" size={14} />
+              </Link>
             </div>
           </div>
           <div className="welcome-point" role="listitem">

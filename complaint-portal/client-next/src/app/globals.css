@@ -2316,6 +2316,19 @@ body {
 
 .welcome-point svg { color: var(--red); flex: 0 0 auto; margin-top: 2px; }
 
+.welcome-anon-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--red-bright);
+  text-decoration: none;
+}
+.welcome-anon-link:hover { text-decoration: underline; }
+.welcome-anon-link svg { color: currentColor; margin-top: 0; }
+
 .welcome-point strong {
   display: block;
   color: var(--text);
@@ -2546,6 +2559,58 @@ body {
   border: 1px dashed rgba(255, 255, 255, 0.3);
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.3);
+}
+
+/* Identity mode toggle — identified vs anonymous report */
+.mode-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.mode-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel-2);
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.mode-card svg { flex: 0 0 auto; color: var(--muted); }
+.mode-card:hover { border-color: var(--line-strong); }
+.mode-card b { display: block; font-size: 0.85rem; color: var(--text); }
+.mode-card small { display: block; font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+.mode-card-active,
+.mode-card-active:hover {
+  border-color: var(--red-bright);
+  background: var(--red-wash);
+}
+.mode-card-active svg { color: var(--red-bright); }
+
+.anon-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--amber);
+  background: var(--amber-wash);
+  border: 1px solid rgba(245, 184, 75, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.anon-note svg { flex: 0 0 auto; margin-top: 2px; }
+
+@media (max-width: 560px) {
+  .mode-cards { grid-template-columns: 1fr; }
 }
 
 .quick-footer {
