@@ -12,8 +12,11 @@ const router = express.Router();
 // College leaderboard — kounse college se kitni complaints. case_team (teachers) sees only this.
 router.get("/leaderboard", requireAuth, requireRole("owner", "case_team"), async (req, res, next) => {
   try {
+    // Anonymous complaints are an owner-only concern: teacher counts are built
+    // from identified reports only, so the anonymous volume stays private.
+    const includeAnonymous = req.member.role === "owner";
     const rows = await Complaint.aggregate([
-      { $match: { flagged_spam: false } },
+      { $match: includeAnonymous ? { flagged_spam: false } : { flagged_spam: false, mode: "identified" } },
       {
         $group: {
           _id: "$institute_code",

@@ -36,7 +36,9 @@ const phoneSchema = z
 
 const contactSchema = z.object({
   name: z.string().trim().min(2, "Full name is required").max(100),
-  class_label: z.string().trim().min(1, "Class / course / division is required").max(100),
+  // Class/division and roll number were removed from the public form (owner
+  // decision); they stay optional so older records still validate.
+  class_label: z.string().trim().max(100).optional().default(""),
   roll_no: z.string().trim().max(50).optional().default(""),
   mobile: phoneSchema,
   email: emailSchema,
@@ -93,7 +95,6 @@ export const submissionSchema = z
       };
       const requiredFields = [
         ["name", "Full name is required"],
-        ["class_label", "Class / course / division is required"],
         ["mobile", "Enter a valid mobile number"],
         ["email", "Enter a valid email address"],
       ];

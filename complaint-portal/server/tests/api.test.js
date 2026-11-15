@@ -203,6 +203,32 @@ test("identified complaint is accepted and separates identity into Contact", asy
   assert.equal(storedContact.email, "asha@example.com");
 });
 
+test("identified complaint without class/division or roll number is accepted", async () => {
+  // Owner removed class/division and roll number from the public form —
+  // the submission must not require them.
+  const res = await request(app)
+    .post("/api/complaints")
+    .send({
+      institute_code: "SCHOOL01",
+      category: "Institution-level Issue",
+      details_text: "An identified complaint submitted without class or roll details.",
+      mode: "identified",
+      urgent: false,
+      captchaToken: "dev-bypass",
+      deviceId: "test-device-no-class",
+      name: "Ravi Kumar",
+      mobile: "9812345678",
+      email: "ravi@example.com",
+    });
+  assert.equal(res.status, 201, JSON.stringify(res.body));
+  const complaint = await Complaint.findOne({ ref_id: res.body.ref_id }).lean();
+  assert.equal(complaint.mode, "identified");
+  assert.equal(complaint.class_label || "", "");
+  const storedContact = await Contact.findOne({ complaint_id: complaint._id }).lean();
+  assert.equal(storedContact.name, "Ravi Kumar");
+  assert.equal(storedContact.class_label || "", "");
+});
+
 test("anonymous complaint stores no identity at all", async () => {
   const res = await request(app)
     .post("/api/complaints")
@@ -574,6 +600,15 @@ test("owner can create staff accounts while case team cannot list them", async (
   const leaderboard = await caseAgent.get("/api/stats/leaderboard");
   assert.equal(leaderboard.status, 200);
   assert.ok(Array.isArray(leaderboard.body.leaderboard));
+
+  // Anonymous complaints count only for the owner — teachers see identified totals.
+  const ownerLeaderboard = await ownerAgent.get("/api/stats/leaderboard");
+  assert.equal(ownerLeaderboard.status, 200);
+  const teacherSchoolRow = leaderboard.body.leaderboard.find((row) => row.code === "SCHOOL01");
+  const ownerSchoolRow = ownerLeaderboard.body.leaderboard.find((row) => row.code === "SCHOOL01");
+  assert.ok(teacherSchoolRow && ownerSchoolRow, "SCHOOL01 should appear on the leaderboard");
+  assert.ok(ownerSchoolRow.total > teacherSchoolRow.total,
+    "teacher leaderboard must exclude anonymous complaints");
 
   const audit = await caseAgent.get("/api/staff/audit");
   assert.equal(audit.status, 404);

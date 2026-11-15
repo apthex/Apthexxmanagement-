@@ -19,8 +19,6 @@ function formatBytes(bytes) {
 const EMPTY_FORM = {
   institute_code: "",
   name: "",
-  class_label: "",
-  roll_no: "",
   mobile: "",
   email: "",
   category: "",
@@ -48,7 +46,6 @@ export default function ComplaintPage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [mode, setMode] = useState("identified");
   const [copied, setCopied] = useState(false);
-  const [colleges, setColleges] = useState([]);
   const [config, setConfig] = useState(null);
   const [captcha, setCaptcha] = useState({ token: null, answer: "" });
   const [error, setError] = useState("");
@@ -64,10 +61,6 @@ export default function ComplaintPage() {
     if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("anon") === "1") {
       setMode("anonymous");
     }
-    fetch("/api/institutes/list", { headers: { Accept: "application/json" } })
-      .then((response) => response.json())
-      .then((data) => setColleges(data.institutes || []))
-      .catch(() => setColleges([]));
     fetch("/api/config", { headers: { Accept: "application/json" } })
       .then((response) => response.json())
       .then(setConfig)
@@ -78,7 +71,9 @@ export default function ComplaintPage() {
 
   function setField(key) {
     return (event) => {
-      setForm((current) => ({ ...current, [key]: event.target.value }));
+      // The college reference code is always stored uppercase, like a ref ID.
+      const value = key === "institute_code" ? event.target.value.toUpperCase() : event.target.value;
+      setForm((current) => ({ ...current, [key]: value }));
       setFieldErrors((current) => ({ ...current, [key]: undefined }));
     };
   }
@@ -88,7 +83,7 @@ export default function ComplaintPage() {
     setMode(next);
     // Personal fields never carry across modes: anonymous mode must not retain
     // (or send) any of them, and identified mode starts clean.
-    setForm((current) => ({ ...current, name: "", class_label: "", roll_no: "", mobile: "", email: "" }));
+    setForm((current) => ({ ...current, name: "", mobile: "", email: "" }));
     setFieldErrors({});
   }
 
@@ -161,8 +156,6 @@ export default function ComplaintPage() {
     // personal data in anonymous mode, so it is simply not sent.
     if (mode === "identified") {
       data.set("name", form.name);
-      data.set("class_label", form.class_label);
-      if (form.roll_no.trim()) data.set("roll_no", form.roll_no);
       data.set("mobile", form.mobile);
       data.set("email", form.email);
     }
@@ -257,7 +250,7 @@ export default function ComplaintPage() {
               </p>
             ) : (
               <p className="quick-sub">
-                No name, no email, no mobile — only your institute and what happened.
+                No name, no email, no mobile — only your college code and what happened.
               </p>
             )}
 
@@ -283,7 +276,7 @@ export default function ComplaintPage() {
                 <Icon name="shield" size={18} />
                 <span>
                   <b>Report anonymously</b>
-                  <small>No name, no email — just institute &amp; complaint</small>
+                  <small>No name, no email — just college code &amp; complaint</small>
                 </span>
               </button>
             </div>
@@ -302,13 +295,19 @@ export default function ComplaintPage() {
 
             <div className="form-grid">
               <div className="field field-wide">
-                <label className="field-label" htmlFor="qf-college">College / Institute <i aria-hidden="true">*</i></label>
-                <select id="qf-college" className="select" value={form.institute_code} onChange={setField("institute_code")} required>
-                  <option value="" disabled>Select your college</option>
-                  {colleges.map((college) => (
-                    <option key={college.code} value={college.code}>{college.name}</option>
-                  ))}
-                </select>
+                <label className="field-label" htmlFor="qf-college">College code <i aria-hidden="true">*</i></label>
+                <input
+                  id="qf-college"
+                  className="input input-mono"
+                  value={form.institute_code}
+                  onChange={setField("institute_code")}
+                  placeholder="e.g. APS001"
+                  autoComplete="off"
+                  spellCheck={false}
+                  maxLength={32}
+                  required
+                />
+                <p className="field-hint">Type the reference code alloted to your college (e.g. on the notice your college shared).</p>
                 {fieldError("institute_code") && <p className="error-text">{fieldError("institute_code")}</p>}
               </div>
 
@@ -318,17 +317,6 @@ export default function ComplaintPage() {
                     <label className="field-label" htmlFor="qf-name">Full name <i aria-hidden="true">*</i></label>
                     <input id="qf-name" className="input" value={form.name} onChange={setField("name")} autoComplete="name" required />
                     {fieldError("name") && <p className="error-text">{fieldError("name")}</p>}
-                  </div>
-
-                  <div className="field">
-                    <label className="field-label" htmlFor="qf-class">Class / Course / Division <i aria-hidden="true">*</i></label>
-                    <input id="qf-class" className="input" value={form.class_label} onChange={setField("class_label")} placeholder="e.g. FY BSc CS - A" required />
-                    {fieldError("class_label") && <p className="error-text">{fieldError("class_label")}</p>}
-                  </div>
-
-                  <div className="field">
-                    <label className="field-label" htmlFor="qf-roll">Roll number (optional)</label>
-                    <input id="qf-roll" className="input" value={form.roll_no} onChange={setField("roll_no")} />
                   </div>
 
                   <div className="field">
