@@ -26,6 +26,11 @@ const nextConfig = {
   // Next dev-tools badge (bottom "N" button) off — production builds never show it.
   devIndicators: false,
   async rewrites() {
+    // Local development only: proxy /api/* to the local Express server.
+    // In production the API routing happens at the edge via vercel.json
+    // (function-runtime rewrites cannot resolve *.vercel.app targets —
+    // they resolve to a private IP and fail with DNS_HOSTNAME_RESOLVED_PRIVATE).
+    if (!isDev) return [];
     return [{ source: "/api/:path*", destination: `${apiTarget}/api/:path*` }];
   },
   async headers() {
