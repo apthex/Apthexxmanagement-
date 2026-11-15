@@ -120,21 +120,33 @@ export function configWarnings() {
 
 export function assertProductionConfig() {
   if (!isProduction) return;
+  // DEPLOY_MODE=staging: a hosted deployment that is not yet supplied with the
+  // email provider and Turnstile keys. Every security-relevant setting remains
+  // REQUIRED — only provider PRESENCE is relaxed. Remove DEPLOY_MODE once the
+  // owner provides RESEND_API_KEY (or SMTP) and the Turnstile keys.
+  const staging = process.env.DEPLOY_MODE === "staging";
   const missing = [];
   if (!env.MONGODB_URI) missing.push("MONGODB_URI");
   if (!process.env.RETENTION_DAYS) missing.push("RETENTION_DAYS (owner approval required)");
   if (!process.env.ESCALATION_DAYS) missing.push("ESCALATION_DAYS (owner approval required)");
   if (env.SESSION_SECRET.length < 32 || env.SESSION_SECRET === DEFAULT_SESSION_SECRET) missing.push("SESSION_SECRET (32+ random characters)");
   if (env.TOTP_ENCRYPTION_KEY.length < 32 || env.TOTP_ENCRYPTION_KEY === DEFAULT_TOTP_KEY) missing.push("TOTP_ENCRYPTION_KEY (32+ random characters)");
-  if (!env.RESEND_API_KEY && !(env.SMTP_USER && env.SMTP_PASS)) missing.push("RESEND_API_KEY or SMTP_USER+SMTP_PASS");
-  if (!env.EMAIL_FROM) missing.push("EMAIL_FROM");
-  if (!env.APTHEX_CASE_MAILBOX) missing.push("APTHEX_CASE_MAILBOX");
-  if (!env.CLOUDFLARE_TURNSTILE_SITE_KEY) missing.push("CLOUDFLARE_TURNSTILE_SITE_KEY");
-  if (!env.CLOUDFLARE_TURNSTILE_SECRET_KEY) missing.push("CLOUDFLARE_TURNSTILE_SECRET_KEY");
   if (env.CAPTCHA_DEV_BYPASS) missing.push("CAPTCHA_DEV_BYPASS must be false in production");
   if (!env.AUTH_REQUIRE_2FA) missing.push("AUTH_REQUIRE_2FA must be true in production");
   if (env.AUTO_SEED) missing.push("AUTO_SEED must be false in production");
   if (!env.APP_BASE_URL.startsWith("https://")) missing.push("APP_BASE_URL (https)");
+  if (!staging) {
+    if (!env.RESEND_API_KEY && !(env.SMTP_USER && env.SMTP_PASS)) missing.push("RESEND_API_KEY or SMTP_USER+SMTP_PASS");
+    if (!env.EMAIL_FROM) missing.push("EMAIL_FROM");
+    if (!env.APTHEX_CASE_MAILBOX) missing.push("APTHEX_CASE_MAILBOX");
+    if (!env.CLOUDFLARE_TURNSTILE_SITE_KEY) missing.push("CLOUDFLARE_TURNSTILE_SITE_KEY");
+    if (!env.CLOUDFLARE_TURNSTILE_SECRET_KEY) missing.push("CLOUDFLARE_TURNSTILE_SECRET_KEY");
+  } else {
+    console.warn(
+      "[config] DEPLOY_MODE=staging: email transport and Turnstile are not configured yet — " +
+        "the built-in arithmetic CAPTCHA is active and emails are recorded in the outbox only."
+    );
+  }
   if (missing.length) {
     throw new Error(`Production configuration is incomplete:\n- ${missing.join("\n- ")}`);
   }
