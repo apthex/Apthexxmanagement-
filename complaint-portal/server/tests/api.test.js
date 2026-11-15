@@ -738,7 +738,11 @@ test("CAPTCHA verification rejects invalid tokens and accepts valid provider res
 
 test("local zero-setup captcha is enforced and accepts a correct answer", async () => {
   const originalBypass = env.CAPTCHA_DEV_BYPASS;
+  const originalRequired = env.CAPTCHA_REQUIRED;
   env.CAPTCHA_DEV_BYPASS = false;
+  // Owner's live deployment runs with CAPTCHA_REQUIRED=false (challenge off).
+  // This test exercises the enforced path, so the flag is forced on here.
+  env.CAPTCHA_REQUIRED = true;
   try {
     const challenge = await request(app).get("/api/captcha");
     assert.equal(challenge.status, 200);
@@ -793,6 +797,7 @@ test("local zero-setup captcha is enforced and accepts a correct answer", async 
     assert.equal(replay.body.captchaFailed, true);
   } finally {
     env.CAPTCHA_DEV_BYPASS = originalBypass;
+    env.CAPTCHA_REQUIRED = originalRequired;
   }
 });
 

@@ -23,6 +23,7 @@ function baseProductionEnv() {
     CAPTCHA_DEV_BYPASS: "false",
     // Keep production posture explicit (dev .env sets this false; dotenv would leak it here).
     AUTH_REQUIRE_2FA: "true",
+    CAPTCHA_REQUIRED: "true",
     AUTO_SEED: "false",
     RETENTION_DAYS: "30",
     ESCALATION_DAYS: "7",

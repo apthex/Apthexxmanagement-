@@ -4,6 +4,7 @@ import { buildMonthlyReportData, buildMonthlyReportPdf } from "../services/month
 import { queueMonthlyReport, processOutbox } from "../services/email.js";
 import { instituteCodeSchema, monthSchema } from "../utils/validation.js";
 import { audit } from "../utils/audit.js";
+import { waitUntil } from "@vercel/functions";
 
 const router = express.Router();
 
@@ -67,7 +68,13 @@ router.post("/send", requireAuth, requireCsrf, requireRole("owner"), async (req,
       inProcess: data.inProcess,
       dedupeSuffix,
     });
-    void processOutbox({ limit: 5 }).catch((error) => console.error("[email] outbox processing failed:", error.message));
+    // waitUntil keeps the serverless function alive after the response — a
+    // plain void promise is frozen on Vercel once the response is sent.
+    waitUntil(
+      processOutbox({ limit: 5 }).catch((error) => {
+        console.error("[email] outbox processing failed:", error.message);
+      })
+    );
     await audit({
       member_id: req.member._id,
       action: "monthly_report_queued",

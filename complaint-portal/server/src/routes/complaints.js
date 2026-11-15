@@ -24,6 +24,7 @@ import { sanitizeText, normalizeEmail, normalizePhone, escapeRegex } from "../ut
 import { requireAuth, requireCsrf, requireRole } from "../middleware/auth.js";
 import { requestTimeSweep } from "../services/purge.js";
 import { env } from "../config/env.js";
+import { waitUntil } from "@vercel/functions";
 
 const router = express.Router();
 
@@ -258,9 +259,13 @@ router.post("/", upload.fields([{ name: "images", maxCount: env.MAX_IMAGES }, { 
         reporterEmail: data.mode === "identified" ? normalizeEmail(contactInput.email) : null,
       });
       // Urgent alerts should not wait for the scheduled outbox worker.
-      void processOutbox({ limit: data.urgent ? 10 : 3 }).catch((error) => {
-        console.error("[email] outbox processing failed:", error.message);
-      });
+      // waitUntil keeps the serverless function alive after the response — a
+      // plain void promise is frozen on Vercel once the response is sent.
+      waitUntil(
+        processOutbox({ limit: data.urgent ? 10 : 3 }).catch((error) => {
+          console.error("[email] outbox processing failed:", error.message);
+        })
+      );
     } catch (error) {
       console.error("[email] could not queue complaint notification:", error.message);
     }
