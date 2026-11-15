@@ -215,7 +215,22 @@ code {
   gap: 8px;
   padding-block: 8px;
   letter-spacing: 0.02em;
+  flex-wrap: wrap;
 }
+.emergency-strip-help {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.emergency-strip-help a {
+  color: #ffffff;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(255, 255, 255, 0.4);
+}
+.emergency-strip-help a:hover { text-decoration-color: #ffffff; }
 
 /* --------------------------------------------------------------- headers */
 
@@ -2308,6 +2323,46 @@ body {
   letter-spacing: 0.04em;
 }
 
+/* APTHEX help desk — calmer companion block under the emergency block */
+.welcome-help {
+  margin-top: 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  color: var(--text-soft);
+  font-size: 0.78rem;
+}
+.welcome-help-label {
+  display: block;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 8px;
+}
+.welcome-help-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.welcome-help-row svg { color: var(--blue); flex: 0 0 auto; transform: translateY(2px); }
+.welcome-help a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 0.92rem;
+  transition: color 0.15s ease;
+}
+.welcome-help a:hover { color: var(--blue); text-decoration: underline; }
+.welcome-help-kind {
+  color: var(--text-soft);
+  font-weight: 600;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+}
+
 /* ---- reassurance points */
 
 .welcome-points {
@@ -2636,6 +2691,19 @@ body {
   font-size: 0.78rem;
   border-top: 1px solid var(--line);
 }
+
+.quick-help {
+  margin-bottom: 8px;
+  color: var(--text-soft);
+}
+.quick-help a {
+  color: var(--text);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+}
+.quick-help a:hover { text-decoration-color: var(--text); }
 
 /* ------------------------------------------------------------ leaderboard */
 

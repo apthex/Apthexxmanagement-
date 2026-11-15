@@ -438,7 +438,13 @@ export default function ComplaintPage() {
         )}
       </main>
 
-      <footer className="quick-footer">Powered by APTHEX · Student Help Portal</footer>
+      <footer className="quick-footer">
+        <p className="quick-help">
+          Need help? <a href="tel:+919421161446">Call 94211 61446</a> ·{" "}
+          <a href="mailto:help@apthex.com">help@apthex.com</a>
+        </p>
+        Powered by APTHEX · Student Help Portal
+      </footer>
     </div>
   );
 }

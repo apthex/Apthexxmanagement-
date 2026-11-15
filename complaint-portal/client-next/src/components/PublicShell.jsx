@@ -16,7 +16,14 @@ export default function PublicShell({ children, lang, setLang, hideNav = false }
     <div className="site-shell">
       <a className="skip-link" href="#main-content">Skip to main content</a>
       <div className="emergency-strip">
-        <span>{t(lang, "footerEmergency")}</span>
+        <span>
+          <span>{t(lang, "footerEmergency")}</span>
+          <span className="emergency-strip-help">
+            <a href="tel:+919421161446">94211 61446</a>
+            <span aria-hidden="true">·</span>
+            <a href="mailto:help@apthex.com">help@apthex.com</a>
+          </span>
+        </span>
       </div>
       <header className="public-header">
         <div className="public-header-inner">

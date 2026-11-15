@@ -72,6 +72,20 @@ export default function WelcomePage() {
                 </span>
               </div>
             </div>
+
+            <div className="welcome-help">
+              <span className="welcome-help-label">{t(lang, "helpTitle")}</span>
+              <div className="welcome-help-row">
+                <Icon name="phone" size={16} />
+                <a href="tel:+919421161446">94211 61446</a>
+                <span className="welcome-help-kind">{t(lang, "helpCallLabel")}</span>
+              </div>
+              <div className="welcome-help-row">
+                <Icon name="mail" size={16} />
+                <a href="mailto:help@apthex.com">help@apthex.com</a>
+                <span className="welcome-help-kind">{t(lang, "helpMailLabel")}</span>
+              </div>
+            </div>
           </div>
 
           <div className="welcome-visual">
