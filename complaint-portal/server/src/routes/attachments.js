@@ -38,7 +38,7 @@ router.get("/:id/url", requireAuth, requireRole("owner"), async (req, res, next)
 // directly to clients; downloads always route through this endpoint.
 router.get("/download/:id", async (req, res, next) => {
   try {
-    if (storageDriver === "vercel") {
+    if (storageDriver === "vercel-blob") {
       const loaded = await loadMemberFromSession(req);
       if (!loaded) return res.status(401).json({ error: "Authentication required" });
       if (!["owner", "case_team"].includes(loaded.member.role)) {
