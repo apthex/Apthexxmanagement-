@@ -71,11 +71,12 @@ function verifyLocalChallenge(token, answer) {
 
 export function captchaPublicConfig() {
   const configured = Boolean(env.CLOUDFLARE_TURNSTILE_SITE_KEY && env.CLOUDFLARE_TURNSTILE_SECRET_KEY);
+  const required = Boolean(env.CAPTCHA_REQUIRED) && (isProduction || configured);
   return {
     configured,
     mode: configured ? "turnstile" : "local",
     siteKey: configured ? env.CLOUDFLARE_TURNSTILE_SITE_KEY : null,
-    required: isProduction || configured,
+    required,
     devBypass: !isProduction && !configured && env.CAPTCHA_DEV_BYPASS,
   };
 }
@@ -87,6 +88,9 @@ export function captchaPublicConfig() {
 export async function verifyCaptcha(token, remoteIp, answer = undefined) {
   const configured = Boolean(env.CLOUDFLARE_TURNSTILE_SECRET_KEY);
   if (!configured) {
+    // Owner decision (2026-11): CAPTCHA_REQUIRED=false turns the challenge
+    // off entirely (rate limiting stays in force).
+    if (!env.CAPTCHA_REQUIRED) return { ok: true, skipped: true };
     if (!isProduction && env.CAPTCHA_DEV_BYPASS) {
       return { ok: true, devBypass: true };
     }

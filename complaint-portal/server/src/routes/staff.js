@@ -64,7 +64,7 @@ router.post("/members", requireAuth, requireCsrf, requireRole("owner"), async (r
     const parsed = memberCreateSchema.safeParse(req.body || {});
     if (!parsed.success) return res.status(400).json({ error: "Please check the member details", fields: fieldsFrom(parsed.error) });
     const { name, email, role } = parsed.data;
-    // Blank password + case_team => standard teacher password (teacher@123).
+    // Blank password + case_team => standard teacher password (TEACHER_DEFAULT_PASSWORD).
     const password = parsed.data.password || (role === "case_team" ? TEACHER_DEFAULT_PASSWORD : null);
     if (!password) return res.status(400).json({ error: "Owner accounts need a password", fields: { password: "Password is required for owner accounts" } });
     const existing = await Member.exists({ email });

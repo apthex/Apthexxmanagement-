@@ -54,6 +54,10 @@ const schema = z.object({
   CLOUDFLARE_TURNSTILE_SITE_KEY: z.string().optional(),
   CLOUDFLARE_TURNSTILE_SECRET_KEY: z.string().optional(),
   CAPTCHA_DEV_BYPASS: bool,
+  // Owner decision (2026-11): CAPTCHA is cancelled for this deployment.
+  // CAPTCHA_REQUIRED=false skips the challenge entirely on public forms.
+  // Turnstile keys, once configured, are always verified regardless.
+  CAPTCHA_REQUIRED: bool,
 
   STORAGE_SIGNED_URL_TTL_SECONDS: z.coerce.number().int().positive().default(300),
 
@@ -132,7 +136,8 @@ export function assertProductionConfig() {
   if (env.SESSION_SECRET.length < 32 || env.SESSION_SECRET === DEFAULT_SESSION_SECRET) missing.push("SESSION_SECRET (32+ random characters)");
   if (env.TOTP_ENCRYPTION_KEY.length < 32 || env.TOTP_ENCRYPTION_KEY === DEFAULT_TOTP_KEY) missing.push("TOTP_ENCRYPTION_KEY (32+ random characters)");
   if (env.CAPTCHA_DEV_BYPASS) missing.push("CAPTCHA_DEV_BYPASS must be false in production");
-  if (!env.AUTH_REQUIRE_2FA) missing.push("AUTH_REQUIRE_2FA must be true in production");
+  if (!staging && !env.AUTH_REQUIRE_2FA) missing.push("AUTH_REQUIRE_2FA must be true in production");
+  if (!staging && env.CAPTCHA_REQUIRED === false) missing.push("CAPTCHA_REQUIRED must be true in production");
   if (env.AUTO_SEED) missing.push("AUTO_SEED must be false in production");
   if (!env.APP_BASE_URL.startsWith("https://")) missing.push("APP_BASE_URL (https)");
   if (!staging) {
@@ -143,8 +148,8 @@ export function assertProductionConfig() {
     if (!env.CLOUDFLARE_TURNSTILE_SECRET_KEY) missing.push("CLOUDFLARE_TURNSTILE_SECRET_KEY");
   } else {
     console.warn(
-      "[config] DEPLOY_MODE=staging: email transport and Turnstile are not configured yet — " +
-        "the built-in arithmetic CAPTCHA is active and emails are recorded in the outbox only."
+      "[config] DEPLOY_MODE=staging: running with the owner's simplified plan — " +
+        "no 2FA (password-only staff sign-in), CAPTCHA disabled, emails are recorded in the outbox until a transport is configured."
     );
   }
   if (missing.length) {

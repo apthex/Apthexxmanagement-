@@ -230,7 +230,7 @@ function StaffView() {
             <h2>Add a staff member</h2>
             <p className="small muted">
               Teachers see only the college leaderboard. Leave the password blank and the standard teacher password
-              <strong> teacher@123 </strong> is set automatically.
+              <strong> Teacher8686@# </strong> is set automatically.
             </p>
             <form className="stack" onSubmit={createMember}>
               <label className="field">
@@ -243,7 +243,7 @@ function StaffView() {
               </label>
               <label className="field">
                 <span className="field-label">Password (optional)</span>
-                <input className="input" type="password" value={draft.password} onChange={(event) => setDraft({ ...draft, password: event.target.value })} autoComplete="new-password" placeholder="Leave blank for teacher@123" />
+                <input className="input" type="password" value={draft.password} onChange={(event) => setDraft({ ...draft, password: event.target.value })} autoComplete="new-password" placeholder="Leave blank for Teacher8686@#" />
               </label>
               <label className="field">
                 <span className="field-label">Role</span>

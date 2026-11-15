@@ -152,8 +152,9 @@ export const patchComplaintSchema = z
 export const memberCreateSchema = z.object({
   name: z.string().trim().min(2).max(100),
   email: emailSchema,
-  // Password optional: teachers get the standard default (teacher@123) when the
-  // owner leaves it blank. Complex rules only apply to an explicitly set one.
+  // Password optional: teachers get the standard default (TEACHER_DEFAULT_PASSWORD,
+  // see below) when the owner leaves it blank. Complex rules only apply to an
+  // explicitly set one.
   password: z
     .string()
     .trim()
