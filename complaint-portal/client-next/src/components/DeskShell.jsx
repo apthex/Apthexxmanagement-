@@ -40,21 +40,12 @@ export default function DeskShell({ children, title, subtitle, actions = null })
 
   return (
     <div className="desk-shell">
-      <header className="desk-header">
-        <div className="desk-header-top">
-          <Link href="/desk" className="desk-brand">
-            <span className="brand-mark">APTHEX</span>
-            <span className="desk-brand-sub">{member.role === "owner" ? "Case Desk" : "Teacher Desk"}</span>
-          </Link>
-          <div className="desk-user">
-            <span className="desk-user-name">{member.name}</span>
-            <span className={`badge role-${member.role}`}>{member.role === "owner" ? "Owner" : "Case team"}</span>
-            <Link href="/" className="desk-public-link">Public portal</Link>
-            <button type="button" className="btn btn-ghost btn-small" onClick={logout} disabled={loggingOut}>
-              <Icon name="logout" size={16} /> {loggingOut ? "Signing out…" : "Sign out"}
-            </button>
-          </div>
-        </div>
+      <aside className="desk-sidebar">
+        <Link href="/desk" className="desk-brand" aria-label="APTHEX Case Desk home">
+          <span className="brand-mark">APTHEX</span>
+          <span className="desk-brand-sub">{member.role === "owner" ? "Case Desk" : "Teacher Desk"}</span>
+        </Link>
+
         <nav className="desk-nav" aria-label="Case Desk navigation">
           {links
             .filter((link) => !link.owner || member.role === "owner")
@@ -63,25 +54,51 @@ export default function DeskShell({ children, title, subtitle, actions = null })
               return (
                 <Link key={link.href} href={link.href} className={active ? "desk-nav-link active" : "desk-nav-link"} aria-current={active ? "page" : undefined}>
                   <Icon name={link.icon} size={17} />
-                  {link.label}
+                  <span>{link.label}</span>
                 </Link>
               );
             })}
         </nav>
-      </header>
 
-      <main className="desk-main">
-        <div className="desk-title-row">
-          <div>
-            <p className="eyebrow">APTHEX admin &amp; teacher area</p>
-            <h1>{title}</h1>
-            {subtitle && <p className="page-subtitle">{subtitle}</p>}
-          </div>
-          {actions && <div className="desk-actions">{actions}</div>}
+        <div className="desk-sidebar-foot">
+          <p className="desk-help-line">
+            Need help?<br />
+            <a href="tel:+919421161446">94211 61446</a>
+            {" · "}
+            <a href="mailto:help@apthex.com">help@apthex.com</a>
+          </p>
         </div>
-        {error && <div className="alert alert-error" role="alert">{error}</div>}
-        {children}
-      </main>
+      </aside>
+
+      <div className="desk-frame">
+        <header className="desk-topbar">
+          <div className="desk-user">
+            <span className="desk-user-name">{member.name}</span>
+            <span className={`badge role-${member.role}`}>{member.role === "owner" ? "Owner" : "Case team"}</span>
+          </div>
+          <div className="desk-user-actions">
+            <Link href="/" className="desk-public-link">
+              Public portal <Icon name="external" size={13} />
+            </Link>
+            <button type="button" className="btn btn-ghost btn-small" onClick={logout} disabled={loggingOut}>
+              <Icon name="logout" size={15} /> {loggingOut ? "Signing out…" : "Sign out"}
+            </button>
+          </div>
+        </header>
+
+        <main className="desk-main">
+          <div className="desk-title-row">
+            <div>
+              <p className="eyebrow">APTHEX admin &amp; teacher area</p>
+              <h1>{title}</h1>
+              {subtitle && <p className="page-subtitle">{subtitle}</p>}
+            </div>
+            {actions && <div className="desk-actions">{actions}</div>}
+          </div>
+          {error && <div className="alert alert-error" role="alert">{error}</div>}
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
