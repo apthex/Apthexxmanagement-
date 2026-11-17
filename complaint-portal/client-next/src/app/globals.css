@@ -1199,6 +1199,7 @@ code {
 }
 .check-list li svg { color: var(--green); flex: 0 0 auto; margin-top: 2px; }
 .check-list.compact { gap: 8px; }
+.refid-steps { margin-top: 12px; }
 .check-list.compact li { font-size: 0.79rem; }
 
 .captcha-card { padding: 18px; }

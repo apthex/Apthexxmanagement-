@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import Protected, { useAuth } from "../../../components/Protected.jsx";
 import DeskShell from "../../../components/DeskShell.jsx";
 import Icon from "../../../components/Icon.jsx";
@@ -18,9 +19,6 @@ function StatsView() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [collegeDraft, setCollegeDraft] = useState({ name: "", head_name: "", head_email: "", type: "college" });
-  const [creatingCollege, setCreatingCollege] = useState(false);
-  const [collegeNotice, setCollegeNotice] = useState(null);
 
   function loadInstitutes() {
     return api("/api/stats/institutes")
@@ -62,23 +60,6 @@ function StatsView() {
       setError(requestError.message);
     } finally {
       setSending(false);
-    }
-  }
-
-  async function createCollege(event) {
-    event.preventDefault();
-    setCreatingCollege(true);
-    setError("");
-    setCollegeNotice(null);
-    try {
-      const result = await api("/api/institutes", { method: "POST", json: collegeDraft });
-      setCollegeNotice(result.institute);
-      setCollegeDraft({ name: "", head_name: "", head_email: "", type: "college" });
-      await loadInstitutes();
-    } catch (requestError) {
-      setError(requestError.fields ? Object.values(requestError.fields).join(" · ") : requestError.message);
-    } finally {
-      setCreatingCollege(false);
     }
   }
 
@@ -151,68 +132,15 @@ function StatsView() {
 
         <aside className="stack">
           <section className="card side-card">
-            <h2>Add a college</h2>
+            <h2>Institute ref IDs</h2>
             <p className="small muted">
-              College ka naam, contact person aur email likho — a random APXJIT-### ref ID is generated automatically
-              (e.g. <span className="mono">APXJIT-234</span>) and the college appears in the student form immediately.
-              The full register lives under <strong>Institute ref IDs</strong> in the side menu.
+              College codes are issued from <strong>Institute ref IDs</strong> in the side menu — type the
+              college's name there and a unique <span className="mono">APXJIT-###</span> code is generated
+              instantly. New codes appear in the student form right away.
             </p>
-            {collegeNotice && (
-              <div className="alert alert-success" role="status">
-                <Icon name="check" size={16} />
-                <span>
-                  Added! Institute code: <strong className="mono">{collegeNotice.code}</strong>
-                </span>
-              </div>
-            )}
-            <form className="stack" onSubmit={createCollege}>
-              <label className="field">
-                <span className="field-label">College / Institute name</span>
-                <input
-                  className="input"
-                  value={collegeDraft.name}
-                  onChange={(event) => setCollegeDraft({ ...collegeDraft, name: event.target.value })}
-                  maxLength={120}
-                  required
-                />
-              </label>
-              <label className="field">
-                <span className="field-label">Contact person name</span>
-                <input
-                  className="input"
-                  value={collegeDraft.head_name}
-                  onChange={(event) => setCollegeDraft({ ...collegeDraft, head_name: event.target.value })}
-                  maxLength={100}
-                  required
-                />
-              </label>
-              <label className="field">
-                <span className="field-label">Contact email</span>
-                <input
-                  className="input"
-                  type="email"
-                  value={collegeDraft.head_email}
-                  onChange={(event) => setCollegeDraft({ ...collegeDraft, head_email: event.target.value })}
-                  autoComplete="off"
-                  required
-                />
-              </label>
-              <label className="field">
-                <span className="field-label">Type</span>
-                <select
-                  className="select"
-                  value={collegeDraft.type}
-                  onChange={(event) => setCollegeDraft({ ...collegeDraft, type: event.target.value })}
-                >
-                  <option value="college">College</option>
-                  <option value="school">School</option>
-                  <option value="other">Other</option>
-                </select>
-              </label>
-              <button type="submit" className="btn btn-primary btn-block" disabled={creatingCollege}>
-                <Icon name="building" size={16} /> {creatingCollege ? "Adding…" : "Add college"}
-              </button>
-            </form>
+            <Link href="/desk/institutes" className="btn btn-secondary btn-block">
+              <Icon name="building" size={16} /> Open institute ref IDs
+            </Link>
           </section>
 
           <section className="card side-card">

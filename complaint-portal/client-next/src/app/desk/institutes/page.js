@@ -138,9 +138,14 @@ function Dashboard() {
         <div className="card-heading">
           <h2>Generate an institute ref ID</h2>
           <p>
-            College ka naam likho — a random <span className="mono">APXJIT-###</span> code is generated automatically.
-            Every code is different and never repeats, so each college keeps its own ID.
+            Every college gets its own unique reporting code. Fill the name below and the code is created for
+            you — it can never be guessed or reused by another college.
           </p>
+          <ul className="check-list compact refid-steps">
+            <li><Icon name="check" size={15} /> Type the college's full name in the box below.</li>
+            <li><Icon name="check" size={15} /> Click <strong>Generate ref ID</strong> — a unique <span className="mono">APXJIT-###</span> code (like <span className="mono">APXJIT-234</span>) is created instantly.</li>
+            <li><Icon name="check" size={15} /> The new code appears at the top of the register below — copy it and share it with the college.</li>
+          </ul>
         </div>
 
         <form className="refid-form" onSubmit={generate}>
