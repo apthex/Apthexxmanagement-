@@ -106,24 +106,30 @@ function Dashboard() {
     >
       <div className="stat-grid">
         <article className="stat-card">
-          <span className="stat-icon"><Icon name="list" size={20} /></span>
-          <div><span>All cases</span><strong>{summary.total}</strong></div>
+          <span className="stat-icon"><Icon name="layers" size={20} /></span>
+          <div><strong>{summary.total}</strong><span>All cases</span></div>
         </article>
         <article className="stat-card stat-urgent">
           <span className="stat-icon"><Icon name="alert" size={20} /></span>
-          <div><span>Urgent, open</span><strong>{summary.urgent}</strong></div>
+          <div><strong>{summary.urgent}</strong><span>Urgent, open</span></div>
         </article>
         <article className="stat-card">
           <span className="stat-icon"><Icon name="clock" size={20} /></span>
-          <div><span>In process</span><strong>{summary.in_process}</strong></div>
+          <div><strong>{summary.in_process}</strong><span>In process</span></div>
         </article>
         <article className="stat-card stat-complete">
           <span className="stat-icon"><Icon name="check" size={20} /></span>
-          <div><span>Completed</span><strong>{summary.completed}</strong></div>
+          <div><strong>{summary.completed}</strong><span>Completed</span></div>
         </article>
       </div>
 
       <form className="card filter-card" onSubmit={applyFilters}>
+        <div className="filter-head">
+          <span className="filter-title"><Icon name="layers" size={15} /> Filter complaints</span>
+          <span className="filter-updated small muted">
+            {updatedAt ? `Updated ${formatDateTime(updatedAt)}` : "Loading cases…"}
+          </span>
+        </div>
         <div className="filter-grid">
           <label className="field">
             <span className="field-label">Search reference</span>
@@ -161,18 +167,15 @@ function Dashboard() {
               </select>
             </label>
           )}
+        </div>
+        <div className="between filter-actions">
           <label className="checkbox-field">
             <input type="checkbox" checked={draft.urgent} onChange={(event) => setDraft({ ...draft, urgent: event.target.checked })} />
             <span>Urgent only</span>
           </label>
-        </div>
-        <div className="between filter-actions">
-          <span className="small muted">
-            {updatedAt ? `Updated ${formatDateTime(updatedAt)}` : "Loading cases…"}
-          </span>
-          <div className="row">
-            <button type="button" className="btn btn-ghost btn-small" onClick={resetFilters}>Clear</button>
-            <button type="submit" className="btn btn-secondary btn-small"><Icon name="search" size={15} /> Apply filters</button>
+          <div className="filter-buttons">
+            <button type="button" className="btn btn-ghost" onClick={resetFilters}>Clear</button>
+            <button type="submit" className="btn btn-primary"><Icon name="search" size={15} /> Apply filters</button>
           </div>
         </div>
       </form>
@@ -190,7 +193,7 @@ function Dashboard() {
           </div>
         ) : (
           <div className="table-wrap">
-            <table className="data-table">
+            <table className="data-table cases-table">
               <thead>
                 <tr>
                   <th>Reference</th>
@@ -217,16 +220,16 @@ function Dashboard() {
                     tabIndex={0}
                     role="link"
                   >
-                    <td>
+                    <td data-label="Reference">
                       <span className="ref-cell">{item.ref_id}</span>
                       {item.urgent && <span className="badge badge-urgent">Urgent</span>}
                     </td>
-                    <td><span className="mono">{item.institute_code}</span></td>
-                    <td><span className="cell-clamp">{item.category}</span></td>
-                    <td><StatusBadge status={item.status} spam={item.flagged_spam} /></td>
-                    <td>{item.assigned_to?.name || <span className="muted">Unassigned</span>}</td>
-                    <td className="nowrap">{formatDateTime(item.created_at)}</td>
-                    <td><Icon name="arrowRight" size={16} /></td>
+                    <td data-label="Institute"><span className="mono">{item.institute_code}</span></td>
+                    <td data-label="Category"><span className="cell-clamp">{item.category}</span></td>
+                    <td data-label="Status"><StatusBadge status={item.status} spam={item.flagged_spam} /></td>
+                    <td data-label="Assigned">{item.assigned_to?.name || <span className="muted">Unassigned</span>}</td>
+                    <td data-label="Received" className="nowrap">{formatDateTime(item.created_at)}</td>
+                    <td className="cell-go" aria-hidden="true"><Icon name="arrowRight" size={16} /></td>
                   </tr>
                 ))}
               </tbody>
