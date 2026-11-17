@@ -63,6 +63,17 @@ export default function ComplaintPage() {
   const [dictation, setDictation] = useState({ supported: false, listening: false, interim: "", error: "" });
   const recognitionRef = useRef(null);
   const listeningRef = useRef(false);
+  // Chrome kills a continuous dictation session every few seconds; the
+  // restart is scheduled with a short delay because restarting instantly
+  // inside onend throws InvalidStateError on Android Chrome.
+  const restartTimerRef = useRef(null);
+
+  function clearRestartTimer() {
+    if (restartTimerRef.current) {
+      clearTimeout(restartTimerRef.current);
+      restartTimerRef.current = null;
+    }
+  }
 
   useEffect(() => {
     // Deep link support: /complaint?anon=1 opens the form in anonymous mode.
@@ -83,6 +94,7 @@ export default function ComplaintPage() {
     return () => {
       // Leaving the page must always stop the microphone session.
       listeningRef.current = false;
+      clearRestartTimer();
       try {
         recognitionRef.current?.stop();
       } catch {
@@ -93,6 +105,7 @@ export default function ComplaintPage() {
 
   function stopDictation() {
     listeningRef.current = false;
+    clearRestartTimer();
     try {
       recognitionRef.current?.stop();
     } catch {
@@ -104,6 +117,7 @@ export default function ComplaintPage() {
   function startDictation() {
     const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!Recognition) return;
+    clearRestartTimer();
     setDictation({ supported: true, listening: true, interim: "", error: "" });
     listeningRef.current = true;
 
@@ -132,31 +146,69 @@ export default function ComplaintPage() {
     };
 
     recognition.onerror = (event) => {
-      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+      const kind = event.error;
+      // Fatal errors end the session and show a clear, calm message.
+      if (kind === "not-allowed" || kind === "service-not-allowed") {
         listeningRef.current = false;
+        clearRestartTimer();
         setDictation({
           supported: true,
           listening: false,
           interim: "",
           error: "Microphone access was blocked. Allow the mic in your browser settings, or type instead.",
         });
-      } else if (event.error === "no-speech") {
+      } else if (kind === "audio-capture") {
+        listeningRef.current = false;
+        clearRestartTimer();
+        setDictation({
+          supported: true,
+          listening: false,
+          interim: "",
+          error: "No microphone was found on this device. Please type instead.",
+        });
+      } else if (kind === "network") {
+        listeningRef.current = false;
+        clearRestartTimer();
+        setDictation({
+          supported: true,
+          listening: false,
+          interim: "",
+          error: "Voice service is not reachable right now. Check your internet or type instead.",
+        });
+      } else if (kind === "no-speech" || kind === "aborted") {
+        // Normal pauses and intentional stops — the session continues or
+        // restarts in onend, so stay quiet.
         setDictation((current) => ({ ...current, error: "", interim: "" }));
+      } else {
+        setDictation((current) => ({
+          ...current,
+          error: "Voice typing hit a problem. Tap the mic button to try again, or type instead.",
+        }));
       }
     };
 
     recognition.onend = () => {
+      clearRestartTimer();
+      if (!listeningRef.current) {
+        // The session closed after a stop or a fatal error — mirror the
+        // state so the listening strip never stays stuck on screen.
+        setDictation((current) => ({ ...current, listening: false, interim: "" }));
+        return;
+      }
       // Chrome ends the session periodically; restart while the user still
-      // wants dictation so a long complaint is not cut off.
-      if (listeningRef.current) {
+      // wants dictation so a long complaint is not cut off. The short delay
+      // avoids the InvalidStateError an instant restart throws on Android.
+      restartTimerRef.current = setTimeout(() => {
+        restartTimerRef.current = null;
+        if (!listeningRef.current) return;
         try {
           recognition.start();
           return;
         } catch {
-          // Already restarting.
+          // Already starting — the next onend will retry if needed.
         }
-      }
-      setDictation((current) => ({ ...current, listening: false, interim: "" }));
+        setDictation((current) => ({ ...current, listening: false }));
+      }, 300);
     };
 
     recognitionRef.current = recognition;
@@ -164,7 +216,12 @@ export default function ComplaintPage() {
       recognition.start();
     } catch {
       listeningRef.current = false;
-      setDictation((current) => ({ ...current, listening: false }));
+      clearRestartTimer();
+      setDictation((current) => ({
+        ...current,
+        listening: false,
+        error: "Voice typing could not start on this device. Please type instead.",
+      }));
     }
   }
 
