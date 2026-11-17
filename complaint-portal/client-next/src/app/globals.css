@@ -4446,3 +4446,124 @@ body {
   .site-scene .scene-eclipse,
   .quick-scene .scene-eclipse { width: 150vw; right: -55%; }
 }
+
+/* ---- quick form: big-label / rounded-input format --------------------- */
+
+.quick-shell .quick-form .field-label {
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+.quick-shell .quick-form .label-optional {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+.quick-shell .quick-form .input,
+.quick-shell .quick-form .select {
+  min-height: 52px;
+  border-radius: 14px;
+  border-color: rgba(255, 240, 242, 0.1);
+  background: rgba(5, 4, 5, 0.72);
+  font-size: 0.95rem;
+}
+.quick-shell .quick-form .textarea {
+  border-radius: 14px;
+  border-color: rgba(255, 240, 242, 0.1);
+  background: rgba(5, 4, 5, 0.72);
+  font-size: 0.95rem;
+  padding: 14px 16px;
+  line-height: 1.6;
+}
+.quick-shell .quick-form .btn-block { border-radius: 14px; }
+
+/* Anonymous switch — the quiet centred link under the submit button. */
+.quick-shell .anon-switch {
+  display: block;
+  margin: 4px auto 0;
+  padding: 4px 8px;
+  background: none;
+  border: 0;
+  color: var(--text-soft);
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.quick-shell .anon-switch:hover { color: #ffb3bb; }
+
+.quick-shell .quick-form .quick-help-line {
+  margin-top: 10px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+.quick-shell .quick-form .quick-help-line a { color: #ffb3bb; font-weight: 700; }
+.quick-shell .quick-form .quick-help-line a:hover { color: #fff; }
+
+/* ---- voice section: the speak-to-explain panel ------------------------ */
+
+.quick-shell .voice-mic {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  border: 1px dashed rgba(224, 36, 56, 0.42);
+  border-radius: 14px;
+  background: linear-gradient(165deg, rgba(224, 36, 56, 0.09), rgba(224, 36, 56, 0.02));
+  color: var(--text-soft);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+.quick-shell .voice-mic:hover {
+  border-color: rgba(255, 59, 78, 0.7);
+  background: linear-gradient(165deg, rgba(224, 36, 56, 0.14), rgba(224, 36, 56, 0.04));
+  transform: translateY(-1px);
+}
+.voice-mic-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  border-radius: 13px;
+  background: linear-gradient(160deg, #ff4152, #d01a2e 55%, #a0131f);
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 10px 26px rgba(224, 36, 56, 0.35);
+}
+.voice-mic-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.voice-mic-text b { color: var(--text); font-size: 0.94rem; }
+.voice-mic-text small { color: var(--muted); font-size: 0.78rem; line-height: 1.45; }
+.voice-mic-live,
+.quick-shell .voice-mic-live:hover {
+  border-style: solid;
+  border-color: rgba(255, 59, 78, 0.65);
+  background: linear-gradient(165deg, rgba(224, 36, 56, 0.16), rgba(224, 36, 56, 0.05));
+}
+.voice-mic-live .voice-mic-icon { animation: voice-pulse 1.6s ease-in-out infinite; }
+@keyframes voice-pulse {
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      0 10px 38px rgba(224, 36, 56, 0.55);
+    transform: scale(1.06);
+  }
+}
+
+@media (max-width: 560px) {
+  .voice-mic { align-items: flex-start; padding: 13px 14px; }
+  .voice-mic-icon { width: 42px; height: 42px; }
+}

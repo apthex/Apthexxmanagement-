@@ -20,6 +20,8 @@ function formatBytes(bytes) {
 const EMPTY_FORM = {
   institute_code: "",
   name: "",
+  class_label: "",
+  roll_no: "",
   mobile: "",
   email: "",
   category: "",
@@ -187,7 +189,7 @@ export default function ComplaintPage() {
     setMode(next);
     // Personal fields never carry across modes: anonymous mode must not retain
     // (or send) any of them, and identified mode starts clean.
-    setForm((current) => ({ ...current, name: "", mobile: "", email: "" }));
+    setForm((current) => ({ ...current, name: "", class_label: "", roll_no: "", mobile: "", email: "" }));
     setFieldErrors({});
   }
 
@@ -260,6 +262,8 @@ export default function ComplaintPage() {
     // personal data in anonymous mode, so it is simply not sent.
     if (mode === "identified") {
       data.set("name", form.name);
+      data.set("class_label", form.class_label);
+      data.set("roll_no", form.roll_no);
       data.set("mobile", form.mobile);
       data.set("email", form.email);
     }
@@ -376,33 +380,6 @@ export default function ComplaintPage() {
               </p>
             )}
 
-            <div className="mode-cards">
-              <button
-                type="button"
-                className={`mode-card${mode === "identified" ? " mode-card-active" : ""}`}
-                aria-pressed={mode === "identified"}
-                onClick={() => switchMode("identified")}
-              >
-                <Icon name="user" size={18} />
-                <span>
-                  <b>Report with my details</b>
-                  <small>Name, class, mobile &amp; email — get email updates</small>
-                </span>
-              </button>
-              <button
-                type="button"
-                className={`mode-card${mode === "anonymous" ? " mode-card-active" : ""}`}
-                aria-pressed={mode === "anonymous"}
-                onClick={() => switchMode("anonymous")}
-              >
-                <Icon name="shield" size={18} />
-                <span>
-                  <b>Report anonymously</b>
-                  <small>No name, no email — just college code &amp; complaint</small>
-                </span>
-              </button>
-            </div>
-
             {mode === "anonymous" && (
               <p className="anon-note" role="note">
                 <Icon name="lock" size={14} />
@@ -412,19 +389,6 @@ export default function ComplaintPage() {
                 </span>
               </p>
             )}
-
-            <div className="form-help" role="note">
-              <span className="form-help-label">APTHEX help desk</span>
-              <div className="form-help-rows">
-                <a href="tel:+919421161446">
-                  <Icon name="phone" size={15} /> 94211 61446
-                </a>
-                <a href="mailto:help@apthex.com">
-                  <Icon name="mail" size={15} /> help@apthex.com
-                </a>
-              </div>
-              <p className="form-help-note">Stuck while filling the form? Call or email us — we reply quickly.</p>
-            </div>
 
             {error && <p className="alert alert-error" role="alert">{error}</p>}
 
@@ -448,13 +412,25 @@ export default function ComplaintPage() {
 
               {mode === "identified" && (
                 <>
-                  <div className="field">
-                    <label className="field-label" htmlFor="qf-name">Full name <i aria-hidden="true">*</i></label>
+                  <div className="field field-wide">
+                    <label className="field-label" htmlFor="qf-name">Your name <i aria-hidden="true">*</i></label>
                     <input id="qf-name" className="input" value={form.name} onChange={setField("name")} autoComplete="name" required />
                     {fieldError("name") && <p className="error-text">{fieldError("name")}</p>}
                   </div>
 
-                  <div className="field">
+                  <div className="field field-wide">
+                    <label className="field-label" htmlFor="qf-class">Class / Department / Team / Division <span className="label-optional">(optional)</span></label>
+                    <input id="qf-class" className="input" value={form.class_label} onChange={setField("class_label")} placeholder="e.g. FY-BSc / Computer Dept / A Team" maxLength={100} />
+                    {fieldError("class_label") && <p className="error-text">{fieldError("class_label")}</p>}
+                  </div>
+
+                  <div className="field field-wide">
+                    <label className="field-label" htmlFor="qf-roll">Roll number / Employee ID <span className="label-optional">(optional)</span></label>
+                    <input id="qf-roll" className="input input-mono" value={form.roll_no} onChange={setField("roll_no")} placeholder="e.g. R-2024-1187" maxLength={50} />
+                    {fieldError("roll_no") && <p className="error-text">{fieldError("roll_no")}</p>}
+                  </div>
+
+                  <div className="field field-wide">
                     <label className="field-label" htmlFor="qf-mobile">Mobile number <i aria-hidden="true">*</i></label>
                     <input id="qf-mobile" className="input" type="tel" value={form.mobile} onChange={setField("mobile")} autoComplete="tel" placeholder="+91 98765 43210" required />
                     {fieldError("mobile") && <p className="error-text">{fieldError("mobile")}</p>}
@@ -481,32 +457,28 @@ export default function ComplaintPage() {
               </div>
 
               <div className="field field-wide">
-                <div className="between dictate-label-row">
-                  <label className="field-label" htmlFor="qf-details">Describe the complaint <i aria-hidden="true">*</i></label>
-                  {dictation.supported && (
-                    <button
-                      type="button"
-                      className={`btn btn-ghost btn-small dictate-btn${dictation.listening ? " dictate-listening" : ""}`}
-                      onClick={toggleDictation}
-                      aria-pressed={dictation.listening}
-                      aria-label={dictation.listening ? "Stop voice typing" : "Start voice typing"}
-                    >
-                      <Icon name={dictation.listening ? "stop" : "mic"} size={15} />
-                      {dictation.listening ? "Stop voice typing" : "Speak instead"}
-                    </button>
-                  )}
-                </div>
-                <textarea
-                  id="qf-details"
-                  className="textarea"
-                  value={form.details_text}
-                  onChange={setField("details_text")}
-                  minLength={10}
-                  maxLength={DETAILS_MAX}
-                  rows={6}
-                  placeholder="What happened, where, and who is involved. Type it — or tap “Speak instead” and just say it."
-                  required
-                />
+                <label className="field-label" htmlFor="qf-details">Describe the complaint <i aria-hidden="true">*</i></label>
+                {dictation.supported && (
+                  <button
+                    type="button"
+                    className={`voice-mic${dictation.listening ? " voice-mic-live" : ""}`}
+                    onClick={toggleDictation}
+                    aria-pressed={dictation.listening}
+                    aria-label={dictation.listening ? "Stop voice typing" : "Start voice typing"}
+                  >
+                    <span className="voice-mic-icon" aria-hidden="true">
+                      <Icon name={dictation.listening ? "stop" : "mic"} size={22} />
+                    </span>
+                    <span className="voice-mic-text">
+                      <b>{dictation.listening ? "Listening… tap to stop" : "Also explain by voice"}</b>
+                      <small>
+                        {dictation.listening
+                          ? "Speak now — your words appear in the box below."
+                          : "Tap, then talk. We type it for you — English or Hindi. Nothing is recorded or uploaded."}
+                      </small>
+                    </span>
+                  </button>
+                )}
                 {dictation.listening && (
                   <p className="dictate-live" role="status" aria-live="polite">
                     <span className="recording-dot" aria-hidden="true" />
@@ -515,6 +487,17 @@ export default function ComplaintPage() {
                     </span>
                   </p>
                 )}
+                <textarea
+                  id="qf-details"
+                  className="textarea"
+                  value={form.details_text}
+                  onChange={setField("details_text")}
+                  minLength={10}
+                  maxLength={DETAILS_MAX}
+                  rows={6}
+                  placeholder="What happened, where, and who is involved. Type it — or tap the mic above and just say it."
+                  required
+                />
                 {dictation.error && <p className="error-text">{dictation.error}</p>}
                 {fieldError("details_text") && <p className="error-text">{fieldError("details_text")}</p>}
                 <p className="field-hint">
@@ -592,6 +575,20 @@ export default function ComplaintPage() {
             <button type="submit" className="btn btn-primary btn-large btn-block" disabled={submitting}>
               {submitting ? "Registering…" : mode === "anonymous" ? "Submit anonymous report" : "Register complaint"}
             </button>
+
+            <button
+              type="button"
+              className="anon-switch"
+              onClick={() => switchMode(mode === "identified" ? "anonymous" : "identified")}
+            >
+              {mode === "identified" ? "Prefer to stay anonymous?" : "Prefer to share your details?"}
+            </button>
+
+            <p className="quick-help-line">
+              Need help? <a href="tel:+919421161446">+91 94211 61446</a> ·{" "}
+              <a href="mailto:help@apthex.com">help@apthex.com</a>
+            </p>
+
             <p className="field-hint quick-consent">
               {mode === "anonymous"
                 ? "By submitting you confirm the details are true. No identity data is collected; APTHEX shares the report only with the authorised college contact."
