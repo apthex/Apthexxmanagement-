@@ -457,36 +457,21 @@ export default function ComplaintPage() {
               </div>
 
               <div className="field field-wide">
-                <label className="field-label" htmlFor="qf-details">Describe the complaint <i aria-hidden="true">*</i></label>
-                {dictation.supported && (
-                  <button
-                    type="button"
-                    className={`voice-mic${dictation.listening ? " voice-mic-live" : ""}`}
-                    onClick={toggleDictation}
-                    aria-pressed={dictation.listening}
-                    aria-label={dictation.listening ? "Stop voice typing" : "Start voice typing"}
-                  >
-                    <span className="voice-mic-icon" aria-hidden="true">
-                      <Icon name={dictation.listening ? "stop" : "mic"} size={22} />
-                    </span>
-                    <span className="voice-mic-text">
-                      <b>{dictation.listening ? "Listening… tap to stop" : "Also explain by voice"}</b>
-                      <small>
-                        {dictation.listening
-                          ? "Speak now — your words appear in the box below."
-                          : "Tap, then talk. We type it for you — English or Hindi. Nothing is recorded or uploaded."}
-                      </small>
-                    </span>
-                  </button>
-                )}
-                {dictation.listening && (
-                  <p className="dictate-live" role="status" aria-live="polite">
-                    <span className="recording-dot" aria-hidden="true" />
-                    <span className="dictate-live-text">
-                      {dictation.interim ? `Listening… ${dictation.interim}` : "Listening… speak now. Your words appear in the box."}
-                    </span>
-                  </p>
-                )}
+                <div className="between dictate-label-row">
+                  <label className="field-label" htmlFor="qf-details">Describe the complaint <i aria-hidden="true">*</i></label>
+                  {dictation.supported && (
+                    <button
+                      type="button"
+                      className={`btn btn-ghost btn-small dictate-btn${dictation.listening ? " dictate-listening" : ""}`}
+                      onClick={toggleDictation}
+                      aria-pressed={dictation.listening}
+                      aria-label={dictation.listening ? "Stop voice typing" : "Start voice typing"}
+                    >
+                      <Icon name={dictation.listening ? "stop" : "mic"} size={15} />
+                      {dictation.listening ? "Stop voice typing" : "Speak instead"}
+                    </button>
+                  )}
+                </div>
                 <textarea
                   id="qf-details"
                   className="textarea"
@@ -495,7 +480,7 @@ export default function ComplaintPage() {
                   minLength={10}
                   maxLength={DETAILS_MAX}
                   rows={6}
-                  placeholder="What happened, where, and who is involved. Type it — or tap the mic above and just say it."
+                  placeholder="What happened, where, and who is involved. Type it — or tap “Speak instead” and just say it."
                   required
                 />
                 {dictation.error && <p className="error-text">{dictation.error}</p>}

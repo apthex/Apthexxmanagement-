@@ -138,7 +138,7 @@ export default function StaffLoginPage() {
         </Link>
         <div className="auth-top-side">
           <span className="auth-access-chip">
-            <i className="chip-dot" aria-hidden="true" /> Internal access
+            <i className="chip-dot" aria-hidden="true" /> Admin &amp; teacher access
           </span>
           <Link href="/" className="btn btn-ghost btn-small auth-portal-link">
             <Icon name="external" size={15} /> Public portal
@@ -180,8 +180,8 @@ export default function StaffLoginPage() {
           {!setup ? (
             <>
               <span className="auth-panel-icon"><Icon name="lock" size={22} /></span>
-              <h2 id="auth-panel-heading">Admin / Teacher Sign In</h2>
-              <p className="auth-panel-sub">Access the Case Desk using your authorized password.</p>
+              <h2 id="auth-panel-heading">Sign in to Case Desk</h2>
+              <p className="auth-panel-sub">Enter your staff password to access the complaint management system.</p>
               <form className="auth-form" onSubmit={login}>
                 <label className="auth-field">
                   <span className="auth-label">Password</span>
