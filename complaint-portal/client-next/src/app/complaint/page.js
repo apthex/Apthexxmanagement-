@@ -307,6 +307,20 @@ export default function ComplaintPage() {
 
   return (
     <div className="quick-shell">
+      <div className="quick-scene" aria-hidden="true">
+        <span className="scene-glow" />
+        <span className="scene-bars" />
+        <span className="scene-eclipse" />
+        <span className="scene-arc scene-arc-a" />
+        <span className="scene-arc scene-arc-b" />
+        <span className="scene-podium" />
+        <span className="scene-floor" />
+        <i className="scene-mote mote-1" />
+        <i className="scene-mote mote-2" />
+        <i className="scene-mote mote-3" />
+        <i className="scene-mote mote-4" />
+        <i className="scene-mote mote-5" />
+      </div>
       <header className="quick-top">
         <svg viewBox="192 167 853 884" aria-hidden="true">{APTHEX_MARK}</svg>
         <b>APTHEX</b>

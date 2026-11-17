@@ -4089,3 +4089,360 @@ body {
   .refid-form { grid-template-columns: 1fr; }
   .refid-actions { justify-content: flex-start; }
 }
+
+/* ==========================================================================
+   PUBLIC PAGES · CINEMATIC RED STAGE
+   The public surfaces (home, status, thanks via .site-shell and the quick
+   form via .quick-shell) share the sign-in stage's cinematic scene language,
+   but lit in brand red. Strictly scoped so the Case Desk (.desk-shell) and
+   the login (.auth-shell) keep their champagne gold identity. Appended last
+   so it wins the cascade without !important. Reduced motion is already
+   neutralised by the global prefers-reduced-motion rule above.
+   ========================================================================== */
+
+:root {
+  --stage-ivory: #f5f1e6;
+}
+
+/* ---- stage base ---------------------------------------------------- */
+
+.site-shell {
+  position: relative;
+  overflow-x: clip;
+}
+/* Static content must paint above the absolute scene layer. */
+.site-shell .emergency-strip { position: relative; z-index: 2; }
+.site-shell main,
+.site-shell .public-footer { position: relative; z-index: 1; }
+
+/* ---- scene layer (reuses .scene-* geometry from the sign-in stage) -- */
+
+.site-scene,
+.quick-scene {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.site-scene > span,
+.site-scene > i,
+.quick-scene > span,
+.quick-scene > i {
+  position: absolute;
+  display: block;
+}
+
+.site-scene .scene-glow,
+.quick-scene .scene-glow {
+  background:
+    radial-gradient(900px 480px at 18% 8%, rgba(224, 36, 56, 0.13), transparent 62%),
+    radial-gradient(700px 420px at 78% 30%, rgba(224, 36, 56, 0.08), transparent 60%);
+}
+.site-scene .scene-bars,
+.quick-scene .scene-bars {
+  background: repeating-linear-gradient(90deg, rgba(224, 36, 56, 0.16) 0 2px, transparent 2px 58px);
+}
+.site-scene .scene-eclipse,
+.quick-scene .scene-eclipse {
+  background: radial-gradient(120% 120% at 30% 20%, #150a0c 0%, #0d0708 46%, #070506 78%);
+  box-shadow:
+    0 40px 120px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 120, 132, 0.05);
+}
+.site-scene .scene-eclipse::after,
+.quick-scene .scene-eclipse::after {
+  background: conic-gradient(
+    from 130deg,
+    rgba(255, 59, 78, 0) 0deg,
+    rgba(255, 59, 78, 0.06) 60deg,
+    rgba(255, 59, 78, 0.9) 118deg,
+    rgba(224, 36, 56, 0.35) 168deg,
+    rgba(255, 59, 78, 0.02) 240deg,
+    rgba(255, 59, 78, 0) 360deg
+  );
+}
+.site-scene .scene-arc,
+.quick-scene .scene-arc {
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 59, 78, 0) 0deg,
+    rgba(255, 59, 78, 0.55) 70deg,
+    rgba(255, 59, 78, 0) 150deg,
+    rgba(255, 59, 78, 0) 360deg
+  );
+}
+.site-scene .scene-arc-b,
+.quick-scene .scene-arc-b {
+  background: conic-gradient(
+    from 180deg,
+    rgba(255, 59, 78, 0) 0deg,
+    rgba(224, 36, 56, 0.45) 90deg,
+    rgba(255, 59, 78, 0) 170deg,
+    rgba(255, 59, 78, 0) 360deg
+  );
+}
+.site-scene .scene-podium,
+.quick-scene .scene-podium {
+  background: radial-gradient(100% 100% at 50% 0%, rgba(40, 14, 18, 0.9), rgba(10, 8, 6, 0.6) 70%);
+  box-shadow: inset 0 -1px 0 rgba(255, 120, 132, 0.07);
+}
+.site-scene .scene-podium::after,
+.quick-scene .scene-podium::after {
+  background: conic-gradient(
+    from 250deg,
+    rgba(255, 59, 78, 0) 0deg,
+    rgba(255, 59, 78, 0.7) 90deg,
+    rgba(224, 36, 56, 0.18) 170deg,
+    rgba(255, 59, 78, 0) 260deg
+  );
+}
+.site-scene .scene-floor,
+.quick-scene .scene-floor {
+  background: radial-gradient(60% 90% at 50% 100%, rgba(224, 36, 56, 0.12), transparent 70%);
+}
+.site-scene .scene-mote,
+.quick-scene .scene-mote {
+  background: var(--red-bright);
+  box-shadow: 0 0 10px rgba(255, 59, 78, 0.7);
+}
+
+/* ---- glass header --------------------------------------------------- */
+
+.site-shell .public-header {
+  border-bottom-color: rgba(224, 36, 56, 0.16);
+  background: rgba(9, 6, 6, 0.78);
+}
+.site-shell .brand-mark { color: var(--stage-ivory); }
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .site-shell .brand-mark {
+    background: linear-gradient(180deg, #fbf7ee 10%, #e6dcc9 62%, #b4a68b 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+}
+.site-shell .public-nav a:hover {
+  background: rgba(224, 36, 56, 0.1);
+  color: #ffb3bb;
+}
+
+/* ---- cards: crimson seal line --------------------------------------- */
+
+.site-shell .card,
+.quick-shell .card {
+  background:
+    radial-gradient(560px 260px at 100% 0%, rgba(224, 36, 56, 0.07), transparent 70%),
+    linear-gradient(165deg, rgba(255, 240, 242, 0.05), rgba(255, 240, 242, 0.014));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 214, 220, 0.06),
+    0 24px 80px rgba(0, 0, 0, 0.5);
+}
+.site-shell .card::before,
+.quick-shell .card::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 59, 78, 0.5) 30%, rgba(224, 36, 56, 0.72) 70%, transparent);
+}
+
+/* ---- primary CTA: red gradient with a champagne shine sweep ---------- */
+
+.site-shell .btn-primary,
+.quick-shell .btn-primary {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(255, 92, 106, 0.4);
+  background: linear-gradient(160deg, #ff4152, #d01a2e 52%, #a0131f);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 12px 34px rgba(224, 36, 56, 0.3);
+}
+.site-shell .btn-primary:hover:not(:disabled),
+.quick-shell .btn-primary:hover:not(:disabled) {
+  filter: brightness(1.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 16px 44px rgba(224, 36, 56, 0.4);
+}
+.site-shell .btn-primary::after,
+.quick-shell .btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.42) 46%,
+    rgba(255, 255, 255, 0.1) 54%,
+    transparent 70%
+  );
+  translate: -120% 0;
+  transition: translate 0.75s cubic-bezier(0.3, 0.7, 0.3, 1);
+  pointer-events: none;
+}
+.site-shell .btn-primary:hover:not(:disabled)::after,
+.quick-shell .btn-primary:hover:not(:disabled)::after { translate: 120% 0; }
+
+/* ---- icon tiles: crimson family (semantic variants keep their ink) --- */
+
+.site-shell .icon-tile:not(.icon-tile-green):not(.icon-tile-amber):not(.icon-tile-red),
+.quick-shell .icon-tile:not(.icon-tile-green):not(.icon-tile-amber):not(.icon-tile-red) {
+  color: var(--red-bright);
+  border-color: rgba(224, 36, 56, 0.3);
+  background: linear-gradient(165deg, rgba(224, 36, 56, 0.16), rgba(224, 36, 56, 0.04));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 214, 220, 0.1),
+    0 8px 30px rgba(224, 36, 56, 0.1);
+}
+
+/* ---- accents: eyebrow dash + focus rings + checkboxes ---------------- */
+
+.site-shell .eyebrow { color: var(--red-bright); }
+.site-shell .eyebrow::before {
+  content: "";
+  width: 24px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--red-bright), rgba(255, 59, 78, 0));
+}
+.site-shell :is(.input, .select, .textarea):focus,
+.quick-shell :is(.input, .select, .textarea):focus {
+  border-color: rgba(255, 59, 78, 0.55);
+  box-shadow: 0 0 0 3px rgba(224, 36, 56, 0.16);
+}
+.site-shell input[type="checkbox"],
+.quick-shell input[type="checkbox"] { accent-color: var(--red); }
+
+/* ---- footer ---------------------------------------------------------- */
+
+.site-shell .public-footer {
+  border-top: 1px solid rgba(224, 36, 56, 0.14);
+  background: linear-gradient(180deg, transparent, rgba(224, 36, 56, 0.04));
+}
+.site-shell .footer-links a:hover { color: #ff8894; }
+
+/* ---- welcome stage (home) -------------------------------------------- */
+
+.site-shell .welcome::before {
+  border-color: rgba(224, 36, 56, 0.28);
+  box-shadow:
+    inset 0 0 150px rgba(224, 36, 56, 0.1),
+    inset 0 0 0 100px rgba(224, 36, 56, 0.03),
+    0 0 130px rgba(224, 36, 56, 0.07);
+}
+.site-shell .welcome::after {
+  border-color: rgba(224, 36, 56, 0.2);
+  box-shadow: inset 0 0 140px rgba(224, 36, 56, 0.07);
+}
+.site-shell .welcome-help-label { color: var(--red-bright); }
+.site-shell .welcome-help-row svg { color: var(--red-bright); }
+.site-shell .welcome-help a:hover { color: var(--red-bright); }
+
+.site-shell .welcome-start {
+  position: relative;
+  overflow: hidden;
+  border-color: transparent;
+  background: linear-gradient(160deg, #ff4152, #d01a2e 52%, #a0131f);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 12px 34px rgba(224, 36, 56, 0.3);
+  transition: box-shadow 0.2s ease, filter 0.2s ease;
+}
+.site-shell .welcome-start:hover { filter: brightness(1.06); }
+.site-shell .welcome-start::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.42) 46%,
+    rgba(255, 255, 255, 0.1) 54%,
+    transparent 70%
+  );
+  translate: -120% 0;
+  transition: translate 0.75s cubic-bezier(0.3, 0.7, 0.3, 1);
+  pointer-events: none;
+}
+.site-shell .welcome-start:hover::after { translate: 120% 0; }
+
+/* ---- quick form (/complaint) ----------------------------------------- */
+
+.quick-shell .quick-top { position: relative; z-index: 1; }
+.quick-shell .quick-top b { color: var(--stage-ivory); }
+.quick-shell .quick-main { position: relative; z-index: 1; }
+
+.quick-shell::before {
+  border-color: rgba(224, 36, 56, 0.28);
+  box-shadow:
+    inset 0 0 140px rgba(224, 36, 56, 0.1),
+    inset 0 0 0 90px rgba(224, 36, 56, 0.03),
+    0 0 120px rgba(224, 36, 56, 0.07);
+}
+.quick-shell::after {
+  border-color: rgba(224, 36, 56, 0.22);
+  box-shadow: inset 0 0 140px rgba(224, 36, 56, 0.08);
+}
+
+.quick-shell .quick-ref {
+  color: #fff;
+  border-color: rgba(224, 36, 56, 0.5);
+  background: rgba(224, 36, 56, 0.06);
+  box-shadow: 0 0 40px rgba(224, 36, 56, 0.08) inset;
+  text-shadow: 0 0 24px rgba(255, 59, 78, 0.35);
+}
+
+.quick-shell .mode-card-active {
+  border-color: rgba(224, 36, 56, 0.55);
+  background: linear-gradient(165deg, rgba(224, 36, 56, 0.14), rgba(224, 36, 56, 0.04));
+}
+.quick-shell .mode-card-active svg { color: var(--red-bright); }
+
+/* help card — same red family as the rest of the stage */
+.quick-shell .form-help {
+  border-color: rgba(224, 36, 56, 0.26);
+  background: linear-gradient(165deg, rgba(224, 36, 56, 0.1), rgba(224, 36, 56, 0.03));
+}
+.quick-shell .form-help-label { color: var(--red-bright); }
+.quick-shell .form-help-rows a { color: #ffc4c9; }
+.quick-shell .form-help-rows a svg { color: var(--red-bright); }
+.quick-shell .form-help-rows a:hover { color: #fff; }
+
+.quick-shell .quick-help-line a { color: #ffb3bb; }
+.quick-shell .quick-help-line a:hover { color: #fff; }
+
+/* ---- status page ------------------------------------------------------ */
+
+.site-shell .side-card .card-heading h2 { color: var(--stage-ivory); }
+.site-shell .check-list svg { color: var(--red-bright); }
+
+/* ---- entrance ---------------------------------------------------------- */
+
+@keyframes stage-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+.site-shell .welcome-grid > *,
+.site-shell .status-layout > *,
+.quick-shell .quick-main > * {
+  animation: stage-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.site-shell .welcome-grid > *:nth-child(2) { animation-delay: 0.08s; }
+.site-shell .status-layout > *:nth-child(2) { animation-delay: 0.08s; }
+.site-shell .status-layout > *:nth-child(3) { animation-delay: 0.14s; }
+.quick-shell .quick-main > *:nth-child(2) { animation-delay: 0.06s; }
+.quick-shell .quick-main > *:nth-child(3) { animation-delay: 0.1s; }
+
+/* ---- scene on small screens -------------------------------------------- */
+
+@media (max-width: 900px) {
+  .site-scene .scene-bars,
+  .quick-scene .scene-bars,
+  .site-scene .scene-mote,
+  .quick-scene .scene-mote { display: none; }
+  .site-scene .scene-podium,
+  .quick-scene .scene-podium { width: 130vw; right: -40%; }
+}
+@media (max-width: 640px) {
+  .site-scene .scene-eclipse,
+  .quick-scene .scene-eclipse { width: 150vw; right: -55%; }
+}
