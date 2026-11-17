@@ -6,15 +6,14 @@
     { "source": "/api/:path*", "destination": "https://apthex-complaint.vercel.app/api/:path*" },
     { "source": "/complaint", "destination": "https://apthex-complaint.vercel.app/complaint" },
     { "source": "/complaint/:path*", "destination": "https://apthex-complaint.vercel.app/complaint/:path*" },
-    { "source": "/admin", "destination": "https://apthex-complaint.vercel.app/admin" },
-    { "source": "/admin/:path*", "destination": "https://apthex-complaint.vercel.app/admin/:path*" },
+    { "source": "/complaint-review-console", "destination": "https://apthex-complaint.vercel.app/complaint-review-console" },
+    { "source": "/complaint-review-console/:path*", "destination": "https://apthex-complaint.vercel.app/complaint-review-console/:path*" },
     { "source": "/desk", "destination": "https://apthex-complaint.vercel.app/desk" },
     { "source": "/category", "destination": "https://apthex-complaint.vercel.app/category" },
     { "source": "/details", "destination": "https://apthex-complaint.vercel.app/details" },
     { "source": "/thanks", "destination": "https://apthex-complaint.vercel.app/thanks" },
     { "source": "/status", "destination": "https://apthex-complaint.vercel.app/status" },
     { "source": "/status/:path*", "destination": "https://apthex-complaint.vercel.app/status/:path*" },
-    { "source": "/staff/:path*", "destination": "https://apthex-complaint.vercel.app/staff/:path*" },
     { "source": "/desk/:path*", "destination": "https://apthex-complaint.vercel.app/desk/:path*" }
   ]
 }

@@ -8,12 +8,11 @@ import { useAuth } from "./Protected.jsx";
 import Icon from "./Icon.jsx";
 
 const links = [
+  { href: "/desk", label: "Complaints", icon: "home" },
   { href: "/desk/leaderboard", label: "Leaderboard", icon: "chart" },
-  { href: "/desk", label: "Dashboard", icon: "home", owner: true },
-  { href: "/desk/stats", label: "Institutes", icon: "building", owner: true },
-  { href: "/desk/staff", label: "Staff", icon: "users", owner: true },
-  { href: "/desk/audit", label: "Audit log", icon: "list", owner: true },
-  { href: "/desk/email", label: "Email log", icon: "mail", owner: true },
+  { href: "/desk/institutes", label: "Institute ref IDs", icon: "building", owner: true },
+  { href: "/desk/stats", label: "Reporting", icon: "list", owner: true },
+  { href: "/desk/staff", label: "Staff accounts", icon: "users", owner: true },
 ];
 
 export default function DeskShell({ children, title, subtitle, actions = null }) {
@@ -28,10 +27,10 @@ export default function DeskShell({ children, title, subtitle, actions = null })
     setError("");
     try {
       await api("/api/auth/logout", { method: "POST" });
-      router.replace("/staff/login");
+      router.replace("/complaint-review-console");
     } catch (requestError) {
       if (requestError.status === 401) {
-        router.replace("/staff/login");
+        router.replace("/complaint-review-console");
         return;
       }
       setError(requestError.message);

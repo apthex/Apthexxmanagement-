@@ -287,19 +287,28 @@ function parsePositive(value, fallback, max = Number.MAX_SAFE_INTEGER) {
   return Math.min(number, max);
 }
 
-router.get("/", requireAuth, requireRole("owner"), async (req, res, next) => {
+router.get("/", requireAuth, requireRole("owner", "case_team"), async (req, res, next) => {
   try {
     await requestTimeSweep();
     const page = parsePositive(req.query.page, 1);
     const limit = parsePositive(req.query.limit, 25, 100);
     const filter = { flagged_spam: false };
 
-    if (req.query.institute_code) filter.institute_code = String(req.query.institute_code).toUpperCase();
+    // Teachers (case_team) are scoped to their own college: their institute
+    // ref ID is forced server-side, query overrides and spam review are
+    // ignored (spam review stays an owner concern).
+    const isOwner = req.member.role === "owner";
+    const instituteScope = isOwner ? "" : req.member.institute_code || "\u0000unscoped";
+    if (instituteScope) {
+      filter.institute_code = instituteScope;
+    } else if (req.query.institute_code) {
+      filter.institute_code = String(req.query.institute_code).toUpperCase();
+    }
     if (req.query.category && CATEGORIES.includes(String(req.query.category))) filter.category = String(req.query.category);
     if (req.query.status && ["in_process", "completed"].includes(String(req.query.status))) filter.status = String(req.query.status);
     if (req.query.urgent === "true") filter.urgent = true;
-    if (req.query.spam === "true") filter.flagged_spam = true;
-    else if (req.query.spam === "all") delete filter.flagged_spam;
+    if (isOwner && req.query.spam === "true") filter.flagged_spam = true;
+    else if (isOwner && req.query.spam === "all") delete filter.flagged_spam;
 
     if (req.query.search) {
       const search = String(req.query.search).trim().slice(0, 80);
@@ -307,6 +316,10 @@ router.get("/", requireAuth, requireRole("owner"), async (req, res, next) => {
       else if (search) filter.ref_id = { $regex: `^${escapeRegex(search.toUpperCase())}`, $options: "i" };
     }
 
+    // Summary cards follow the same scope as the list (teachers: their college).
+    const summaryBase = isOwner
+      ? { flagged_spam: false }
+      : { flagged_spam: false, institute_code: instituteScope };
     const [items, total, summaryRaw] = await Promise.all([
       Complaint.find(filter)
         .select("ref_id institute_code category urgent mode status flagged_spam assigned_to created_at completed_at delete_after")
@@ -317,10 +330,10 @@ router.get("/", requireAuth, requireRole("owner"), async (req, res, next) => {
         .lean(),
       Complaint.countDocuments(filter),
       Promise.all([
-        Complaint.countDocuments({ flagged_spam: false }),
-        Complaint.countDocuments({ flagged_spam: false, urgent: true, status: "in_process" }),
-        Complaint.countDocuments({ flagged_spam: false, status: "in_process" }),
-        Complaint.countDocuments({ flagged_spam: false, status: "completed" }),
+        Complaint.countDocuments({ ...summaryBase }),
+        Complaint.countDocuments({ ...summaryBase, urgent: true, status: "in_process" }),
+        Complaint.countDocuments({ ...summaryBase, status: "in_process" }),
+        Complaint.countDocuments({ ...summaryBase, status: "completed" }),
       ]),
     ]);
 
@@ -365,11 +378,16 @@ async function loadComplaintForStaff(refId) {
   return complaint;
 }
 
-router.get("/:ref_id", requireAuth, requireRole("owner"), async (req, res, next) => {
+router.get("/:ref_id", requireAuth, requireRole("owner", "case_team"), async (req, res, next) => {
   try {
     await requestTimeSweep();
     const complaint = await loadComplaintForStaff(req.params.ref_id);
     if (!complaint) return res.status(404).json({ error: "Not found" });
+    // Teachers may only open cases reported against their own college — any
+    // other reference behaves as if it does not exist.
+    if (req.member.role !== "owner" && complaint.institute_code !== req.member.institute_code) {
+      return res.status(404).json({ error: "Not found" });
+    }
 
     const contact = complaint.mode === "identified"
       ? await Contact.findOne({ complaint_id: complaint._id }).select("name roll_no mobile email created_at").lean()

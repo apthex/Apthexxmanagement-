@@ -153,9 +153,9 @@ export const patchComplaintSchema = z
 export const memberCreateSchema = z.object({
   name: z.string().trim().min(2).max(100),
   email: emailSchema,
-  // Password optional: teachers get the standard default (TEACHER_DEFAULT_PASSWORD,
-  // see below) when the owner leaves it blank. Complex rules only apply to an
-  // explicitly set one.
+  // Password optional: teacher accounts get a unique strong password generated
+  // by the server (shown once to the owner to hand over). Owner accounts must
+  // set their own.
   password: z
     .string()
     .trim()
@@ -165,9 +165,10 @@ export const memberCreateSchema = z.object({
     .regex(/[0-9]/, "Password must contain a number")
     .optional(),
   role: z.enum(["owner", "case_team"]).default("case_team"),
+  // Required for case_team (teacher) accounts: the college whose complaints
+  // they are allowed to see. Ignored for owner accounts.
+  institute_code: instituteCodeSchema.optional(),
 });
-
-export const TEACHER_DEFAULT_PASSWORD = "Teacher8686@#";
 
 export const instituteCreateSchema = z.object({
   name: z.string().trim().min(2, "Institute name is required").max(120),
@@ -176,11 +177,31 @@ export const instituteCreateSchema = z.object({
   type: z.enum(["school", "college", "other"]).default("college"),
 });
 
+// Panel flow: the admin generates a random APXJIT-### ref ID. Just the college
+// name is enough to assign it — contact details stay optional extras.
+export const instituteGenerateSchema = z.object({
+  name: z.string().trim().min(2, "Institute name is required").max(120).optional(),
+  head_name: z.string().trim().min(2, "Contact person name is required").max(100).optional(),
+  head_email: emailSchema.optional(),
+  type: z.enum(["school", "college", "other"]).default("college"),
+});
+
+export const instituteUpdateSchema = z
+  .object({
+    name: z.string().trim().min(2, "Institute name is required").max(120).optional(),
+    head_name: z.string().trim().min(2, "Contact person name is required").max(100).optional(),
+    head_email: emailSchema.optional(),
+    type: z.enum(["school", "college", "other"]).optional(),
+    status: z.enum(["active", "inactive"]).optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, { message: "No changes supplied" });
+
 export const memberUpdateSchema = z
   .object({
     name: z.string().trim().min(2).max(100).optional(),
     role: z.enum(["owner", "case_team"]).optional(),
     status: z.enum(["active", "inactive"]).optional(),
+    institute_code: instituteCodeSchema.optional(),
   })
   .refine((data) => Object.keys(data).length > 0, { message: "No changes supplied" });
 

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import Protected from "../../../../components/Protected.jsx";
+import Protected, { useAuth } from "../../../../components/Protected.jsx";
 import DeskShell from "../../../../components/DeskShell.jsx";
 import Icon from "../../../../components/Icon.jsx";
 import StatusBadge from "../../../../components/StatusBadge.jsx";
@@ -26,6 +26,8 @@ function ComplaintView() {
   const params = useParams();
   const ref = params.ref;
   const router = useRouter();
+  const { member } = useAuth();
+  const isOwner = member?.role === "owner";
   const [data, setData] = useState(null);
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,10 +51,13 @@ function ComplaintView() {
 
   useEffect(() => {
     load();
-    api("/api/staff/assignable")
-      .then((result) => setMembers(result.members))
-      .catch(() => {});
-  }, [load]);
+    // Assignment dropdown data is an owner-only concern.
+    if (isOwner) {
+      api("/api/staff/assignable")
+        .then((result) => setMembers(result.members))
+        .catch(() => {});
+    }
+  }, [load, isOwner]);
 
   async function patch(body, message) {
     setSaving(true);
@@ -64,7 +69,7 @@ function ComplaintView() {
       await load();
     } catch (requestError) {
       if (requestError.status === 401) {
-        router.replace("/staff/login");
+        router.replace("/complaint-review-console");
         return;
       }
       setError(requestError.message);
@@ -250,11 +255,13 @@ function ComplaintView() {
         </div>
 
         <aside className="stack">
-          <section className="card side-card">
-            <h2>Case status</h2>
-            <p className="small muted">
-              Completing a case starts the approved retention timer. The complaint and evidence are permanently deleted when it expires.
-            </p>
+          {isOwner ? (
+            <>
+              <section className="card side-card">
+                <h2>Case status</h2>
+                <p className="small muted">
+                  Completing a case starts the approved retention timer. The complaint and evidence are permanently deleted when it expires.
+                </p>
             <button
               type="button"
               className={completed ? "btn btn-secondary btn-block" : "btn btn-primary btn-block"}
@@ -316,6 +323,16 @@ function ComplaintView() {
               </button>
             </form>
           </section>
+            </>
+          ) : (
+            <section className="card side-card">
+              <h2>Read-only view</h2>
+              <p className="small muted">
+                You are viewing this case as a {member?.institute_code ? `teacher of ${member.institute_code}` : "teacher"}. Case status,
+                assignment and internal notes are handled by the APTHEX admin team.
+              </p>
+            </section>
+          )}
 
           <section className="card side-card">
             <h2>Privacy reminder</h2>

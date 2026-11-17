@@ -31,10 +31,9 @@ function Dashboard() {
   const [error, setError] = useState("");
   const [updatedAt, setUpdatedAt] = useState(null);
 
-  // Teacher (case_team) accounts sirf leaderboard dekh sakte hain — dashboard data owner-only hai.
-  useEffect(() => {
-    if (member && member.role !== "owner") router.replace("/desk/leaderboard");
-  }, [member, router]);
+  // Teachers land here too — the server forces their list to their own
+  // college, so no redirect is needed anymore.
+  const isOwner = member?.role === "owner";
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -50,7 +49,6 @@ function Dashboard() {
   }, [filters, page]);
 
   const load = useCallback(async () => {
-    if (member && member.role !== "owner") return; // teachers ke liye dashboard data load hi mat karo
     setLoading(true);
     setError("");
     try {
@@ -63,7 +61,7 @@ function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [query, member]);
+  }, [query]);
 
   useEffect(() => {
     load();
@@ -87,16 +85,22 @@ function Dashboard() {
 
   return (
     <DeskShell
-      title="Case overview"
-      subtitle="Every report submitted through the public portal, private to authorised APTHEX staff."
+      title={isOwner ? "Case overview" : "College complaints"}
+      subtitle={
+        isOwner
+          ? "Every report submitted through the public portal, private to authorised APTHEX staff."
+          : `Only complaints reported against your college${member?.institute_code ? ` (${member.institute_code})` : ""} appear here — read-only view.`
+      }
       actions={
         <>
           <button type="button" className="btn btn-secondary btn-small" onClick={load} disabled={loading}>
             <Icon name="refresh" size={16} /> {loading ? "Refreshing…" : "Refresh"}
           </button>
-          <Link href="/desk/stats" className="btn btn-ghost btn-small">
-            <Icon name="chart" size={16} /> Institute reporting
-          </Link>
+          {isOwner && (
+            <Link href="/desk/stats" className="btn btn-ghost btn-small">
+              <Icon name="chart" size={16} /> Institute reporting
+            </Link>
+          )}
         </>
       }
     >
@@ -125,10 +129,12 @@ function Dashboard() {
             <span className="field-label">Search reference</span>
             <input className="input" value={draft.search} onChange={(event) => setDraft({ ...draft, search: event.target.value.toUpperCase() })} placeholder="APX-2601-ABC234" maxLength={16} />
           </label>
-          <label className="field">
-            <span className="field-label">Institute code</span>
-            <input className="input" value={draft.institute_code} onChange={(event) => setDraft({ ...draft, institute_code: event.target.value.toUpperCase() })} placeholder="SCHOOL01" maxLength={32} />
-          </label>
+          {isOwner && (
+            <label className="field">
+              <span className="field-label">Institute code</span>
+              <input className="input" value={draft.institute_code} onChange={(event) => setDraft({ ...draft, institute_code: event.target.value.toUpperCase() })} placeholder="SCHOOL01" maxLength={32} />
+            </label>
+          )}
           <label className="field">
             <span className="field-label">Category</span>
             <select className="select" value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value })}>
@@ -145,14 +151,16 @@ function Dashboard() {
               <option value="completed">Completed</option>
             </select>
           </label>
-          <label className="field">
-            <span className="field-label">Spam</span>
-            <select className="select" value={draft.spam} onChange={(event) => setDraft({ ...draft, spam: event.target.value })}>
-              <option value="false">Visible only</option>
-              <option value="true">Spam only</option>
-              <option value="all">Include spam</option>
-            </select>
-          </label>
+          {isOwner && (
+            <label className="field">
+              <span className="field-label">Spam</span>
+              <select className="select" value={draft.spam} onChange={(event) => setDraft({ ...draft, spam: event.target.value })}>
+                <option value="false">Visible only</option>
+                <option value="true">Spam only</option>
+                <option value="all">Include spam</option>
+              </select>
+            </label>
+          )}
           <label className="checkbox-field">
             <input type="checkbox" checked={draft.urgent} onChange={(event) => setDraft({ ...draft, urgent: event.target.checked })} />
             <span>Urgent only</span>

@@ -3,8 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Icon from "../../../components/Icon.jsx";
-import { api } from "../../../lib/api.js";
+import Icon from "../../components/Icon.jsx";
+import { api } from "../../lib/api.js";
 
 export default function StaffLoginPage() {
   const router = useRouter();
@@ -81,12 +81,12 @@ export default function StaffLoginPage() {
           <p className="eyebrow"><Icon name="lock" size={15} /> Admin &amp; teacher sign in</p>
           <h1>APTHEX Case Desk</h1>
           <p>
-            Students never need an account — complaints go through the public form. Staff sign in
-            here with a password only: the admin password opens the Admin Desk, the teacher
-            password opens the teacher desk.
+            Staff sign in with their own password. Admins manage every case; teachers get a separate password and can
+            only view complaints reported against their own college.
           </p>
           <ul className="check-list">
-            <li><Icon name="check" size={16} /> Password-only sign in — no email needed</li>
+            <li><Icon name="check" size={16} /> One private password per staff member</li>
+            <li><Icon name="check" size={16} /> Teachers are scoped to a single institute ref ID</li>
             <li><Icon name="check" size={16} /> Short-lived, revocable sessions</li>
             <li><Icon name="check" size={16} /> Private evidence accessed through signed links</li>
             <li><Icon name="check" size={16} /> No access for institute staff</li>
@@ -98,7 +98,7 @@ export default function StaffLoginPage() {
             <>
               <div className="card-heading">
                 <h2>Admin / Teacher sign in</h2>
-                <p>Type your password — the admin password opens the Admin Desk, the teacher password opens the teacher desk.</p>
+                <p>Type your password — admins open the full Case Desk, teachers open their own college's complaints.</p>
               </div>
               <form className="stack" onSubmit={login}>
                 <label className="field">

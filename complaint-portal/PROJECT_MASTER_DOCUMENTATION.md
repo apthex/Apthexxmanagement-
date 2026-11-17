@@ -2,7 +2,7 @@
 
 **File:** `complaint-portal/PROJECT_MASTER_DOCUMENTATION.md`  
 **Status:** Single source of truth for understanding, maintaining, developing, testing, and deploying the APTHEX Complaint Portal  
-**Last updated:** Sat Nov 07 2026  
+**Last updated:** Mon Nov 16 2026  
 **Document rules:** This document must be updated whenever any code, route, schema, integration, test result, or project status changes. Never overwrite changelog entries. Never include secrets or personal complaint data.
 
 ---
@@ -52,10 +52,11 @@ Educational institutions in India need a safe, private mechanism for students to
 - Reference ID format: `APX-YYYY-XXXXXX` (e.g., `APX-2611-JGG623`).
 - Public status lookup: returns only `In Process` or `Completed` (no complaint details).
 - Public follow-up submission attached to case timeline.
-- Staff Case Desk: dashboard, complaint detail, assignment, notes, completion/reopening, spam management.
-- Staff management (owner-only): create, update, deactivate, reset password, revoke sessions.
-- Audit log (owner-only): append-only record of all privileged actions.
-- Email outbox (owner-only): audited delivery queue with retry and backoff.
+- Staff Case Desk: dashboard, complaint detail, assignment, notes, completion/reopening, spam management. Teacher (`case_team`) accounts are scoped server-side to a single institute ref ID — they see only their college's complaints, read-only.
+- Staff management (owner-only): position-first creation (Admin or Teacher), institute attach, update, deactivate, reset password, revoke sessions. Every teacher gets a unique generated password (shown once to the owner to hand over) — no shared default password.
+- Institute ref-ID register (owner-only): name-only generation form (random `APXJIT-###` issued instantly) with a searchable register of all issued codes below it.
+- Audit log (owner-only): append-only record of all privileged actions. Removed from the sidebar navigation (routes kept).
+- Email outbox (owner-only): audited delivery queue with retry and backoff. Removed from the sidebar navigation (routes kept).
 - Institute statistics and monthly PDF reports (owner-only).
 - Data retention: completed cases deleted after configurable retention period; deletion log retained.
 - Multilingual interface: English, Hindi, Marathi.
@@ -129,18 +130,19 @@ complaint-portal/
 | `/help/details` | `DetailsPage` | Complaint details, personal info, evidence, review, submit | No |
 | `/help/thanks` | `ThankYouPage` | Submission confirmation with reference ID | No |
 | `/help/status` | `StatusPage` | Public status lookup and follow-up | No |
-| `/help/staff/login` | `StaffLoginPage` | Staff sign-in with TOTP 2FA enrolment | No |
-| `/help/desk` | `DeskPage` | Case dashboard (list, filters, summary) | Yes (TOTP) |
-| `/help/desk/complaint/[ref]` | `DeskComplaintPage` | Individual case detail and management | Yes (TOTP) |
+| `/complaint-review-console` | `StaffLoginPage` | Staff sign-in with TOTP 2FA enrolment (single login URL; `/admin` and `/staff/login` no longer resolve) | No |
+| `/help/desk` | `DeskPage` | Case dashboard (list, filters, summary) — admins see every college; teachers are server-scoped to their own institute and see a read-only "College complaints" view | Yes (TOTP) |
+| `/desk/institutes` | `InstitutesPage` | Institute ref-ID register: type a college name → random `APXJIT-###` code generated instantly; searchable list of all issued codes below (regenerate, deactivate) | Yes (Owner only) |
+| `/help/desk/complaint/[ref]` | `DeskComplaintPage` | Individual case detail and management — teachers can open only their own college's cases, read-only | Yes (TOTP) |
 | `/help/desk/stats` | `StatsPage` | Institute reporting statistics | Yes (TOTP) |
-| `/help/desk/staff` | `StaffPage` | Staff account management | Yes (Owner only) |
+| `/help/desk/staff` | `StaffPage` | Staff account management — position-first form (Admin/Teacher); teachers get an institute code + unique generated password shown once | Yes (Owner only) |
 | `/help/desk/audit` | `AuditPage` | Security audit log | Yes (Owner only) |
 | `/help/desk/email` | `EmailPage` | Email outbox log | Yes (Owner only) |
 
 **Shared Components:**
 - `PublicShell.jsx` — Header, navigation, language switcher, footer for public pages.
 - `DeskShell.jsx` — Header, navigation, logout for Case Desk pages.
-- `Protected.jsx` — Session verification wrapper for Case Desk routes; redirects to `/help/staff/login` on 401.
+- `Protected.jsx` — Session verification wrapper for Case Desk routes; redirects to `/complaint-review-console` on 401.
 - `Turnstile.jsx` — Cloudflare Turnstile CAPTCHA widget.
 - `StepIndicator.jsx` — Progress indicator (Welcome → Category → Details).
 - `Icon.jsx` — SVG icon library.
@@ -174,19 +176,19 @@ complaint-portal/
 |---|---|---|---|
 | `config.js` | `GET /api/config` | No | Public config: languages, CAPTCHA state, emergency numbers |
 | `auth.js` | `POST /api/auth/login`, `POST /api/auth/setup-2fa`, `POST /api/auth/logout`, `GET /api/auth/me`, `GET /api/auth/sessions`, `POST /api/auth/sessions/:id/revoke`, `POST /api/auth/sessions/revoke-others` | Login: No; others: Yes | Staff authentication, TOTP, session management |
-| `institutes.js` | `GET /api/institutes/validate` | No | Institute code validation with rate limiting |
+| `institutes.js` | `GET /api/institutes/validate`, `GET /api/institutes/list`, `GET /api/institutes/all`, `POST /api/institutes`, `PATCH /api/institutes/:code`, `POST /api/institutes/:code/regenerate` | No for validate/list; Owner for all/all-write | APXJIT-### ref-ID generation (random, distinct), college assignment, public validation with rate limiting |
 | `complaints.js` | `POST /api/complaints`, `GET /api/complaints`, `GET /api/complaints/:ref_id`, `PATCH /api/complaints/:ref_id` | POST: No (CAPTCHA required); others: Yes (staff) | Complaint submission, listing, detail, management |
 | `status.js` | `POST /api/status/lookup`, `POST /api/status/followup` | No | Public status lookup and follow-up |
 | `attachments.js` | `GET /api/attachments/:id/url`, `GET /api/attachments/download/:id` | Yes (staff) | Signed evidence URL issuance and download |
-| `staff.js` | `GET /api/staff/assignable`, `GET/POST/PATCH/DELETE /api/staff/members`, `POST /api/staff/members/:id/reset-password`, `POST /api/staff/members/:id/revoke-sessions`, `GET /api/staff/audit`, `GET /api/staff/outbox`, `POST /api/staff/outbox/process` | Yes (Owner for most) | Staff management, audit log, email outbox |
-| `stats.js` | `GET /api/stats/institutes`, `GET /api/stats/institute/:code`, `GET /api/stats/monthly`, `GET /api/stats/overview` | Yes | Institute statistics |
+| `staff.js` | `GET /api/staff/assignable`, `GET/POST/PATCH/DELETE /api/staff/members`, `POST /api/staff/members/:id/reset-password`, `POST /api/staff/members/:id/revoke-sessions`, `GET /api/staff/audit`, `GET /api/staff/outbox`, `POST /api/staff/outbox/process` | Yes (Owner for most) | Staff management with position-first creation — teachers require an institute code and get a unique server-generated password (returned once); audit log, email outbox |
+| `stats.js` | `GET /api/stats/leaderboard`, `GET /api/stats/institutes`, `GET /api/stats/institute/:code`, `GET /api/stats/monthly`, `GET /api/stats/overview` | Yes (leaderboard also for case_team — scoped to their own college row) | Institute statistics; leaderboard lists every generated ref ID; teacher boards contain only their own institute |
 | `reports.js` | `GET /api/reports/preview`, `GET /api/reports/data`, `POST /api/reports/send` | Yes (Owner for send) | Monthly PDF reports |
 
 ### 2.4 Public Website Integration
 
 The Complaint Portal frontend is integrated into the existing public Next.js website (`nextjs-site/`) under the `/help` route:
 
-- `nextjs-site/next.config.mjs` — API rewrites proxy `/api/*` and `/help/api/*` to the Express backend at `API_PROXY_TARGET` (default `http://localhost:4000`). CSP allows Turnstile script (`https://challenges.cloudflare.com`). Security headers applied globally; `noindex` on `/help/desk/*` and `/help/staff/*`.
+- `nextjs-site/next.config.mjs` — API rewrites proxy `/api/*` and `/help/api/*` to the Express backend at `API_PROXY_TARGET` (default `http://localhost:4000`). CSP allows Turnstile script (`https://challenges.cloudflare.com`). Security headers applied globally; `noindex` on `/desk/*` and `/complaint-review-console*` (login moved there Nov 16 2026; `/staff/*` and `/admin` routes no longer exist).
 - `nextjs-site/app/help/layout.js` — Server-side metadata + client language shell.
 - `nextjs-site/app/help/layout-shell.jsx` — Client-side `PublicShell` wrapper with language state.
 - `nextjs-site/app/help/page.js` — Welcome page (institute validation).
@@ -194,7 +196,7 @@ The Complaint Portal frontend is integrated into the existing public Next.js web
 - `nextjs-site/app/help/details/page.js` — Complaint details and evidence.
 - `nextjs-site/app/help/thanks/page.js` — Submission confirmation.
 - `nextjs-site/app/help/status/page.js` — Status lookup and follow-up.
-- `nextjs-site/app/help/staff/login/page.js` — Staff login.
+- `client-next/src/app/complaint-review-console/page.js` — Staff login (the only login URL).
 - `nextjs-site/app/help/desk/*.js` — Case Desk pages.
 - `nextjs-site/components/*` — Copied portal components with `/help`-based links.
 - `nextjs-site/lib/*` — Copied portal lib files with `NEXT_PUBLIC_API_BASE_URL` support.
@@ -210,9 +212,9 @@ Public flow:
                                             ↳ (status check) → /help/status → (follow-up) → /help/status
 
 Staff flow:
-  /help/staff/login → (TOTP enrolment if first time) → /help/desk → /help/desk/complaint/[ref]
-                                                      → /help/desk/stats → (monthly report) → /help/desk/email
-                                                      → /help/desk/staff (owner) → /help/desk/audit (owner)
+  /complaint-review-console → (TOTP enrolment if first time) → /desk → /desk/complaint/[ref]
+                              → /desk/stats → (monthly report) → /desk/email
+                              → /desk/staff (owner) → /desk/audit (owner)
 ```
 
 ---
@@ -246,9 +248,10 @@ flowchart TD
 
 ### 3.2 Institute Code Validation
 
+- Codes are issued by the owner in the Case Desk under **Institute ref IDs** (`/desk/institutes`): the form asks only for the college name — a random `APXJIT-###` code (e.g. `APXJIT-234`) is generated instantly, each college keeps its own distinct ID, and the full register with a search bar sits right below the form. Codes issued earlier as `JIT-APTHEX###` remain valid; Regenerate moves a college onto the new format. (Server-side, generating without a name is still possible for legacy flows and leaves the code unassigned until a college is attached — the panel UI no longer produces such blank codes.)
 - Endpoint: `GET /api/institutes/validate?code=<code>`
 - Validation: Zod `instituteCodeSchema` (`^[A-Z0-9_-]{3,32}$`).
-- Database: `Institute.findOne({ code, status: "active" })`.
+- Database: `Institute.findOne({ code, status: "active", name: { $ne: "" } })` — unassigned codes never validate.
 - Rate limit: 30 requests/minute per IP hash.
 - Response: `{ code, name, type }` or 404/400.
 - Result saved to sessionStorage via `saveInstitute()`.
@@ -433,7 +436,7 @@ flowchart TD
 
 ### 3.16 Staff Login and TOTP Authentication
 
-1. User navigates to `/help/staff/login`.
+1. User navigates to `/complaint-review-console`.
 2. Enters email and password.
 3. `POST /api/auth/login`:
    - Rate limit: 5 attempts/15 minutes per IP+email hash.
@@ -508,6 +511,20 @@ flowchart TD
   5. Audit: `retention_deletion`.
 - Status lookup on deleted ref returns `data_deleted: true`.
 - Backup retention: 30 days (per OPEN_DECISIONS recommendation).
+
+### 3.22 Teacher Accounts and Institute Scoping (Owner Configures)
+
+- Staff creation form asks **position first**: *Teacher* (case_team) or *Admin* (owner).
+- Teacher accounts require an **institute ref ID** — only assigned, active codes are selectable (`resolveInstituteScope`).
+- If no password is typed, the server generates a **unique strong password per teacher** (15 chars: uppercase + lowercase + digits + symbols, no ambiguous glyphs), returned in the POST response as `password` **exactly once**. The panel shows a copy-to-clipboard card; the owner hands the password to the teacher privately. Only the bcrypt hash is stored; there is no shared default password anymore (the old `Teacher8686@#` default was retired and its export removed).
+- Access scoping is **server-enforced**, not UI-only:
+  - `GET /api/complaints` — `institute_code` filter forced to the teacher's college; query overrides and spam filters ignored; summary counts scoped the same way.
+  - `GET /api/complaints/:ref_id` — a case from another college responds `404` (behaves as non-existent).
+  - `GET /api/stats/leaderboard` — only the teacher's own college row is returned (empty institute → empty board).
+  - All mutations (`PATCH /api/complaints/:ref_id`, attachment URLs, spam flags) remain owner-only (`404` for teachers).
+- Teachers see a read-only case view: status/assignment/note action cards are hidden behind an `isOwner` guard and replaced by a "Read-only view" card; the institute and spam filters, assignment dropdown fetch, and Reporting link are hidden for teachers.
+- `PATCH /api/staff/members/:id` can set/change `institute_code` (per-row select in the staff table); a case_team member without an institute simply sees nothing until one is attached — safe default.
+- Sidebar navigation: Complaints and Leaderboard for everyone; Institute ref IDs, Reporting, Staff accounts for owners only. Audit log and Email log links were removed from the navigation (routes still resolve for owners).
 
 ---
 
@@ -648,7 +665,7 @@ The Complaint Portal uses a self-contained CSS design system (`client-next/src/a
 
 | Collection | Model File | Key Fields | Indexes |
 |---|---|---|---|
-| institutes | `Institute.js` | code, name, type, head_name, head_email, status, created_at | code (unique), status |
+| institutes | `Institute.js` | code (APXJIT-### random; legacy JIT-APTHEX### still valid), name (empty = unassigned), type, head_name, head_email, status, created_at, updated_at | code (unique), status |
 | complaints | `Complaint.js` | ref_id, institute_code, category, details_text, details_hash, urgent, mode, class_label, status, flagged_spam, escalated, assigned_to, created_at, completed_at, delete_after | ref_id (unique), institute_code, status, flagged_spam, delete_after (partial), details_hash+institute_code |
 | contacts | `Contact.js` | complaint_id, kind, name, roll_no, mobile, email, created_at | complaint_id (unique) |
 | attachments | `Attachment.js` | complaint_id, type, storage_key, mime, size_bytes, created_at | complaint_id |
@@ -748,7 +765,7 @@ Scheduler (`src/jobs/scheduler.js`) with `node-cron` (timezone `Asia/Kolkata`):
 | contacts | Reporter identity (identified only) | Yes (name, roll, mobile, email) |
 | attachments | Evidence file metadata | No (file content in storage, not DB) |
 | case_events | Case timeline events | Yes (notes may contain sensitive info) |
-| members | Staff accounts | Yes (email, password hash) |
+| members | Staff accounts | Yes (email, password hash; `institute_code` names the college a teacher is scoped to) |
 | staff_sessions | Active sessions | No (token hashes only) |
 | audit_events | Append-only audit log | No (hashed IP, no complaint content) |
 | rate_limits | Rate limit counters | No (hashed keys) |
@@ -971,7 +988,12 @@ All endpoints are under `/api/*` on the Express backend (port 4000 by default). 
 |---|---|---|---|---|---|
 | GET | `/api/health` | Health check | None | `{ ok, database, time }` | No |
 | GET | `/api/config` | Public config | None | `{ environment, languages, captcha, retentionNotice, emergency }` | No |
-| GET | `/api/institutes/validate?code=` | Validate institute code | Query: `code` | `{ code, name, type }` or 404/400 | No |
+| GET | `/api/institutes/validate?code=` | Validate institute code (assigned + active only) | Query: `code` | `{ code, name, type }` or 404/400 | No |
+| GET | `/api/institutes/list` | Public list of assigned, active codes | None | `{ institutes[] }` | No |
+| GET | `/api/institutes/all` | Full ref-ID register incl. unassigned/deactivated | None | `{ institutes[] }` | Owner |
+| POST | `/api/institutes` | Generate APXJIT-### ref ID (random, distinct per college; panel sends name only — head details optional) | JSON optional: `{ name?, head_name?, head_email?, type? }` | 201: `{ institute }` | Owner |
+| PATCH | `/api/institutes/:code` | Assign a college / edit contact / toggle status | JSON: `{ name?, head_name?, head_email?, type?, status? }` | `{ institute }` | Owner |
+| POST | `/api/institutes/:code/regenerate` | Issue a fresh code for the same college; old code retired | None | `{ institute, previous_code }` | Owner |
 | POST | `/api/complaints` | Submit complaint | Multipart: institute_code, category, details_text, urgent, mode, captchaToken, deviceId, contact (JSON), images[], voice | 201: `{ ref_id, message, acknowledgement_email, attachments }` | No (CAPTCHA required) |
 | POST | `/api/status/lookup` | Check complaint status | JSON: `{ ref_id }` | `{ status: "In Process" \| "Completed" }` or 404 | No |
 | POST | `/api/status/followup` | Submit follow-up | JSON: `{ ref_id, text, captchaToken, deviceId }` | 201: `{ ok, message }` | No (CAPTCHA if configured) |
@@ -987,14 +1009,14 @@ All endpoints are under `/api/*` on the Express backend (port 4000 by default). 
 | GET | `/api/auth/sessions` | List sessions | None | `{ sessions[] }` | Yes |
 | POST | `/api/auth/sessions/:id/revoke` | Revoke session | None | `{ ok }` | Yes + CSRF |
 | POST | `/api/auth/sessions/revoke-others` | Revoke other sessions | None | `{ ok }` | Yes + CSRF |
-| GET | `/api/complaints` | Case list | Query: page, limit, filters | `{ items[], page, limit, total, summary }` | Yes |
+| GET | `/api/complaints` | Case list (teachers server-scoped to their institute) | Query: page, limit, filters | `{ items[], page, limit, total, summary }` | Yes |
 | GET | `/api/complaints/:ref_id` | Case detail | Path: ref_id | `{ complaint, contact, contacts[], attachments, events[] }` | Yes |
 | PATCH | `/api/complaints/:ref_id` | Update case | JSON: `{ completed?, flagged_spam?, assigned_to?, note? }` | `{ ok }` | Yes + CSRF |
 | GET | `/api/attachments/:id/url` | Signed evidence URL | Path: id | `{ url, expires_at, mime, type }` | Yes |
 | GET | `/api/attachments/download/:id` | Download evidence (local only) | Query: expires, signature | File binary | Yes (signature verified) |
 | GET | `/api/staff/assignable` | Assignable staff | None | `{ members[] }` | Yes |
-| GET | `/api/staff/members` | Staff list (owner) | None | `{ members[] }` | Yes + Owner |
-| POST | `/api/staff/members` | Create staff (owner) | JSON: `{ name, email, password, role }` | 201: `{ member }` | Yes + Owner + CSRF |
+| GET | `/api/staff/members` | Staff list (owner; rows include `institute_code`) | None | `{ members[] }` | Yes + Owner |
+| POST | `/api/staff/members` | Create staff (owner). Teacher: `institute_code` required, password auto-generated (unique, returned once as `password`). Admin: `password` required | JSON: `{ name, email, role, password?, institute_code? }` | 201: `{ member, password? }` | Yes + Owner + CSRF |
 | PATCH | `/api/staff/members/:id` | Update staff (owner) | JSON: `{ name?, role?, status? }` | `{ member }` | Yes + Owner + CSRF |
 | POST | `/api/staff/members/:id/reset-password` | Reset password (owner) | JSON: `{ password }` | `{ ok }` | Yes + Owner + CSRF |
 | POST | `/api/staff/members/:id/revoke-sessions` | Revoke sessions (owner) | None | `{ ok }` | Yes + Owner + CSRF |
@@ -1558,6 +1580,10 @@ Verify:
 | Date | What Changed | Files/Modules Affected | Reason | Tests Performed | Result |
 |---|---|---|---|---|---|
 | Sat Nov 07 2026 | Initial master documentation created | `complaint-portal/PROJECT_MASTER_DOCUMENTATION.md` (new) | Consolidate all project knowledge into single source of truth | Full codebase inspection: all routes, models, services, configs, tests, existing docs | N/A (documentation only) |
+| Mon Nov 16 2026 | Institute ref-ID system (`JIT-APTHEX###`): owner generates sequential codes (e.g. `JIT-APTHEX304`), assigns them to colleges, regenerates, activates/deactivates; unassigned codes never validate publicly. New owner desk page `/desk/institutes`. Optional voice dictation (speech-to-text mic button) on the complaint description field. Royal/premium visual pass: layered crimson + royal-indigo + gold glows, film grain + vignette, gold hairlines on panels, ornamental rings on welcome/complaint pages. | `server/src/routes/institutes.js`, `server/src/models/Institute.js`, `server/src/utils/validation.js`, `server/tests/api.test.js`, `client-next/src/app/desk/institutes/page.js` (new), `client-next/src/components/DeskShell.jsx`, `client-next/src/app/desk/stats/page.js`, `client-next/src/app/complaint/page.js`, `client-next/src/app/globals.css`, `API.md` | Owner requested: dedicated admin option to generate/assign institute ref IDs in the JIT-APTHEX format with a code↔college register; optional mic-based voice complaints; richer, royal UI while keeping buttons/templates unchanged | `npm --workspace server run test` — 43 tests pass incl. 2 new (ref-ID sequence + assign/regenerate/deactivate flow); `npm --workspace client-next run build` — build succeeds, `/desk/institutes` route registered; dev-server smoke: `/complaint` and `/desk/institutes` return 200 | Pass |
+| Mon Nov 16 2026 | Security/URL pass: staff login moved from `/staff/login` to `/complaint-review-console` (the only login URL); `/admin` redirect stub deleted so `/admin` 404s instead of resolving to login; all 401/logout redirects updated (`Protected.jsx`, `DeskShell.jsx`, `desk/complaint/[ref]`); public header/footer staff links removed from `PublicShell.jsx` (invite-only portal); noindex header moved to `/complaint-review-console` + `/complaint-review-console/:path*`; root `vercel.json` rewrites updated — removed `/admin`, `/admin/:path*`, `/staff/:path*`, added `/complaint-review-console` + `/complaint-review-console/:path*` (so www.apthex.com/admin and /staff/* 404 at the edge); main-site footer links "File a Complaint" and "Case Desk — Staff" removed from `index.html`; careers page got the home-page hover cursor spotlight (`.careers-spot` inside `.topbg`: same red-veins image with brighter filter, masked radial reveal following the cursor, `pointer:fine` + reduced-motion guarded, touch kill-switch). | `client-next/src/app/complaint-review-console/page.js` (moved from `app/staff/login/page.js`), `client-next/src/app/admin/page.js` (deleted), `client-next/src/components/Protected.jsx`, `client-next/src/components/DeskShell.jsx`, `client-next/src/components/PublicShell.jsx`, `client-next/src/app/desk/complaint/[ref]/page.js`, `client-next/next.config.mjs`, `vercel.json` (root), `index.html`, `careers.html`, `PROJECT_MASTER_DOCUMENTATION.md` | Owner requested: login only at `https://www.apthex.com/complaint-review-console`, `/admin` must throw 404, remove "File a Complaint"/"Case Desk — Staff" footer references (portal invite-only), add home-page hover spotlight glow to careers page | `npm --workspace client-next run build` — route list shows `/complaint-review-console`, no `/admin` or `/staff` routes; `npm --workspace server run test` — 43/43 pass; dev-server smoke: `/complaint-review-console` 200 with `X-Robots-Tag: noindex, nofollow, noarchive`, `/admin` 404, `/staff/login` 404, `/staff` 404, `/complaint` 200; `careers.html` inline script syntax-checked | Pass |
+| Tue Nov 17 2026 | Institute ref-ID format changed from sequential `JIT-APTHEX###` to random `APXJIT-###` (e.g. `APXJIT-234`): allocator picks a random unused 3-digit number (100–999; 4-digit pool as fallback), existence-checked + unique-index guarded so every college's ID is distinct and reveals no ordering. Legacy `JIT-APTHEX###` codes remain valid; Regenerate moves a college onto the new format. Leaderboard now lists **every** generated ref ID — zero-complaint colleges included — with the ref code shown alongside the college name; complaint codes no longer active show as "(inactive or archived)". Search bar added to the leaderboard page (filter by ref ID or college name). Wrong/inactive ref codes on the public form keep returning a field-level "Invalid or inactive institute code" error (verified). | `server/src/routes/institutes.js`, `server/src/routes/stats.js`, `server/src/utils/validation.js` (comment), `server/tests/api.test.js` (2 tests updated + zero-complaint leaderboard assertion), `client-next/src/app/desk/leaderboard/page.js`, `client-next/src/app/desk/institutes/page.js`, `client-next/src/app/desk/stats/page.js`, `client-next/src/app/globals.css` (`.lb-search`, `.lb-code`), `API.md`, `PROJECT_MASTER_DOCUMENTATION.md` | Owner requested: per-college ref IDs must stay memorable/distinct (random `APXJIT-###` like `APXJIT-234`), the code↔college mapping must never be lost, complaints must only come through issued ref IDs, and the leaderboard should show all generated ref IDs with a search bar | `npm --workspace server run test` — 43/43 pass (format regex `^APXJIT-\d{3,4}$`, distinctness, regenerate, zero-complaint leaderboard row); `npm --workspace client-next run build` — succeeds with leaderboard search UI | Pass |
+| Tue Nov 17 2026 | Teacher institute scoping + panel simplification: **Staff accounts** — creation form asks position first (Admin/Teacher); teachers require an institute code (assigned+active only) and get a **unique server-generated password** (15 chars, upper/lower/digits/symbols) returned once in the POST response and shown in a copy-once card — the shared `Teacher8686@#` default was retired and its export removed; staff table gained Position + Institute per-row selects (owner→case_team switch allowed; teacher without institute simply sees nothing until attached). **Institute ref IDs** — form reduced to college name only (code generates instantly, head/type/assign clutter removed) with a searchable register of all issued codes below (Ref ID/College/Status/Issued columns + New code/Deactivate actions). **Teacher access scoping (server-enforced)** — `GET /api/complaints` allows case_team with `institute_code` forced server-side (query overrides + spam filters ignored, summary counts scoped), `GET /api/complaints/:ref_id` returns `404` for other colleges' cases, `GET /api/stats/leaderboard` returns only the teacher's own college row, all mutations stay owner-only; Member model gained `institute_code` (in `publicMember`). **Sidebar** — Complaints + Leaderboard for everyone, Institute ref IDs/Reporting/Staff accounts for owners; Audit log and Email log links removed (routes kept); `/desk` is now the shared complaints view (teachers land on "College complaints", read-only detail view with owner-only action cards guarded by `isOwner`). | `server/src/models/Member.js`, `server/src/middleware/auth.js` (publicMember), `server/src/utils/validation.js` (memberCreate/memberUpdate/instituteGenerate schemas, TEACHER_DEFAULT_PASSWORD removed), `server/src/routes/staff.js`, `server/src/routes/complaints.js`, `server/src/routes/stats.js`, `server/tests/api.test.js`, `client-next/src/app/desk/staff/page.js` (rewritten), `client-next/src/app/desk/institutes/page.js` (rewritten), `client-next/src/app/desk/page.js`, `client-next/src/app/desk/complaint/[ref]/page.js`, `client-next/src/components/DeskShell.jsx`, `client-next/src/app/complaint-review-console/page.js` (copy), `client-next/src/app/globals.css` (`.generated-password*`), `API.md`, `PROJECT_MASTER_DOCUMENTATION.md` | Owner requested: each teacher logs in with their own separate password (admin hands it over at creation) and can see ONLY their own college's complaints; institutes page should be just name → code with the full generated list + search below; audit/email log links not needed right now | `npm --workspace server run test` — 44/44 pass (teacher scoping: scoped list, other-college detail 404, PATCH 404, scoped leaderboard; unique generated password ≠ shared default; teacher without institute refused at creation; password-only login matches the teacher's own generated password); `npm --workspace client-next run build` — passes (17 routes) | Pass |
 
 ---
 

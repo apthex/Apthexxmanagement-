@@ -6,6 +6,9 @@ const schema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password_hash: { type: String, required: true },
     role: { type: String, enum: ["owner", "case_team"], default: "case_team", index: true },
+    // case_team (teacher) accounts are scoped to one institute ref ID — they
+    // only see complaints submitted against that college. Empty for owners.
+    institute_code: { type: String, default: "", uppercase: true, trim: true, index: true },
     status: { type: String, enum: ["active", "inactive"], default: "active", index: true },
     totp_secret: { type: String },
     totp_enabled: { type: Boolean, default: false },

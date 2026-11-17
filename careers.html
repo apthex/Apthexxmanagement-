@@ -76,6 +76,13 @@
      radial-gradient(45% 55% at 78% 45%,transparent 40%,rgba(10,10,12,.75) 100%)}
   .careers-grain{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.25;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E")}
+  /* cursor spotlight — home hero jaisa: same hi-res img, brighter where the cursor is */
+  .careers-spot{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity .5s;overflow:hidden;
+    background:url("design/Red%20Veins%20Across%20a%20Shattered%20World.png") 68% 38%/cover no-repeat;
+    filter:saturate(1.5) contrast(1.22) brightness(1.18);
+    -webkit-mask-image:radial-gradient(circle 340px at var(--sx,50%) var(--sy,30%),#000 40%,transparent 74%);
+    mask-image:radial-gradient(circle 340px at var(--sx,50%) var(--sy,30%),#000 40%,transparent 74%)}
+  .topbg:hover .careers-spot{opacity:1}
   @media (max-width:900px){.careers-bg{background-position:70% 30%}}
 
   .page{min-height:100svh;display:flex;flex-direction:column;justify-content:center;padding:150px var(--gx) 110px;position:relative}
@@ -108,7 +115,7 @@
   .glass::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(180deg,rgba(255,255,255,.4),rgba(255,255,255,.08) 25%,rgba(255,255,255,0) 45%,rgba(255,255,255,0) 60%,rgba(255,255,255,.08) 80%,rgba(255,255,255,.32));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
   .glass::after{content:"";position:absolute;top:-40%;left:-20%;width:60%;height:90%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.08),transparent);transform:rotate(8deg);pointer-events:none}
   .glass:hover{transform:translateY(-4px);border-color:rgba(240,42,59,.55);box-shadow:inset 0 1px 1px rgba(255,255,255,.18),0 24px 60px rgba(0,0,0,.45),0 0 0 1px rgba(225,29,46,.12),0 8px 32px rgba(225,29,46,.08)}
-  @media (hover:none),(pointer:coarse){.glass:hover{transform:none}}
+  @media (hover:none),(pointer:coarse){.glass:hover{transform:none}.topbg:hover .careers-spot{opacity:0!important}}
   .panel{display:flex;flex-direction:column;gap:14px;padding:30px 28px 28px}
   .panel .code{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.18em;color:var(--red)}
   .panel h2{font-family:var(--disp);font-size:clamp(1.35rem,1.8vw,1.6rem);font-weight:600;letter-spacing:-.02em;line-height:1.2;margin-top:2px}
@@ -198,6 +205,7 @@
   <div class="topbg">
     <div class="careers-bg" aria-hidden="true"></div>
     <div class="careers-shade" aria-hidden="true"></div>
+    <div class="careers-spot" aria-hidden="true"></div>
     <div class="careers-grain" aria-hidden="true"></div>
 
     <!-- 01 hero — same headline / vision / open-roles count -->
@@ -337,6 +345,16 @@
   /* counts the role panels, so the line under the headline stays right when a panel is added or removed */
   const n = $$('.panel').length, count = $('#count');
   if (count) count.textContent = n + (n === 1 ? ' open role' : ' open roles');
+
+  /* cursor spotlight — home hero jaisa: bg sirf cursor ke paas bright reveal */
+  const topbg = $('.topbg'), cspot = $('.careers-spot');
+  if (topbg && cspot && !reduce && matchMedia('(pointer:fine)').matches) {
+    topbg.addEventListener('mousemove', e => {
+      const r = topbg.getBoundingClientRect();
+      cspot.style.setProperty('--sx', ((e.clientX - r.left) / r.width * 100).toFixed(2) + '%');
+      cspot.style.setProperty('--sy', ((e.clientY - r.top) / r.height * 100).toFixed(2) + '%');
+    });
+  }
 })();
 </script>
 

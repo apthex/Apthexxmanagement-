@@ -35,7 +35,6 @@ export default function PublicShell({ children, lang, setLang, hideNav = false }
           {!hideNav && (
             <nav className="public-nav" aria-label="Main navigation">
               <Link href="/status">{t(lang, "navStatus")}</Link>
-              <Link href="/staff/login" className="nav-staff">{t(lang, "navStaff")}</Link>
             </nav>
           )}
           <LanguageSwitcher lang={lang} setLang={setLang} compact />
@@ -50,7 +49,6 @@ export default function PublicShell({ children, lang, setLang, hideNav = false }
           </div>
           <div className="footer-links">
             <Link href="/status">{t(lang, "navStatus")}</Link>
-            <Link href="/staff/login">{t(lang, "navStaff")}</Link>
           </div>
           <div className="footer-privacy">
             <span>{t(lang, "footerPrivacy")}</span>

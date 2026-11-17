@@ -24,6 +24,10 @@
   --amber: #f5b84b;
   --amber-wash: rgba(245, 184, 75, 0.1);
   --blue: #79a8ff;
+  /* Royal accents — used sparingly for hairlines and glow, never for text. */
+  --gold: #d8b45a;
+  --gold-soft: rgba(216, 180, 90, 0.32);
+  --royal: #4c3da5;
   --radius-sm: 10px;
   --radius: 16px;
   --radius-lg: 24px;
@@ -31,6 +35,12 @@
   --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   --font-display: "Space Grotesk", "Avenir Next", "Segoe UI", system-ui, sans-serif;
   --font-mono: "SFMono-Regular", "Cascadia Code", "Roboto Mono", Consolas, monospace;
+  /* Shared royal canvas: crimson + royal indigo + faint gold glows over deep black. */
+  --bg-royal:
+    radial-gradient(1100px 620px at 82% -8%, rgba(225, 29, 46, 0.17), transparent 62%),
+    radial-gradient(1000px 720px at -12% 28%, rgba(76, 61, 165, 0.16), transparent 60%),
+    radial-gradient(760px 420px at 50% -14%, rgba(216, 180, 90, 0.07), transparent 64%),
+    var(--bg);
 }
 
 *,
@@ -48,10 +58,7 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    radial-gradient(1100px 620px at 82% -8%, rgba(225, 29, 46, 0.14), transparent 60%),
-    radial-gradient(900px 600px at -10% 20%, rgba(70, 80, 120, 0.13), transparent 55%),
-    var(--bg);
+  background: var(--bg-royal);
   color: var(--text);
   font-family: var(--font-sans);
   font-size: 16px;
@@ -70,6 +77,19 @@ body::before {
     linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
   background-size: 64px 64px;
   mask-image: radial-gradient(circle at 50% 0%, black, transparent 78%);
+}
+
+/* Royal finish: film grain + a soft vignette that pulls the eye to the middle. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"),
+    radial-gradient(120% 100% at 50% 18%, transparent 52%, rgba(2, 3, 5, 0.5) 100%);
+  background-size: 160px 160px, 100% 100%;
 }
 
 img {
@@ -445,17 +465,35 @@ code {
 /* ----------------------------------------------------------------- cards */
 
 .card {
-  background: linear-gradient(165deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
+  position: relative;
+  background:
+    radial-gradient(560px 260px at 100% 0%, rgba(76, 61, 165, 0.09), transparent 70%),
+    linear-gradient(165deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   padding: 26px;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 24px 80px rgba(0, 0, 0, 0.42);
+}
+
+/* Gold seal line — a thin crest hairline across every panel's top edge. */
+.card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(216, 180, 90, 0.5) 30%, rgba(225, 29, 46, 0.55) 70%, transparent);
+  pointer-events: none;
 }
 
 .card-glow {
   background:
-    radial-gradient(500px 240px at 100% 0%, rgba(225, 29, 46, 0.12), transparent 65%),
-    linear-gradient(165deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+    radial-gradient(500px 240px at 100% 0%, rgba(225, 29, 46, 0.14), transparent 65%),
+    radial-gradient(420px 200px at 0% 100%, rgba(216, 180, 90, 0.06), transparent 70%),
+    linear-gradient(165deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.012));
   box-shadow: var(--shadow);
 }
 
@@ -1370,9 +1408,7 @@ code {
 .auth-shell {
   min-height: 100vh;
   padding-bottom: 60px;
-  background:
-    radial-gradient(800px 500px at 85% 0%, rgba(225, 29, 46, 0.12), transparent 60%),
-    var(--bg);
+  background: transparent;
 }
 .auth-top {
   width: min(1180px, calc(100% - 40px));
@@ -1435,9 +1471,7 @@ code {
 
 .desk-shell {
   min-height: 100vh;
-  background:
-    radial-gradient(900px 480px at 100% 0%, rgba(225, 29, 46, 0.07), transparent 60%),
-    var(--bg);
+  background: transparent;
 }
 
 .desk-header {
@@ -1445,7 +1479,7 @@ code {
   top: 0;
   z-index: 40;
   border-bottom: 1px solid var(--line);
-  background: rgba(8, 9, 12, 0.9);
+  background: rgba(6, 7, 10, 0.92);
   backdrop-filter: blur(18px);
 }
 .desk-header-top {
@@ -1885,6 +1919,19 @@ code {
   align-items: start;
 }
 .staff-layout > aside { position: sticky; top: 140px; }
+.generated-password-card { margin-bottom: 2px; }
+.generated-password-card .card-heading { margin-bottom: 12px; }
+.generated-password {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--bg-2);
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  overflow-wrap: anywhere;
+}
 .select-small {
   min-height: 34px;
   padding: 4px 8px;
@@ -2087,7 +2134,8 @@ code {
   --bg: #050609;
 }
 body {
-  background: var(--bg);
+  /* Keep the shared royal canvas — the deeper black only deepens the base. */
+  background: var(--bg-royal);
 }
 
 /* ----------------------------------------------------------------- nav */
@@ -2111,6 +2159,35 @@ body {
   padding-block: clamp(56px, 10vw, 120px) clamp(40px, 6vw, 100px);
   padding-inline: clamp(24px, 6vw, 40px);
   overflow: hidden;
+}
+
+/* Royal ornaments on the welcome stage — mirrors the complaint page rings. */
+.welcome::before,
+.welcome::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.welcome::before {
+  width: 620px;
+  height: 620px;
+  top: -240px;
+  right: -200px;
+  border: 1px solid var(--gold-soft);
+  box-shadow:
+    inset 0 0 150px rgba(225, 29, 46, 0.08),
+    inset 0 0 0 100px rgba(216, 180, 90, 0.03),
+    0 0 130px rgba(216, 180, 90, 0.05);
+}
+.welcome::after {
+  width: 520px;
+  height: 520px;
+  bottom: -260px;
+  left: -220px;
+  border: 1px solid rgba(225, 29, 46, 0.15);
+  box-shadow: inset 0 0 140px rgba(225, 29, 46, 0.06);
 }
 
 .welcome-grid {
@@ -2518,10 +2595,43 @@ body {
 /* --------------------------------------------------- /complaint quick form */
 
 .quick-shell {
+  position: relative;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: var(--bg);
+  background: transparent;
+  overflow: hidden;
+}
+
+/* Royal ornaments — thin concentric rings drifting in the corners. */
+.quick-shell::before,
+.quick-shell::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.quick-shell::before {
+  width: 560px;
+  height: 560px;
+  top: -200px;
+  right: -180px;
+  border: 1px solid var(--gold-soft);
+  box-shadow:
+    inset 0 0 140px rgba(225, 29, 46, 0.09),
+    inset 0 0 0 90px rgba(216, 180, 90, 0.03),
+    0 0 120px rgba(216, 180, 90, 0.05);
+}
+.quick-shell::after {
+  width: 720px;
+  height: 720px;
+  bottom: -320px;
+  left: -260px;
+  border: 1px solid rgba(225, 29, 46, 0.16);
+  box-shadow:
+    inset 0 0 160px rgba(225, 29, 46, 0.07),
+    inset 0 0 0 130px rgba(76, 61, 165, 0.04);
 }
 
 .quick-top {
@@ -2627,9 +2737,10 @@ body {
   letter-spacing: 0.08em;
   color: var(--text);
   padding: 12px 22px;
-  border: 1px dashed rgba(255, 255, 255, 0.3);
+  border: 1px dashed rgba(216, 180, 90, 0.45);
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 40px rgba(216, 180, 90, 0.06) inset;
 }
 
 /* Identity mode toggle — identified vs anonymous report */
@@ -2766,6 +2877,10 @@ body {
 
 /* ------------------------------------------------------------ leaderboard */
 
+.lb-search { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.lb-search .input { flex: 1; min-width: 0; }
+.lb-search .btn { flex: 0 0 auto; }
+
 .lb-rows { display: flex; flex-direction: column; gap: 12px; }
 
 .lb-row {
@@ -2801,6 +2916,7 @@ body {
 
 .lb-info { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .lb-info strong { font-size: 0.98rem; overflow-wrap: anywhere; }
+.lb-code { font-size: 0.78rem; letter-spacing: 0.08em; color: var(--red); }
 
 .lb-bar {
   height: 8px;
@@ -2832,4 +2948,139 @@ body {
   .lb-rank { width: 34px; height: 34px; border-radius: 10px; font-size: 0.85rem; }
   .lb-count strong { font-size: 1.2rem; }
   .quick-top span { display: none; }
+}
+
+/* ------------------------------------------------------------ voice dictation */
+
+/* Optional speech-to-text for the complaint description — a mic button on the
+   field label row, live transcript while listening, all client-side. */
+.dictate-label-row {
+  align-items: center;
+  gap: 10px;
+}
+
+.dictate-btn {
+  flex: 0 0 auto;
+}
+
+.dictate-listening,
+.dictate-listening:hover:not(:disabled) {
+  border-color: rgba(225, 29, 46, 0.55);
+  background: var(--red-wash);
+  color: #ffb3bb;
+}
+
+.dictate-listening .recording-dot {
+  display: none; /* the icon swaps to a stop square; dot only shows in the live strip */
+}
+
+.dictate-live {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 13px;
+  border-radius: 10px;
+  border: 1px solid rgba(225, 29, 46, 0.24);
+  background: rgba(225, 29, 46, 0.09);
+  color: #ffc4c9;
+  font-size: 0.83rem;
+  line-height: 1.5;
+}
+
+.dictate-live-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------ institute ref IDs */
+
+/* Owner panel: APXJIT-### code register — generate, assign, regenerate. */
+.refid-panel { margin-bottom: 16px; }
+
+.refid-attach-note {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 14px;
+  padding: 10px 13px;
+  border: 1px solid rgba(121, 168, 255, 0.28);
+  border-radius: 10px;
+  background: rgba(121, 168, 255, 0.07);
+  color: #cfe0ff;
+  font-size: 0.83rem;
+}
+.refid-attach-note svg { color: var(--blue); flex: 0 0 auto; }
+.refid-attach-note .btn { margin-left: auto; }
+
+.refid-form {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1.2fr 0.7fr;
+  gap: 14px;
+  align-items: end;
+}
+
+.refid-form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.refid-code {
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.04em;
+}
+
+.refid-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 8px;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text-soft);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.refid-copy:hover { border-color: var(--gold-soft); color: var(--gold); }
+.refid-copy svg { flex: 0 0 auto; }
+
+.refid-college { display: flex; flex-direction: column; }
+.refid-college strong { color: var(--text); font-size: 0.87rem; overflow-wrap: anywhere; }
+.refid-college small { color: var(--muted); font-size: 0.7rem; text-transform: capitalize; }
+
+.refid-contact { display: flex; flex-direction: column; min-width: 0; }
+.refid-contact span { font-size: 0.82rem; color: var(--text-soft); }
+.refid-contact a {
+  color: var(--blue);
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
+}
+.refid-contact a:hover { text-decoration: underline; }
+
+.refid-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.refid-danger:not(:hover) {
+  color: #ffb3bb;
+}
+
+@media (max-width: 1050px) {
+  .refid-form { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 640px) {
+  .refid-form { grid-template-columns: 1fr; }
+  .refid-actions { justify-content: flex-start; }
 }

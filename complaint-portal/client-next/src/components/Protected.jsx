@@ -29,7 +29,7 @@ export default function Protected({ children }) {
       .catch((requestError) => {
         if (cancelled) return;
         if (requestError.status === 401) {
-          router.replace("/staff/login");
+          router.replace("/complaint-review-console");
           return;
         }
         setError(requestError.message || "Could not verify your session.");

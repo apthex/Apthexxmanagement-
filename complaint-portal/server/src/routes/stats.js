@@ -15,20 +15,20 @@ router.get("/leaderboard", requireAuth, requireRole("owner", "case_team"), async
     // Anonymous complaints are an owner-only concern: teacher counts are built
     // from identified reports only, so the anonymous volume stays private.
     const includeAnonymous = req.member.role === "owner";
-    const rows = await Complaint.aggregate([
-      { $match: includeAnonymous ? { flagged_spam: false } : { flagged_spam: false, mode: "identified" } },
-      {
-        $group: {
-          _id: "$institute_code",
-          total: { $sum: 1 },
-          in_process: { $sum: { $cond: [{ $eq: ["$status", "in_process"] }, 1, 0] } },
-          completed: { $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] } },
+    const [rows, institutes] = await Promise.all([
+      Complaint.aggregate([
+        { $match: includeAnonymous ? { flagged_spam: false } : { flagged_spam: false, mode: "identified" } },
+        {
+          $group: {
+            _id: "$institute_code",
+            total: { $sum: 1 },
+            in_process: { $sum: { $cond: [{ $eq: ["$status", "in_process"] }, 1, 0] } },
+            completed: { $sum: { $cond: [{ $eq: ["$status", "completed"] }, 1, 0] } },
+          },
         },
-      },
-      { $sort: { total: -1, _id: 1 } },
+      ]),
+      Institute.find({ status: "active" }).select("code name type").lean(),
     ]);
-    const institutes = await Institute.find({ status: "active" }).select("code name type").lean();
-    const byCode = new Map(institutes.map((institute) => [institute.code, institute]));
     await audit({
       member_id: req.member._id,
       action: "leaderboard_viewed",
@@ -36,16 +36,35 @@ router.get("/leaderboard", requireAuth, requireRole("owner", "case_team"), async
       entity_id: null,
       ip: req.ip,
     });
-    res.json({
-      leaderboard: rows.map((row, index) => ({
-        rank: index + 1,
-        code: row._id,
-        name: byCode.get(row._id)?.name || row._id,
-        type: byCode.get(row._id)?.type || "other",
+
+    // Every generated ref ID stays on the board (even with zero complaints) so
+    // the code ↔ college register is always visible. Complaint codes that are
+    // no longer active keep showing as "(inactive or archived)".
+    const byCode = new Map(institutes.map((institute) => [institute.code, institute]));
+    const stats = new Map(rows.map((row) => [row._id, row]));
+    const codes = new Set([...byCode.keys(), ...stats.keys()]);
+    const merged = [...codes].map((code) => {
+      const row = stats.get(code) || { total: 0, in_process: 0, completed: 0 };
+      const institute = byCode.get(code);
+      return {
+        code,
+        name: institute?.name || `${code} (inactive or archived)`,
+        type: institute?.type || "other",
         total: row.total,
         in_process: row.in_process,
         completed: row.completed,
-      })),
+      };
+    });
+    merged.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
+
+    // Teachers see only their own college's row — the full board is an owner
+    // view. A teacher without an institute sees nothing.
+    const scoped = req.member.role === "owner"
+      ? merged
+      : merged.filter((row) => row.code === req.member.institute_code);
+
+    res.json({
+      leaderboard: scoped.map((row, index) => ({ rank: index + 1, ...row })),
     });
   } catch (error) {
     next(error);

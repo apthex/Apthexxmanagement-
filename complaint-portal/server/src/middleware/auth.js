@@ -48,6 +48,7 @@ export function publicMember(member) {
     name: member.name,
     email: member.email,
     role: member.role,
+    institute_code: member.institute_code || "",
     totp_enabled: Boolean(member.totp_enabled),
   };
 }

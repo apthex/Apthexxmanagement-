@@ -152,7 +152,11 @@ function StatsView() {
         <aside className="stack">
           <section className="card side-card">
             <h2>Add a college</h2>
-            <p className="small muted">College ka naam, contact person aur email likho — ye turant student form ke dropdown me aa jayega. Code apne aap ban jata hai.</p>
+            <p className="small muted">
+              College ka naam, contact person aur email likho — a random APXJIT-### ref ID is generated automatically
+              (e.g. <span className="mono">APXJIT-234</span>) and the college appears in the student form immediately.
+              The full register lives under <strong>Institute ref IDs</strong> in the side menu.
+            </p>
             {collegeNotice && (
               <div className="alert alert-success" role="status">
                 <Icon name="check" size={16} />

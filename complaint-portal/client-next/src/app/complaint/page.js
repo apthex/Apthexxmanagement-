@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import CaptchaField from "../../components/CaptchaField.jsx";
 import Icon from "../../components/Icon.jsx";
@@ -10,6 +10,7 @@ import { CATEGORY_META } from "../../i18n/index.js";
 const MAX_PHOTOS = 5;
 const PHOTO_LIMIT_BYTES = 10 * 1024 * 1024;
 const VIDEO_LIMIT_BYTES = 50 * 1024 * 1024;
+const DETAILS_MAX = 5000;
 
 function formatBytes(bytes) {
   if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -55,6 +56,11 @@ export default function ComplaintPage() {
   const [photos, setPhotos] = useState([]);
   const [video, setVideo] = useState(null);
   const [fileNotice, setFileNotice] = useState("");
+  // Optional voice dictation: a mic button converts speech to text in the
+  // description box (Web Speech API — no upload, nothing is recorded server-side).
+  const [dictation, setDictation] = useState({ supported: false, listening: false, interim: "", error: "" });
+  const recognitionRef = useRef(null);
+  const listeningRef = useRef(false);
 
   useEffect(() => {
     // Deep link support: /complaint?anon=1 opens the form in anonymous mode.
@@ -66,6 +72,104 @@ export default function ComplaintPage() {
       .then(setConfig)
       .catch(() => setConfig({ captcha: { required: false } }));
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition) return; // Voice typing stays hidden on unsupported browsers.
+    setDictation((current) => ({ ...current, supported: true }));
+    return () => {
+      // Leaving the page must always stop the microphone session.
+      listeningRef.current = false;
+      try {
+        recognitionRef.current?.stop();
+      } catch {
+        // Recognition already ended.
+      }
+    };
+  }, []);
+
+  function stopDictation() {
+    listeningRef.current = false;
+    try {
+      recognitionRef.current?.stop();
+    } catch {
+      // Recognition already ended.
+    }
+    setDictation((current) => ({ ...current, listening: false, interim: "" }));
+  }
+
+  function startDictation() {
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition) return;
+    setDictation({ supported: true, listening: true, interim: "", error: "" });
+    listeningRef.current = true;
+
+    const recognition = new Recognition();
+    recognition.lang = "en-IN"; // handles English + Hindi/Hinglish speech well
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onresult = (event) => {
+      let finalText = "";
+      let interim = "";
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        const result = event.results[index];
+        if (result.isFinal) finalText += result[0].transcript;
+        else interim += result[0].transcript;
+      }
+      if (finalText.trim()) {
+        setForm((current) => {
+          const existing = current.details_text.trimEnd();
+          const merged = existing ? `${existing} ${finalText.trim()}` : finalText.trim();
+          return { ...current, details_text: merged.slice(0, DETAILS_MAX) };
+        });
+        setFieldErrors((current) => ({ ...current, details_text: undefined }));
+      }
+      setDictation((current) => ({ ...current, interim }));
+    };
+
+    recognition.onerror = (event) => {
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        listeningRef.current = false;
+        setDictation({
+          supported: true,
+          listening: false,
+          interim: "",
+          error: "Microphone access was blocked. Allow the mic in your browser settings, or type instead.",
+        });
+      } else if (event.error === "no-speech") {
+        setDictation((current) => ({ ...current, error: "", interim: "" }));
+      }
+    };
+
+    recognition.onend = () => {
+      // Chrome ends the session periodically; restart while the user still
+      // wants dictation so a long complaint is not cut off.
+      if (listeningRef.current) {
+        try {
+          recognition.start();
+          return;
+        } catch {
+          // Already restarting.
+        }
+      }
+      setDictation((current) => ({ ...current, listening: false, interim: "" }));
+    };
+
+    recognitionRef.current = recognition;
+    try {
+      recognition.start();
+    } catch {
+      listeningRef.current = false;
+      setDictation((current) => ({ ...current, listening: false }));
+    }
+  }
+
+  function toggleDictation() {
+    if (dictation.listening) stopDictation();
+    else startDictation();
+  }
 
   const captchaRequired = Boolean(config?.captcha?.required);
 
@@ -363,19 +467,47 @@ export default function ComplaintPage() {
               </div>
 
               <div className="field field-wide">
-                <label className="field-label" htmlFor="qf-details">Describe the complaint <i aria-hidden="true">*</i></label>
+                <div className="between dictate-label-row">
+                  <label className="field-label" htmlFor="qf-details">Describe the complaint <i aria-hidden="true">*</i></label>
+                  {dictation.supported && (
+                    <button
+                      type="button"
+                      className={`btn btn-ghost btn-small dictate-btn${dictation.listening ? " dictate-listening" : ""}`}
+                      onClick={toggleDictation}
+                      aria-pressed={dictation.listening}
+                      aria-label={dictation.listening ? "Stop voice typing" : "Start voice typing"}
+                    >
+                      <Icon name={dictation.listening ? "stop" : "mic"} size={15} />
+                      {dictation.listening ? "Stop voice typing" : "Speak instead"}
+                    </button>
+                  )}
+                </div>
                 <textarea
                   id="qf-details"
                   className="textarea"
                   value={form.details_text}
                   onChange={setField("details_text")}
                   minLength={10}
-                  maxLength={5000}
+                  maxLength={DETAILS_MAX}
                   rows={6}
-                  placeholder="What happened, where, and who is involved. Plain text only."
+                  placeholder="What happened, where, and who is involved. Type it — or tap “Speak instead” and just say it."
                   required
                 />
+                {dictation.listening && (
+                  <p className="dictate-live" role="status" aria-live="polite">
+                    <span className="recording-dot" aria-hidden="true" />
+                    <span className="dictate-live-text">
+                      {dictation.interim ? `Listening… ${dictation.interim}` : "Listening… speak now. Your words appear in the box."}
+                    </span>
+                  </p>
+                )}
+                {dictation.error && <p className="error-text">{dictation.error}</p>}
                 {fieldError("details_text") && <p className="error-text">{fieldError("details_text")}</p>}
+                <p className="field-hint">
+                  {dictation.supported
+                    ? "Voice typing is optional — speak in English or Hindi and edit the text before submitting. Nothing is recorded or stored."
+                    : "You can type here. Voice typing needs Chrome, Edge or Safari on this device."}
+                </p>
               </div>
 
               <div className="field field-wide">

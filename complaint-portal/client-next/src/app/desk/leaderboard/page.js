@@ -12,6 +12,7 @@ function Leaderboard() {
   const [error, setError] = useState("");
   const [updatedAt, setUpdatedAt] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [query, setQuery] = useState("");
 
   const load = useCallback(() => {
     return api("/api/stats/leaderboard")
@@ -42,10 +43,16 @@ function Leaderboard() {
 
   const max = rows && rows.length ? Math.max(...rows.map((row) => row.total)) : 0;
 
+  // Search sirf client-side: ref ID (APXJIT-234) ya college name se filter.
+  const needle = query.trim().toLowerCase();
+  const visible = rows
+    ? rows.filter((row) => !needle || row.code.toLowerCase().includes(needle) || row.name.toLowerCase().includes(needle))
+    : [];
+
   return (
     <DeskShell
       title="College Leaderboard"
-      subtitle="Complaints received from each college — updates every 15 seconds."
+      subtitle="Every generated ref ID with its college and complaint count — updates every 15 seconds."
       actions={
         <div className="row">
           {updatedAt && <span className="small muted">Updated {updatedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>}
@@ -68,21 +75,49 @@ function Leaderboard() {
         </div>
       )}
 
-      {rows && rows.length === 0 && (
-        <div className="card empty-state">
-          <span className="icon-tile"><Icon name="chart" size={26} /></span>
-          <h2>No complaints yet</h2>
-          <p className="muted">As soon as students start submitting, each college shows up here with its count.</p>
+      {rows && (
+        <div className="card lb-search">
+          <span className="icon-tile icon-tile-small"><Icon name="search" size={16} /></span>
+          <input
+            className="input"
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search by ref ID (APXJIT-234) or college name…"
+            aria-label="Search the leaderboard by ref ID or college name"
+          />
+          {query && (
+            <button type="button" className="btn btn-ghost btn-small" onClick={() => setQuery("")}>
+              Clear
+            </button>
+          )}
         </div>
       )}
 
-      {rows && rows.length > 0 && (
+      {rows && rows.length === 0 && (
+        <div className="card empty-state">
+          <span className="icon-tile"><Icon name="chart" size={26} /></span>
+          <h2>No ref IDs yet</h2>
+          <p className="muted">Generate the first institute ref ID under "Institute ref IDs" — every college then appears here with its count.</p>
+        </div>
+      )}
+
+      {rows && rows.length > 0 && visible.length === 0 && (
+        <div className="card empty-state">
+          <span className="icon-tile"><Icon name="search" size={26} /></span>
+          <h2>No matches</h2>
+          <p className="muted">Nothing on the board matches "{query.trim()}" — try a different ref ID or college name.</p>
+        </div>
+      )}
+
+      {rows && visible.length > 0 && (
         <div className="lb-rows">
-          {rows.map((row) => (
+          {visible.map((row) => (
             <div className="lb-row" key={row.code}>
               <span className={`lb-rank${row.rank === 1 ? " lb-rank-first" : ""}`}>#{row.rank}</span>
               <div className="lb-info">
                 <strong>{row.name}</strong>
+                <span className="lb-code mono">{row.code}</span>
                 <div className="lb-bar" role="presentation">
                   <span style={{ width: `${max ? Math.max(4, Math.round((row.total / max) * 100)) : 4}%` }} />
                 </div>

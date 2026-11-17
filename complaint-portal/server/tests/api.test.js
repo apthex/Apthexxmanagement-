@@ -578,12 +578,13 @@ test("statistics and monthly report endpoints return aggregate data and a PDF", 
   assert.ok(pdf.body.length > 500);
 });
 
-test("owner can create staff accounts while case team cannot list them", async () => {
+test("owner can create staff accounts while case team stays scoped to its college", async () => {
   const created = await ownerAgent
     .post("/api/staff/members")
     .set("X-CSRF-Token", ownerCsrf)
-    .send({ name: "Case Team Member", email: CASE_EMAIL, password: CASE_PASSWORD, role: "case_team" });
+    .send({ name: "Case Team Member", email: CASE_EMAIL, password: CASE_PASSWORD, role: "case_team", institute_code: "SCHOOL01" });
   assert.equal(created.status, 201, JSON.stringify(created.body));
+  assert.equal(created.body.member.institute_code, "SCHOOL01");
   caseMemberId = created.body.member.id;
 
   caseAgent = request.agent(app);
@@ -593,20 +594,47 @@ test("owner can create staff accounts while case team cannot list them", async (
   const list = await caseAgent.get("/api/staff/members");
   assert.equal(list.status, 404);
 
+  // Teachers see complaints — but only the ones from their own college.
   const cases = await caseAgent.get("/api/complaints?limit=5");
-  // Naya rule: complaint data sirf owner dekh sakta hai — case_team (teachers) ko sirf leaderboard milta hai.
-  assert.equal(cases.status, 404);
+  assert.equal(cases.status, 200);
+  assert.ok(cases.body.items.length > 0, "teacher should see their college's complaints");
+  for (const item of cases.body.items) {
+    assert.equal(item.institute_code, "SCHOOL01", "teacher list must be scoped to their institute");
+  }
+
+  // A case from another college behaves as non-existent for the teacher.
+  const ownerCases = await ownerAgent.get("/api/complaints?limit=100");
+  assert.equal(ownerCases.status, 200);
+  assert.ok(ownerCases.body.total >= cases.body.total, "owner view must be at least as wide as the teacher's");
+  const otherCollege = ownerCases.body.items.find((item) => item.institute_code !== "SCHOOL01");
+  if (otherCollege) {
+    const otherCase = await caseAgent.get(`/api/complaints/${encodeURIComponent(otherCollege.ref_id)}`);
+    assert.equal(otherCase.status, 404, "teacher must not open another college's case");
+  }
+
+  // Mutations stay owner-only.
+  const firstRef = cases.body.items[0].ref_id;
+  const patch = await caseAgent
+    .patch(`/api/complaints/${encodeURIComponent(firstRef)}`)
+    .set("X-CSRF-Token", caseCsrf)
+    .send({ status: "completed" });
+  assert.equal(patch.status, 404);
 
   const leaderboard = await caseAgent.get("/api/stats/leaderboard");
   assert.equal(leaderboard.status, 200);
   assert.ok(Array.isArray(leaderboard.body.leaderboard));
 
+  // Teacher board = sirf apna college; owner sees the full register.
+  assert.ok(leaderboard.body.leaderboard.every((row) => row.code === "SCHOOL01"),
+    "teacher leaderboard must only contain their own college");
+  const teacherSchoolRow = leaderboard.body.leaderboard.find((row) => row.code === "SCHOOL01");
+  assert.ok(teacherSchoolRow, "the teacher's college must appear on their board");
+
   // Anonymous complaints count only for the owner — teachers see identified totals.
   const ownerLeaderboard = await ownerAgent.get("/api/stats/leaderboard");
   assert.equal(ownerLeaderboard.status, 200);
-  const teacherSchoolRow = leaderboard.body.leaderboard.find((row) => row.code === "SCHOOL01");
   const ownerSchoolRow = ownerLeaderboard.body.leaderboard.find((row) => row.code === "SCHOOL01");
-  assert.ok(teacherSchoolRow && ownerSchoolRow, "SCHOOL01 should appear on the leaderboard");
+  assert.ok(ownerSchoolRow, "SCHOOL01 should appear on the owner's leaderboard");
   assert.ok(ownerSchoolRow.total > teacherSchoolRow.total,
     "teacher leaderboard must exclude anonymous complaints");
 
@@ -697,31 +725,160 @@ test("owner can add institutes through the panel while case team cannot", async 
   assert.ok(publicList.body.institutes.some((row) => row.name === "Verification College"));
 });
 
-test("case team members default to the standard teacher password", async () => {
+test("institute ref IDs follow the APXJIT-### format and can be assigned later", async () => {
+  // 1. Generate an unassigned code — no college details supplied.
+  const generated = await ownerAgent
+    .post("/api/institutes")
+    .set("X-CSRF-Token", ownerCsrf)
+    .send({});
+  assert.equal(generated.status, 201, JSON.stringify(generated.body));
+  const code = generated.body.institute.code;
+  assert.match(code, /^APXJIT-\d{3,4}$/);
+
+  // Unassigned codes must not validate publicly until a college is attached.
+  const anonymous = await request(app).get(`/api/institutes/validate?code=${code}`);
+  assert.equal(anonymous.status, 404);
+
+  // Case team must not see the full code register.
+  const forbiddenList = await caseAgent.get("/api/institutes/all");
+  assert.equal(forbiddenList.status, 404);
+
+  // 2. Owner sees the code in the register, marked unassigned.
+  const listed = await ownerAgent.get("/api/institutes/all");
+  assert.equal(listed.status, 200);
+  const row = listed.body.institutes.find((entry) => entry.code === code);
+  assert.ok(row, "generated code should appear in the owner register");
+  assert.equal(row.assigned, false);
+
+  // 3. Assign a college to the generated code.
+  const assigned = await ownerAgent
+    .patch(`/api/institutes/${code}`)
+    .set("X-CSRF-Token", ownerCsrf)
+    .send({ name: "Referral Institute of Technology", head_name: "Ref Head", head_email: "ref@iit.local", type: "college" });
+  assert.equal(assigned.status, 200, JSON.stringify(assigned.body));
+  assert.equal(assigned.body.institute.assigned, true);
+
+  // The code now validates publicly and resolves to the college.
+  const validated = await request(app).get(`/api/institutes/validate?code=${code}`);
+  assert.equal(validated.status, 200);
+  assert.equal(validated.body.name, "Referral Institute of Technology");
+
+  // Zero-complaint colleges stay on the leaderboard too — har generated ref
+  // ID apne college ke saath board par dikhti hai.
+  const board = await ownerAgent.get("/api/stats/leaderboard");
+  assert.equal(board.status, 200);
+  const zeroRow = board.body.leaderboard.find((entry) => entry.code === code);
+  assert.ok(zeroRow, "assigned college with no complaints must appear on the leaderboard");
+  assert.equal(zeroRow.total, 0);
+  assert.equal(zeroRow.name, "Referral Institute of Technology");
+});
+
+test("random ref IDs stay distinct per college and regenerate issues a fresh code", async () => {
+  const first = await ownerAgent
+    .post("/api/institutes")
+    .set("X-CSRF-Token", ownerCsrf)
+    .send({ name: "Random College A", head_name: "Seq Head", head_email: "seq-a@college.local" });
+  const second = await ownerAgent
+    .post("/api/institutes")
+    .set("X-CSRF-Token", ownerCsrf)
+    .send({ name: "Random College B", head_name: "Seq Head", head_email: "seq-b@college.local" });
+  assert.equal(first.status, 201);
+  assert.equal(second.status, 201);
+
+  const firstCode = first.body.institute.code;
+  const secondCode = second.body.institute.code;
+  assert.match(firstCode, /^APXJIT-\d{3,4}$/);
+  assert.match(secondCode, /^APXJIT-\d{3,4}$/);
+  // Har college ka apna alag ref ID — kabhi same nahi mil sakta.
+  assert.notEqual(firstCode, secondCode);
+
+  // Codes are random, not sequential: strip the prefix and confirm the two
+  // numbers are not adjacent (this holds for different colleges by design).
+  const firstNumber = Number.parseInt(firstCode.replace("APXJIT-", ""), 10);
+  const secondNumber = Number.parseInt(secondCode.replace("APXJIT-", ""), 10);
+  assert.notEqual(secondNumber, firstNumber + 1);
+
+  // Regenerate: the same college gets a new code, the old one stops working.
+  const regenerated = await ownerAgent
+    .post(`/api/institutes/${secondCode}/regenerate`)
+    .set("X-CSRF-Token", ownerCsrf);
+  assert.equal(regenerated.status, 200, JSON.stringify(regenerated.body));
+  assert.equal(regenerated.body.institute.name, "Random College B");
+  assert.notEqual(regenerated.body.institute.code, secondCode);
+  assert.match(regenerated.body.institute.code, /^APXJIT-\d{3,4}$/);
+
+  const oldLookup = await request(app).get(`/api/institutes/validate?code=${secondCode}`);
+  assert.equal(oldLookup.status, 404);
+  const newLookup = await request(app).get(`/api/institutes/validate?code=${regenerated.body.institute.code}`);
+  assert.equal(newLookup.status, 200);
+
+  const partial = await ownerAgent
+    .patch(`/api/institutes/${regenerated.body.institute.code}`)
+    .set("X-CSRF-Token", ownerCsrf)
+    .send({ status: "inactive" });
+  assert.equal(partial.status, 200);
+  assert.equal(partial.body.institute.status, "inactive");
+  const inactiveLookup = await request(app).get(`/api/institutes/validate?code=${regenerated.body.institute.code}`);
+  assert.equal(inactiveLookup.status, 404);
+});
+
+test("case team members get a unique generated password and no shared default", async () => {
+  const first = await ownerAgent
+    .post("/api/staff/members")
+    .set("X-CSRF-Token", ownerCsrf)
+    .send({ name: "Generated Password Teacher", email: "generated-pw-teacher@test.local", role: "case_team", institute_code: "SCHOOL01" });
+  assert.equal(first.status, 201, JSON.stringify(first.body));
+
+  // The password is returned exactly once and is strong enough to hand over.
+  assert.ok(first.body.password, "server must return the generated teacher password once");
+  assert.ok(first.body.password.length >= 15, "generated password must be long");
+  assert.match(first.body.password, /[A-Z]/);
+  assert.match(first.body.password, /[a-z]/);
+  assert.match(first.body.password, /[0-9]/);
+  assert.notEqual(first.body.password, "Teacher8686@#", "the retired shared default must never be used");
+
+  const member = await Member.findOne({ email: "generated-pw-teacher@test.local" }).lean();
+  assert.ok(member);
+  assert.ok(await bcrypt.compare(first.body.password, member.password_hash));
+  assert.ok(!(await bcrypt.compare("Teacher8686@#", member.password_hash)));
+
+  // A second teacher gets a different password — har teacher ka apna pass.
+  const second = await ownerAgent
+    .post("/api/staff/members")
+    .set("X-CSRF-Token", ownerCsrf)
+    .send({ name: "Second Password Teacher", email: "second-pw-teacher@test.local", role: "case_team", institute_code: "SCHOOL01" });
+  assert.equal(second.status, 201, JSON.stringify(second.body));
+  assert.ok(second.body.password);
+  assert.notEqual(second.body.password, first.body.password);
+});
+
+test("teacher without an institute is refused at creation", async () => {
   const created = await ownerAgent
     .post("/api/staff/members")
     .set("X-CSRF-Token", ownerCsrf)
-    .send({ name: "Default Password Teacher", email: "default-pw-teacher@test.local", role: "case_team" });
-  assert.equal(created.status, 201, JSON.stringify(created.body));
-
-  const member = await Member.findOne({ email: "default-pw-teacher@test.local" }).lean();
-  assert.ok(member);
-  assert.ok(await bcrypt.compare("Teacher8686@#", member.password_hash));
+    .send({ name: "Unscoped Teacher", email: "unscoped-teacher@test.local", role: "case_team" });
+  assert.equal(created.status, 400, JSON.stringify(created.body));
+  assert.ok(created.body.fields?.institute_code, "the institute field must carry the error");
+  const exists = await Member.exists({ email: "unscoped-teacher@test.local" });
+  assert.ok(!exists);
 });
 
-test("password-only login matches admin password first, then teacher password", async () => {
-  await ownerAgent
+test("password-only login matches admin password first, then each teacher's own password", async () => {
+  const created = await ownerAgent
     .post("/api/staff/members")
     .set("X-CSRF-Token", ownerCsrf)
-    .send({ name: "Password Only Teacher", email: "password-only-teacher@test.local", role: "case_team" });
+    .send({ name: "Password Only Teacher", email: "password-only-teacher@test.local", role: "case_team", institute_code: "SCHOOL01" });
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+  const teacherPassword = created.body.password;
+  assert.ok(teacherPassword, "teacher creation must return the generated password");
 
   // Admin password matches an owner — with 2FA enforced in tests, a code is asked next.
   const adminMatch = await request(app).post("/api/auth/login").send({ password: OWNER_PASSWORD });
   assert.equal(adminMatch.status, 400, JSON.stringify(adminMatch.body));
   assert.equal(adminMatch.body.twoFactorRequired, true);
 
-  // Teacher password matches a case_team member (never enrolled) — QR setup is offered.
-  const teacherMatch = await request(app).post("/api/auth/login").send({ password: "Teacher8686@#" });
+  // The teacher's own password matches their account (never enrolled) — QR setup is offered.
+  const teacherMatch = await request(app).post("/api/auth/login").send({ password: teacherPassword });
   assert.equal(teacherMatch.status, 200, JSON.stringify(teacherMatch.body));
   assert.equal(teacherMatch.body.setupRequired, true);
 

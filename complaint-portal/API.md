@@ -26,7 +26,7 @@ Sessions are revocable, expire after `SESSION_TTL_HOURS` (default 8), and are in
 Roles:
 
 - `owner` — full access, including staff management, audit log, email outbox, and report sending.
-- `case_team` — case work only. Administrative endpoints return `404` to avoid confirming their existence.
+- `case_team` (teacher) — read-only access to the complaints of ONE college. Every teacher account carries an `institute_code`; the server forces that filter server-side, so a teacher only ever sees cases reported against their own ref ID. Administrative endpoints return `404` to avoid confirming their existence, and all mutations (`PATCH`, attachments, spam) stay owner-only.
 
 ## Public endpoints
 
@@ -54,13 +54,27 @@ Public runtime configuration. Never contains secrets.
 
 ### `GET /api/institutes/validate?code=SCHOOL01`
 
-Validates an active institute code. Rate limited per IP.
+Validates an active institute code that has been assigned to a college. Rate limited per IP.
 
 ```json
 { "code": "SCHOOL01", "name": "Demo Public School", "type": "school" }
 ```
 
-Errors: `400` malformed code, `404` unknown/inactive code, `429` rate limited.
+Errors: `400` malformed code, `404` unknown/inactive/unassigned code, `429` rate limited.
+
+### Institute ref IDs (APXJIT-###)
+
+Institute codes issued through the admin panel follow the `APXJIT-###` format with a **random** number (e.g. `APXJIT-234`) — every college gets its own distinct ID, and the number reveals nothing about the order colleges were added. Codes issued earlier as `JIT-APTHEX###` remain valid; using **Regenerate** moves a college onto the new format. A code generated without college details stays *unassigned* — it does not validate publicly until a college is attached.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/institutes/list` | Public: assigned, active codes (`code`, `name`, `type`) |
+| `GET` | `/api/institutes/all` | Owner: full register incl. unassigned and deactivated |
+| `POST` | `/api/institutes` | Owner: generate a ref ID. Just `name` is enough to assign the college immediately; head contact details (`head_name`, `head_email`) and `type` are optional extras. Without any name the code is banked unassigned (legacy flow) |
+| `PATCH` | `/api/institutes/:code` | Owner: assign/update a college (`name`, `head_name`, `head_email`, `type`) or toggle `status` |
+| `POST` | `/api/institutes/:code/regenerate` | Owner: issue a fresh code for the same college; the old code stops validating |
+
+All owner endpoints are audit logged (`institute_code_generated`, `institute_created`, `institute_updated`, `institute_code_regenerated`).
 
 ### `POST /api/complaints`
 
@@ -213,6 +227,8 @@ All require authentication and return `401` without a valid session.
 
 Query parameters: `page` (default 1), `limit` (default 25, max 100), `institute_code`, `category`, `status` (`in_process`/`completed`), `urgent=true`, `spam=false|true|all`, `search` (reference prefix or exact reference).
 
+Teachers (`case_team`) also get `200` here: the server forces `institute_code` to the teacher's own college and ignores query overrides plus the spam filters, so they can never widen their view.
+
 ```json
 {
   "items": [
@@ -238,6 +254,8 @@ Query parameters: `page` (default 1), `limit` (default 25, max 100), `institute_
 ### `GET /api/complaints/:ref_id`
 
 Returns `complaint`, `contact` (or `null` for anonymous), `contacts`, `attachments`, and `events`. Evidence metadata only; file bytes require a signed URL.
+
+Teachers may open a case only when its `institute_code` matches their own — any other reference responds `404`, as if it did not exist.
 
 ### `PATCH /api/complaints/:ref_id`
 
@@ -268,9 +286,9 @@ These endpoints return `404` for `case_team` members.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `GET` | `/api/staff/members` | List staff accounts |
-| `POST` | `/api/staff/members` | Create a staff account (`name`, `email`, `password`, `role`) |
-| `PATCH` | `/api/staff/members/:id` | Change name, role, or status |
+| `GET` | `/api/staff/members` | List staff accounts (each member includes their `institute_code`) |
+| `POST` | `/api/staff/members` | Create a staff account (`name`, `email`, `role`, plus `password` for owners or `institute_code` for teachers) |
+| `PATCH` | `/api/staff/members/:id` | Change name, role, status, or `institute_code` |
 | `POST` | `/api/staff/members/:id/reset-password` | Reset password, clear 2FA, revoke sessions |
 | `POST` | `/api/staff/members/:id/revoke-sessions` | Revoke all sessions for a member |
 | `GET` | `/api/staff/audit` | Audit events; filters `action`, `entity`, `outcome`, `page`, `limit` |
@@ -278,6 +296,11 @@ These endpoints return `404` for `case_team` members.
 | `POST` | `/api/staff/outbox/process` | Process queued email immediately |
 
 `GET /api/staff/assignable` is available to all authenticated staff and returns active members for assignment.
+
+Creating a member requires `role`:
+
+- **Teacher (`case_team`)** — `institute_code` is mandatory and must point to an assigned, active institute. If `password` is omitted, the server generates a unique strong password per teacher (15 characters, mixed case + digits + symbol) and returns it in the response body as `password` exactly once; it is stored only as a bcrypt hash and cannot be recovered. Teachers are therefore no longer shared under a common default password.
+- **Admin (`owner`)** — `password` is required by the caller (min 8 chars with a lowercase letter and a digit).
 
 The system prevents deactivating your own account and prevents removing the last active owner.
 
@@ -287,6 +310,7 @@ All require authentication.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
+| `GET` | `/api/stats/leaderboard` | College leaderboard — every generated ref ID (incl. zero-complaint colleges) with totals; owner sees identified + anonymous, case_team sees only their own college's row and identified complaints only |
 | `GET` | `/api/stats/overview` | Summary counts and recent cases |
 | `GET` | `/api/stats/institutes` | Active institutes plus institutes seen in complaints |
 | `GET` | `/api/stats/institute/:code` | Totals and monthly rows for one institute |

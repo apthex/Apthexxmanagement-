@@ -1,6 +1,7 @@
 import express from "express";
 import bcrypt from "bcrypt";
 import Member from "../models/Member.js";
+import Institute from "../models/Institute.js";
 import AuditEvent from "../models/AuditEvent.js";
 import EmailOutbox from "../models/EmailOutbox.js";
 import {
@@ -11,7 +12,7 @@ import {
   clearSessionCookies,
   publicMember,
 } from "../middleware/auth.js";
-import { memberCreateSchema, memberUpdateSchema, passwordResetSchema, TEACHER_DEFAULT_PASSWORD } from "../utils/validation.js";
+import { memberCreateSchema, memberUpdateSchema, passwordResetSchema, instituteCodeSchema } from "../utils/validation.js";
 import { audit } from "../utils/audit.js";
 import { processOutbox, queueEmail } from "../services/email.js";
 import { maskEmail } from "../utils/sanitize.js";
@@ -31,6 +32,35 @@ function parsePositive(value, fallback, max = Number.MAX_SAFE_INTEGER) {
   return Math.min(number, max);
 }
 
+// Unique password for every teacher account — the owner sees it once in the
+// panel and hands it to the teacher. No shared default password anymore.
+function generateStaffPassword() {
+  const upper = "ABCDEFGHJKMNPQRSTUVWXYZ";
+  const lower = "abcdefghijkmnpqrstuvwxyz";
+  const digits = "23456789";
+  const symbols = "!@#$%&*";
+  const pick = (alphabet, count) =>
+    Array.from({ length: count }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+  return `${pick(upper, 3)}${pick(lower, 6)}${pick(digits, 4)}${pick(symbols, 2)}`;
+}
+
+// Teacher accounts must be attached to an assigned, active institute ref ID —
+// that college is the only one whose complaints they will ever see.
+async function resolveInstituteScope(code, { required }) {
+  const trimmed = (code || "").trim().toUpperCase();
+  if (!trimmed) {
+    if (required) return { error: "Select the teacher's institute" };
+    return { code: "" };
+  }
+  const parsed = instituteCodeSchema.safeParse(trimmed);
+  if (!parsed.success) return { error: "Invalid institute code" };
+  const institute = await Institute.findOne({ code: parsed.data, status: "active", name: { $ne: "" } })
+    .select("code")
+    .lean();
+  if (!institute) return { error: "Institute code not recognised or not assigned to a college" };
+  return { code: institute.code };
+}
+
 router.get("/assignable", requireAuth, async (req, res, next) => {
   try {
     const members = await Member.find({ status: "active" }).select("name role").sort({ name: 1 }).lean();
@@ -43,7 +73,7 @@ router.get("/assignable", requireAuth, async (req, res, next) => {
 router.get("/members", requireAuth, requireRole("owner"), async (req, res, next) => {
   try {
     const members = await Member.find()
-      .select("name email role status totp_enabled last_login_at created_at")
+      .select("name email role institute_code status totp_enabled last_login_at created_at")
       .sort({ created_at: 1 })
       .lean();
     res.set("Cache-Control", "no-store");
@@ -64,23 +94,42 @@ router.post("/members", requireAuth, requireCsrf, requireRole("owner"), async (r
     const parsed = memberCreateSchema.safeParse(req.body || {});
     if (!parsed.success) return res.status(400).json({ error: "Please check the member details", fields: fieldsFrom(parsed.error) });
     const { name, email, role } = parsed.data;
-    // Blank password + case_team => standard teacher password (TEACHER_DEFAULT_PASSWORD).
-    const password = parsed.data.password || (role === "case_team" ? TEACHER_DEFAULT_PASSWORD : null);
-    if (!password) return res.status(400).json({ error: "Owner accounts need a password", fields: { password: "Password is required for owner accounts" } });
+
+    // Position decides the rest: teachers are scoped to one college and get a
+    // unique generated password; owners set their own password.
+    let instituteCode = "";
+    if (role === "case_team") {
+      const scope = await resolveInstituteScope(parsed.data.institute_code, { required: true });
+      if (scope.error) {
+        return res.status(400).json({ error: "Please check the member details", fields: { institute_code: scope.error } });
+      }
+      instituteCode = scope.code;
+    }
+
+    const generatedPassword = role === "case_team" && !parsed.data.password ? generateStaffPassword() : "";
+    const password = parsed.data.password || generatedPassword;
+    if (!password) {
+      return res.status(400).json({ error: "Owner accounts need a password", fields: { password: "Password is required for owner accounts" } });
+    }
     const existing = await Member.exists({ email });
     if (existing) return res.status(409).json({ error: "A member with this email already exists" });
 
     const password_hash = await bcrypt.hash(password, 12);
-    const member = await Member.create({ name, email, password_hash, role, status: "active" });
+    const member = await Member.create({ name, email, password_hash, role, institute_code: instituteCode, status: "active" });
     await audit({
       member_id: req.member._id,
       action: "staff_member_created",
       entity: "member",
       entity_id: String(member._id),
-      detail: `role=${role}`,
+      detail: `role=${role}${instituteCode ? `; institute=${instituteCode}` : ""}`,
       ip: req.ip,
     });
-    res.status(201).json({ member: publicMember(member) });
+    const response = { member: publicMember(member) };
+    if (generatedPassword) {
+      // Plaintext is returned exactly once — it is not stored or recoverable.
+      response.password = generatedPassword;
+    }
+    res.status(201).json(response);
   } catch (error) {
     next(error);
   }
@@ -111,6 +160,15 @@ router.patch("/members/:id", requireAuth, requireCsrf, requireRole("owner"), asy
     if (data.name !== undefined) target.name = data.name;
     if (data.role !== undefined) target.role = data.role;
     if (data.status !== undefined) target.status = data.status;
+    if (data.institute_code !== undefined) {
+      const scope = await resolveInstituteScope(data.institute_code, { required: true });
+      if (scope.error) {
+        return res.status(400).json({ error: "Please check the member details", fields: { institute_code: scope.error } });
+      }
+      target.institute_code = scope.code;
+    }
+    // A case_team member without an institute simply sees nothing until the
+    // owner attaches their college — safe default, flagged in the panel UI.
     await target.save();
 
     if (willBeInactive) await revokeAllSessionsForMember(target._id, "member_deactivated");
@@ -120,7 +178,7 @@ router.patch("/members/:id", requireAuth, requireCsrf, requireRole("owner"), asy
       action: "staff_member_updated",
       entity: "member",
       entity_id: String(target._id),
-      detail: `role=${target.role}; status=${target.status}`,
+      detail: `role=${target.role}; status=${target.status}; institute=${target.institute_code || "none"}`,
       ip: req.ip,
     });
     res.json({ member: publicMember(target) });

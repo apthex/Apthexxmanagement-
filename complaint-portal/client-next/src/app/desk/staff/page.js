@@ -8,7 +8,7 @@ import Spinner from "../../../components/Spinner.jsx";
 import { api } from "../../../lib/api.js";
 import { formatDateTime } from "../../../lib/format.js";
 
-const EMPTY_MEMBER = { name: "", email: "", password: "", role: "case_team" };
+const EMPTY_MEMBER = { name: "", email: "", password: "", role: "case_team", institute_code: "" };
 
 function passwordProblem(password) {
   if (password.length < 12) return "Password must be at least 12 characters.";
@@ -21,21 +21,32 @@ function passwordProblem(password) {
 function StaffView() {
   const { member } = useAuth();
   const [members, setMembers] = useState([]);
+  const [institutes, setInstitutes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [draft, setDraft] = useState(EMPTY_MEMBER);
   const [creating, setCreating] = useState(false);
+  // Unique generated password — shown exactly once so the owner can hand it
+  // to the teacher. Never stored in plain text server-side.
+  const [generatedPassword, setGeneratedPassword] = useState("");
+  const [passwordCopied, setPasswordCopied] = useState(false);
   const [resetFor, setResetFor] = useState("");
   const [resetPassword, setResetPassword] = useState("");
   const [busyId, setBusyId] = useState("");
+
+  const isTeacher = draft.role === "case_team";
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const result = await api("/api/staff/members");
-      setMembers(result.members);
+      const [staffResult, instituteResult] = await Promise.all([
+        api("/api/staff/members"),
+        api("/api/institutes/all"),
+      ]);
+      setMembers(staffResult.members);
+      setInstitutes((instituteResult.institutes || []).filter((row) => row.assigned && row.status === "active"));
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -49,33 +60,63 @@ function StaffView() {
 
   if (member.role !== "owner") {
     return (
-      <DeskShell title="Staff management">
+      <DeskShell title="Staff accounts">
         <div className="card empty-state">
           <span className="icon-tile icon-tile-amber"><Icon name="lock" size={24} /></span>
-          <h2>Owner access required</h2>
-          <p>Only an active owner can manage staff accounts.</p>
+          <h2>Admin access required</h2>
+          <p>Only an active admin can manage staff accounts.</p>
         </div>
       </DeskShell>
     );
+  }
+
+  async function copyGeneratedPassword() {
+    try {
+      await navigator.clipboard.writeText(generatedPassword);
+      setPasswordCopied(true);
+      setTimeout(() => setPasswordCopied(false), 1800);
+    } catch {
+      // Clipboard unavailable — the password stays visible for manual copying.
+    }
   }
 
   async function createMember(event) {
     event.preventDefault();
     setError("");
     setNotice("");
-    const problem = draft.password ? passwordProblem(draft.password) : "";
-    if (problem) {
-      setError(problem);
-      return;
+    setGeneratedPassword("");
+    const payload = { name: draft.name, email: draft.email, role: draft.role };
+    if (isTeacher) {
+      if (!draft.institute_code) {
+        setError("Select the teacher's institute — they can only see complaints from that college.");
+        return;
+      }
+      payload.institute_code = draft.institute_code;
+    } else {
+      const problem = draft.password ? passwordProblem(draft.password) : "";
+      if (problem) {
+        setError(problem);
+        return;
+      }
+      if (!draft.password) {
+        setError("Admin accounts need a password.");
+        return;
+      }
+      payload.password = draft.password;
     }
     setCreating(true);
     try {
-      await api("/api/staff/members", { method: "POST", json: draft });
+      const result = await api("/api/staff/members", { method: "POST", json: payload });
       setDraft(EMPTY_MEMBER);
-      setNotice("Staff member created. They will enrol 2FA on their first sign-in.");
+      if (result.password) {
+        setGeneratedPassword(result.password);
+        setNotice(`${result.member.name} created with their own separate password. Share it with them — it is shown only this once.`);
+      } else {
+        setNotice(`${result.member.name} created. They will enrol 2FA on their first sign-in.`);
+      }
       await load();
     } catch (requestError) {
-      setError(requestError.message);
+      setError(requestError.fields ? Object.values(requestError.fields).join(" · ") : requestError.message);
     } finally {
       setCreating(false);
     }
@@ -90,7 +131,7 @@ function StaffView() {
       setNotice(message);
       await load();
     } catch (requestError) {
-      setError(requestError.message);
+      setError(requestError.fields ? Object.values(requestError.fields).join(" · ") : requestError.message);
     } finally {
       setBusyId("");
     }
@@ -136,11 +177,26 @@ function StaffView() {
 
   return (
     <DeskShell
-      title="Staff management"
-      subtitle="Owner-only control of Case Desk accounts, roles and sessions."
+      title="Staff accounts"
+      subtitle="Create admin and teacher logins. Every teacher gets their own password and sees only their college."
     >
       {error && <div className="alert alert-error" role="alert"><Icon name="alert" size={18} /> {error}</div>}
       {notice && <div className="alert alert-success" role="status"><Icon name="check" size={18} /> {notice}</div>}
+
+      {generatedPassword && (
+        <div className="card generated-password-card" role="status">
+          <div className="card-heading">
+            <h2>Teacher password — copy it now</h2>
+            <p>This is the only time the password is shown. Hand it to the teacher privately.</p>
+          </div>
+          <div className="row">
+            <code className="generated-password mono">{generatedPassword}</code>
+            <button type="button" className="btn btn-secondary btn-small" onClick={copyGeneratedPassword}>
+              <Icon name={passwordCopied ? "check" : "copy"} size={15} /> {passwordCopied ? "Copied" : "Copy password"}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="staff-layout">
         <section className="card table-card">
@@ -158,7 +214,7 @@ function StaffView() {
             <div className="table-wrap">
               <table className="data-table">
                 <thead>
-                  <tr><th>Name</th><th>Role</th><th>Status</th><th>2FA</th><th>Last sign-in</th><th>Actions</th></tr>
+                  <tr><th>Name</th><th>Position</th><th>Institute</th><th>Status</th><th>2FA</th><th>Last sign-in</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
                   {members.map((row) => {
@@ -178,12 +234,33 @@ function StaffView() {
                             onChange={(event) => updateMember(
                               row,
                               { role: event.target.value },
-                              `${row.name} is now ${event.target.value === "owner" ? "an owner" : "case team"}.`
+                              `${row.name} is now ${event.target.value === "owner" ? "an admin" : "a teacher"}.`
                             )}
                           >
-                            <option value="owner">Owner</option>
-                            <option value="case_team">Case team</option>
+                            <option value="owner">Admin</option>
+                            <option value="case_team">Teacher</option>
                           </select>
+                        </td>
+                        <td>
+                          {row.role === "case_team" ? (
+                            <select
+                              className="select select-small"
+                              value={row.institute_code || ""}
+                              disabled={busy}
+                              onChange={(event) => updateMember(
+                                row,
+                                { institute_code: event.target.value },
+                                `${row.name} is now scoped to ${event.target.value}. They will only see that college's complaints.`
+                              )}
+                            >
+                              <option value="">— not set —</option>
+                              {institutes.map((institute) => (
+                                <option key={institute.code} value={institute.code}>{institute.code} · {institute.name}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="muted">All access</span>
+                          )}
                         </td>
                         <td>
                           <span className={`badge ${row.status === "active" ? "status-completed" : "badge-spam"}`}>{row.status}</span>
@@ -227,12 +304,19 @@ function StaffView() {
 
         <aside className="stack">
           <section className="card side-card">
-            <h2>Add a staff member</h2>
+            <h2>Create a login account</h2>
             <p className="small muted">
-              Teachers see only the college leaderboard. Leave the password blank and the standard teacher password
-              <strong> Teacher8686@# </strong> is set automatically.
+              Pick the position first. Teachers get a unique password generated here — share it with them — and they only
+              ever see complaints from the college you attach to their account.
             </p>
             <form className="stack" onSubmit={createMember}>
+              <label className="field">
+                <span className="field-label">Position</span>
+                <select className="select" value={draft.role} onChange={(event) => setDraft({ ...draft, role: event.target.value })}>
+                  <option value="case_team">Teacher — own college only</option>
+                  <option value="owner">Admin — full Case Desk</option>
+                </select>
+              </label>
               <label className="field">
                 <span className="field-label">Full name</span>
                 <input className="input" value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} maxLength={100} required />
@@ -241,19 +325,30 @@ function StaffView() {
                 <span className="field-label">Work email</span>
                 <input className="input" type="email" value={draft.email} onChange={(event) => setDraft({ ...draft, email: event.target.value })} autoComplete="off" required />
               </label>
-              <label className="field">
-                <span className="field-label">Password (optional)</span>
-                <input className="input" type="password" value={draft.password} onChange={(event) => setDraft({ ...draft, password: event.target.value })} autoComplete="new-password" placeholder="Leave blank for Teacher8686@#" />
-              </label>
-              <label className="field">
-                <span className="field-label">Role</span>
-                <select className="select" value={draft.role} onChange={(event) => setDraft({ ...draft, role: event.target.value })}>
-                  <option value="case_team">Case team (teacher)</option>
-                  <option value="owner">Owner</option>
-                </select>
-              </label>
+              {isTeacher ? (
+                <label className="field">
+                  <span className="field-label">Institute (their college)</span>
+                  <select
+                    className="select"
+                    value={draft.institute_code}
+                    onChange={(event) => setDraft({ ...draft, institute_code: event.target.value })}
+                    required
+                  >
+                    <option value="">Select a college…</option>
+                    {institutes.map((institute) => (
+                      <option key={institute.code} value={institute.code}>{institute.code} · {institute.name}</option>
+                    ))}
+                  </select>
+                  <span className="small muted">Password is generated automatically — each teacher gets their own.</span>
+                </label>
+              ) : (
+                <label className="field">
+                  <span className="field-label">Password</span>
+                  <input className="input" type="password" value={draft.password} onChange={(event) => setDraft({ ...draft, password: event.target.value })} autoComplete="new-password" minLength={12} required />
+                </label>
+              )}
               <button type="submit" className="btn btn-primary btn-block" disabled={creating}>
-                {creating ? "Creating…" : "Create staff member"}
+                {creating ? "Creating…" : isTeacher ? "Create teacher account" : "Create admin account"}
               </button>
             </form>
           </section>
