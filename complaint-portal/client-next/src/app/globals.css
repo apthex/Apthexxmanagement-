@@ -1920,17 +1920,24 @@ code {
   align-items: start;
 }
 .staff-layout > aside { position: sticky; top: 140px; }
-.generated-password-card { margin-bottom: 2px; }
+.generated-password-card {
+  margin-bottom: 2px;
+  border-color: var(--gold-soft);
+  background:
+    radial-gradient(500px 200px at 100% 0%, rgba(216, 180, 90, 0.10), transparent 65%),
+    linear-gradient(165deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+}
 .generated-password-card .card-heading { margin-bottom: 12px; }
 .generated-password {
   flex: 1;
   min-width: 0;
   padding: 10px 14px;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--gold-soft);
   border-radius: 10px;
-  background: var(--bg-2);
+  background: var(--panel-2);
   font-size: 1rem;
   letter-spacing: 0.06em;
+  color: var(--gold);
   overflow-wrap: anywhere;
 }
 .select-small {
@@ -2882,6 +2889,56 @@ body {
 .lb-search .input { flex: 1; min-width: 0; }
 .lb-search .btn { flex: 0 0 auto; }
 
+/* institute ref-ID register — same design language as the leaderboard rows */
+
+.inst-rows { display: flex; flex-direction: column; gap: 12px; }
+
+.inst-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 18px;
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+}
+
+.inst-row-off { opacity: 0.6; }
+
+.inst-code {
+  display: grid;
+  place-items: center;
+  min-width: 104px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  font-weight: 700;
+  font-size: 0.88rem;
+  letter-spacing: 0.07em;
+  color: var(--text-soft);
+}
+
+.inst-code-live {
+  background: linear-gradient(160deg, rgba(216, 180, 90, 0.16), rgba(216, 180, 90, 0.04));
+  border-color: var(--gold-soft);
+  color: var(--gold);
+}
+
+.inst-info { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.inst-info strong { font-size: 0.98rem; overflow-wrap: anywhere; }
+.inst-meta { font-size: 0.78rem; color: var(--muted); }
+
+.inst-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
+@media (max-width: 760px) {
+  .inst-row { grid-template-columns: 1fr; gap: 12px; padding: 14px; }
+  .inst-code { justify-items: start; min-width: 0; }
+  .inst-actions { justify-content: flex-start; }
+}
+
 .lb-rows { display: flex; flex-direction: column; gap: 12px; }
 
 .lb-row {
@@ -2996,7 +3053,14 @@ body {
 /* ------------------------------------------------------ institute ref IDs */
 
 /* Owner panel: APXJIT-### code register — generate, assign, regenerate. */
-.refid-panel { margin-bottom: 16px; }
+.refid-panel {
+  margin-bottom: 16px;
+  /* gold hero panel — same warm glow as the leaderboard canvas */
+  background:
+    radial-gradient(560px 220px at 100% 0%, rgba(216, 180, 90, 0.10), transparent 65%),
+    linear-gradient(165deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+  border: 1px solid var(--gold-soft);
+}
 
 .refid-attach-note {
   display: flex;

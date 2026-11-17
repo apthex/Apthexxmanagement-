@@ -210,70 +210,48 @@ function Dashboard() {
             <p>Nothing in the register matches "{query.trim()}".</p>
           </div>
         ) : (
-          <div className="table-wrap">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Ref ID</th>
-                  <th>College</th>
-                  <th>Status</th>
-                  <th>Issued</th>
-                  <th aria-label="Actions" />
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((row) => (
-                  <tr key={row.code}>
-                    <td>
-                      <span className="refid-code mono">{row.code}</span>
-                      <button
-                        type="button"
-                        className="refid-copy"
-                        onClick={() => copyCode(row.code)}
-                        aria-label={`Copy ${row.code}`}
-                      >
-                        <Icon name={copiedCode === row.code ? "check" : "copy"} size={13} />
-                        {copiedCode === row.code ? "Copied" : "Copy"}
-                      </button>
-                    </td>
-                    <td>
-                      {row.assigned ? (
-                        <strong>{row.name}</strong>
-                      ) : (
-                        <span className="muted">— not assigned —</span>
-                      )}
-                    </td>
-                    <td>
-                      <span className={`badge ${row.status === "active" ? "status-in_process" : "badge-neutral"}`}>
-                        {row.status === "active" ? "Active" : "Deactivated"}
-                      </span>
-                    </td>
-                    <td className="nowrap">{formatDateTime(row.created_at)}</td>
-                    <td>
-                      <div className="refid-actions">
-                        <button
-                          type="button"
-                          className="btn btn-ghost btn-small"
-                          onClick={() => regenerate(row)}
-                          disabled={busyCode === row.code}
-                        >
-                          <Icon name="refresh" size={14} /> New code
-                        </button>
-                        <button
-                          type="button"
-                          className={`btn btn-ghost btn-small${row.status === "active" ? " refid-danger" : ""}`}
-                          onClick={() => toggleStatus(row)}
-                          disabled={busyCode === row.code}
-                        >
-                          <Icon name={row.status === "active" ? "lock" : "check"} size={14} />
-                          {row.status === "active" ? "Deactivate" : "Activate"}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="inst-rows">
+            {visible.map((row) => (
+              <div className={`inst-row${row.status === "active" ? "" : " inst-row-off"}`} key={row.code}>
+                <span className={`inst-code mono${row.status === "active" ? " inst-code-live" : ""}`}>
+                  {row.code}
+                </span>
+                <div className="inst-info">
+                  <strong>{row.assigned ? row.name : "— not assigned —"}</strong>
+                  <span className="inst-meta">
+                    {row.status === "active" ? "Active" : "Deactivated"} · issued {formatDateTime(row.created_at)}
+                  </span>
+                </div>
+                <div className="inst-actions">
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-small"
+                    onClick={() => copyCode(row.code)}
+                    aria-label={`Copy ${row.code}`}
+                  >
+                    <Icon name={copiedCode === row.code ? "check" : "copy"} size={14} />
+                    {copiedCode === row.code ? "Copied" : "Copy"}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-small"
+                    onClick={() => regenerate(row)}
+                    disabled={busyCode === row.code}
+                  >
+                    <Icon name="refresh" size={14} /> New code
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn btn-ghost btn-small${row.status === "active" ? " refid-danger" : ""}`}
+                    onClick={() => toggleStatus(row)}
+                    disabled={busyCode === row.code}
+                  >
+                    <Icon name={row.status === "active" ? "lock" : "check"} size={14} />
+                    {row.status === "active" ? "Deactivate" : "Activate"}
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
