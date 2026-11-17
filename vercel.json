@@ -8,6 +8,8 @@
     { "source": "/complaint/:path*", "destination": "https://apthex-complaint.vercel.app/complaint/:path*" },
     { "source": "/complaint-review-console", "destination": "https://apthex-complaint.vercel.app/complaint-review-console" },
     { "source": "/complaint-review-console/:path*", "destination": "https://apthex-complaint.vercel.app/complaint-review-console/:path*" },
+    { "source": "/admin", "destination": "https://apthex-complaint.vercel.app/complaint-review-console" },
+    { "source": "/admin/:path*", "destination": "https://apthex-complaint.vercel.app/complaint-review-console/:path*" },
     { "source": "/desk", "destination": "https://apthex-complaint.vercel.app/desk" },
     { "source": "/category", "destination": "https://apthex-complaint.vercel.app/category" },
     { "source": "/details", "destination": "https://apthex-complaint.vercel.app/details" },
