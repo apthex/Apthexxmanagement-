@@ -54,6 +54,7 @@ export default function ComplaintPage() {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [result, setResult] = useState(null);
   const [photos, setPhotos] = useState([]);
   const [video, setVideo] = useState(null);
@@ -435,6 +436,37 @@ export default function ComplaintPage() {
               <p className="quick-sub">
                 No name, no email, no mobile — only your college code and what happened.
               </p>
+            )}
+
+            {/* Page navigation */}
+            {currentPage === 1 && mode === "identified" && (
+              <div className="page-nav">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setCurrentPage(2)}
+                >
+                  Next →
+                </button>
+              </div>
+            )}
+            {currentPage === 2 && (
+              <div className="page-nav">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setCurrentPage(1)}
+                >
+                  ← Back
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setSubmitting(true)}
+                >
+                  Submit complaint
+                </button>
+              </div>
             )}
 
             {mode === "anonymous" && (
