@@ -4903,3 +4903,14 @@ body {
   font-weight: 700;
   letter-spacing: 0.02em;
 }
+.anon-note {
+  color: var(--red-bright) !important;
+  background: rgba(224, 36, 56, 0.1) !important;
+  border: 1px solid rgba(224, 36, 56, 0.3) !important;
+  border-radius: 8px !important;
+  padding: 14px 16px !important;
+  margin: 12px 0 !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+  backdrop-filter: blur(2px);
+}
