@@ -451,7 +451,7 @@ export default function ComplaintPage() {
                   className="btn btn-primary"
                   onClick={() => setCurrentPage(2)}
                 >
-                  Next →
+                  Continue
                 </button>
               </div>
             )}
@@ -510,18 +510,6 @@ export default function ComplaintPage() {
                     <label className="field-label" htmlFor="qf-name">Your name <i aria-hidden="true">*</i></label>
                     <input id="qf-name" className="input" value={form.name} onChange={setField("name")} autoComplete="name" required />
                     {fieldError("name") && <p className="error-text">{fieldError("name")}</p>}
-                  </div>
-
-                  <div className="field field-wide">
-                    <label className="field-label" htmlFor="qf-class">Class / Department / Team / Division <span className="label-optional">(optional)</span></label>
-                    <input id="qf-class" className="input" value={form.class_label} onChange={setField("class_label")} placeholder="e.g. FY-BSc / Computer Dept / A Team" maxLength={100} />
-                    {fieldError("class_label") && <p className="error-text">{fieldError("class_label")}</p>}
-                  </div>
-
-                  <div className="field field-wide">
-                    <label className="field-label" htmlFor="qf-roll">Roll number / Employee ID <span className="label-optional">(optional)</span></label>
-                    <input id="qf-roll" className="input input-mono" value={form.roll_no} onChange={setField("roll_no")} placeholder="e.g. R-2024-1187" maxLength={50} />
-                    {fieldError("roll_no") && <p className="error-text">{fieldError("roll_no")}</p>}
                   </div>
 
                   <div className="field field-wide">
