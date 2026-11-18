@@ -31,22 +31,18 @@ function Dashboard() {
   const [error, setError] = useState("");
   const [updatedAt, setUpdatedAt] = useState(null);
 
-  // Teachers land here too — the server forces their list to their own
-  // college, so no redirect is needed anymore.
+  // Auto-detect institute for case_team (staff) members
+  // Teachers/admins see only their institute's complaints
   const isOwner = member?.role === "owner";
+  const isStaff = member?.role === "case_team";
+  const staffInstituteCode = isStaff ? member?.institute_code || "" : "";
 
-  const query = useMemo(() => {
-    const params = new URLSearchParams();
-    if (filters.institute_code) params.set("institute_code", filters.institute_code.trim().toUpperCase());
-    if (filters.category) params.set("category", filters.category);
-    if (filters.status) params.set("status", filters.status);
-    if (filters.search) params.set("search", filters.search.trim());
-    if (filters.urgent) params.set("urgent", "true");
-    if (filters.spam !== "false") params.set("spam", filters.spam);
-    params.set("page", String(page));
-    params.set("limit", "25");
-    return params.toString();
-  }, [filters, page]);
+  // Auto-set institute code for staff (case_team) members from their record
+  useEffect(() => {
+    if (isStaff && staffInstituteCode && !filters.institute_code) {
+      setFilters({ ...filters, institute_code: staffInstituteCode });
+    }
+  }, [isStaff, staffInstituteCode, filters.institute_code]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -105,22 +101,56 @@ function Dashboard() {
       }
     >
       <div className="stat-grid">
-        <article className="stat-card">
-          <span className="stat-icon"><Icon name="layers" size={20} /></span>
-          <div><strong>{summary.total}</strong><span>All cases</span></div>
-        </article>
-        <article className="stat-card stat-urgent">
-          <span className="stat-icon"><Icon name="alert" size={20} /></span>
-          <div><strong>{summary.urgent}</strong><span>Urgent, open</span></div>
-        </article>
-        <article className="stat-card">
-          <span className="stat-icon"><Icon name="clock" size={20} /></span>
-          <div><strong>{summary.in_process}</strong><span>In process</span></div>
-        </article>
-        <article className="stat-card stat-complete">
-          <span className="stat-icon"><Icon name="check" size={20} /></span>
-          <div><strong>{summary.completed}</strong><span>Completed</span></div>
-        </article>
+        {isOwner ? (
+          <>
+            <article className="stat-card">
+              <span className="stat-icon"><Icon name="layers" size={20} /></span>
+              <div><strong>{summary.total}</strong><span>All cases</span></div>
+            </article>
+            <article className="stat-card stat-urgent">
+              <span className="stat-icon"><Icon name="alert" size={20} /></span>
+              <div><strong>{summary.urgent}</strong><span>Urgent, open</span></div>
+            </article>
+            <article className="stat-card">
+              <span className="stat-icon"><Icon name="clock" size={20} /></span>
+              <div><strong>{summary.in_process}</strong><span>In process</span></div>
+            </article>
+            <article className="stat-card stat-complete">
+              <span className="stat-icon"><Icon name="check" size={20} /></span>
+              <div><strong>{summary.completed}</strong><span>Completed</span></div>
+            </article>
+          </>
+        ) : isStaff && staffInstituteCode ? (
+          <>
+            <article className="stat-card">
+              <span className="stat-icon"><Icon name="layers" size={20} /></span>
+              <div><strong>{summary.total}</strong><span>Your institute cases</span></div>
+            </article>
+            <article className="stat-card stat-urgent">
+              <span className="stat-icon"><Icon name="alert" size={20} /></span>
+              <div><strong>{summary.urgent}</strong><span>Urgent, open</span></div>
+            </article>
+            <article className="stat-card">
+              <span className="stat-icon"><Icon name="clock" size={20} /></span>
+              <div><strong>{summary.in_process}</strong><span>In process</span></div>
+            </article>
+            <article className="stat-card stat-complete">
+              <span className="stat-icon"><Icon name="check" size={20} /></span>
+              <div><strong>{summary.completed}</strong><span>Completed</span></div>
+            </article>
+          </>
+        ) : (
+          <>
+            <article className="stat-card">
+              <span className="stat-icon"><Icon name="layers" size={20} /></span>
+              <div><strong>{summary.total}</strong><span>All cases</span></div>
+            </article>
+            <article className="stat-card stat-urgent">
+              <span className="stat-icon"><Icon name="alert" size={20} /></span>
+              <div><strong>{summary.urgent}</strong><span>Urgent, open</span></div>
+            </article>
+          </>
+        )}
       </div>
 
       <form className="card filter-card" onSubmit={applyFilters}>
@@ -135,12 +165,17 @@ function Dashboard() {
             <span className="field-label">Search reference</span>
             <input className="input" value={draft.search} onChange={(event) => setDraft({ ...draft, search: event.target.value.toUpperCase() })} placeholder="APX-2601-ABC234" maxLength={16} />
           </label>
-          {isOwner && (
-            <label className="field">
-              <span className="field-label">Institute code</span>
-              <input className="input" value={draft.institute_code} onChange={(event) => setDraft({ ...draft, institute_code: event.target.value.toUpperCase() })} placeholder="SCHOOL01" maxLength={32} />
-            </label>
-          )}
+            {isOwner ? (
+              <label className="field">
+                <span className="field-label">Institute code</span>
+                <input className="input" value={draft.institute_code} onChange={(event) => setDraft({ ...draft, institute_code: event.target.value.toUpperCase() })} placeholder="SCHOOL01" maxLength={32} />
+              </label>
+            ) : isStaff && (
+              <label className="field" style={{ opacity: 0.7 }}>
+                <span className="field-label">Institute</span>
+                <span className="monio">{staffInstituteCode || "—"}</span>
+              </label>
+            )}
           <label className="field">
             <span className="field-label">Category</span>
             <select className="select" value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value })}>
