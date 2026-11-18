@@ -536,17 +536,12 @@ export default function ComplaintPage() {
                   onChange={setField("details_text")}
                   minLength={10}
                   maxLength={DETAILS_MAX}
-                  rows={6}
-                  placeholder="What happened, where, and who is involved. Type it — or tap “Speak instead” and just say it."
+                  rows={3}
+                  placeholder="What happened. Type it — or tap ‘Speak instead’ and just say it."
                   required
                 />
                 {dictation.error && <p className="error-text">{dictation.error}</p>}
                 {fieldError("details_text") && <p className="error-text">{fieldError("details_text")}</p>}
-                <p className="field-hint">
-                  {dictation.supported
-                    ? "Voice typing is optional — speak in English or Hindi and edit the text before submitting. Nothing is recorded or stored."
-                    : "You can type here. Voice typing needs Chrome, Edge or Safari on this device."}
-                </p>
               </div>
 
               <div className="field field-wide">

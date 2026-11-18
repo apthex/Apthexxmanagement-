@@ -579,7 +579,6 @@ export const CATEGORY_META = [
   { value: "Online Harassment or Bullying", key: "categoryHarassment", descriptionKey: "categoryHarassmentDesc", icon: "chat" },
   { value: "Financial Fraud or Threats", key: "categoryFinancial", descriptionKey: "categoryFinancialDesc", icon: "wallet" },
   { value: "Fake Profiles or Account Hacking", key: "categoryFake", descriptionKey: "categoryFakeDesc", icon: "user" },
-  { value: "Institution-level Issue", key: "categoryInstitution", descriptionKey: "categoryInstitutionDesc", icon: "building" },
 ];
 
 export const URGENT_CATEGORY = "Urgent safety concern";
