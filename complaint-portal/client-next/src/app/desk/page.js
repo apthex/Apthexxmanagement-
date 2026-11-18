@@ -100,56 +100,35 @@ function Dashboard() {
         </>
       }
     >
-      <div className="stat-grid">
+      <div className="summary-container">
         {isOwner ? (
-          <>
-            <article className="stat-card">
-              <span className="stat-icon"><Icon name="layers" size={20} /></span>
-              <div><strong>{summary.total}</strong><span>All cases</span></div>
-            </article>
-            <article className="stat-card stat-urgent">
-              <span className="stat-icon"><Icon name="alert" size={20} /></span>
-              <div><strong>{summary.urgent}</strong><span>Urgent, open</span></div>
-            </article>
-            <article className="stat-card">
-              <span className="stat-icon"><Icon name="clock" size={20} /></span>
-              <div><strong>{summary.in_process}</strong><span>In process</span></div>
-            </article>
-            <article className="stat-card stat-complete">
-              <span className="stat-icon"><Icon name="check" size={20} /></span>
-              <div><strong>{summary.completed}</strong><span>Completed</span></div>
-            </article>
-          </>
+          <div className="summary-owner">
+            <span className="summary-label">Case Desk Overview</span>
+            <div className="summary-numbers">
+              <span className="summary-total">{summary.total}</span>
+              <span className="summary-urgent">{summary.urgent} Urgent</span>
+              <span className="summary-inproc">{summary.in_process} In Process</span>
+              <span className="summary-completed">{summary.completed} Completed</span>
+            </div>
+          </div>
         ) : isStaff && staffInstituteCode ? (
-          <>
-            <article className="stat-card">
-              <span className="stat-icon"><Icon name="layers" size={20} /></span>
-              <div><strong>{summary.total}</strong><span>Your institute cases</span></div>
-            </article>
-            <article className="stat-card stat-urgent">
-              <span className="stat-icon"><Icon name="alert" size={20} /></span>
-              <div><strong>{summary.urgent}</strong><span>Urgent, open</span></div>
-            </article>
-            <article className="stat-card">
-              <span className="stat-icon"><Icon name="clock" size={20} /></span>
-              <div><strong>{summary.in_process}</strong><span>In process</span></div>
-            </article>
-            <article className="stat-card stat-complete">
-              <span className="stat-icon"><Icon name="check" size={20} /></span>
-              <div><strong>{summary.completed}</strong><span>Completed</span></div>
-            </article>
-          </>
+          <div className="summary-staff">
+            <span className="summary-label">Your Institute Cases</span>
+            <div className="summary-numbers">
+              <span className="summary-total">{summary.total}</span>
+              <span className="summary-urgent">{summary.urgent} Urgent</span>
+              <span className="summary-inproc">{summary.in_process} In Process</span>
+              <span className="summary-completed">{summary.completed} Completed</span>
+            </div>
+          </div>
         ) : (
-          <>
-            <article className="stat-card">
-              <span className="stat-icon"><Icon name="layers" size={20} /></span>
-              <div><strong>{summary.total}</strong><span>All cases</span></div>
-            </article>
-            <article className="stat-card stat-urgent">
-              <span className="stat-icon"><Icon name="alert" size={20} /></span>
-              <div><strong>{summary.urgent}</strong><span>Urgent, open</span></div>
-            </article>
-          </>
+          <div className="summary-all">
+            <span className="summary-label">All Cases</span>
+            <div className="summary-numbers">
+              <span className="summary-total">{summary.total}</span>
+              <span className="summary-urgent">{summary.urgent} Urgent</span>
+            </div>
+          </div>
         )}
       </div>
 
