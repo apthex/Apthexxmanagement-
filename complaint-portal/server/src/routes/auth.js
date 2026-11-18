@@ -72,13 +72,24 @@ router.post("/login", requireTrustedOrigin, async (req, res, next) => {
       return res.status(429).json({ error: "Too many login attempts. Try again in 15 minutes." });
     }
 
-    // Password-only sign-in: the password itself picks the account.
-    // Owners (admin password) are matched first, then case_team (teacher password).
+    // Password-only sign-in with institute code support.
+    // If institute code (code) is provided, teacher is found by institute_code + password.
+    // Otherwise, falls back to searching all owners then teachers by password.
     let member = null;
     if (email) {
       // Email path kept for API compatibility and a future 2FA re-enable.
       member = await Member.findOne({ email });
+    } else if (code) {
+      // Institute code path: find teacher by institute_code + verify password
+      const teachers = await Member.find({ role: "case_team", institute_code: code.toUpperCase().trim(), status: "active" });
+      for (const candidate of teachers) {
+        if (await bcrypt.compare(password, candidate.password_hash)) {
+          member = candidate;
+          break;
+        }
+      }
     } else {
+      // Fallback: search all owners then teachers by password (no institute code)
       const owners = await Member.find({ role: "owner", status: "active" }).sort({ created_at: 1 });
       const teachers = await Member.find({ role: "case_team", status: "active" }).sort({ created_at: 1 });
       for (const candidate of [...owners, ...teachers]) {

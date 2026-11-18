@@ -196,6 +196,14 @@ export default function StaffLoginPage() {
                       required
                       placeholder="Enter your password"
                     />
+                    <input
+                      className="auth-input auth-input-code"
+                      value={code}
+                      onChange={(event) => setCode(event.target.value.replace(/\D/g, "").toUpperCase().slice(0, 8))}
+                      inputMode="text"
+                      placeholder="Institute code (e.g. APS001)"
+                      maxLength={8}
+                    />
                     <button
                       type="button"
                       className="auth-eye"
