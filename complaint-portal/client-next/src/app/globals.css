@@ -271,8 +271,7 @@ code {
   top: 0;
   z-index: 50;
   border-bottom: 1px solid var(--line);
-  background: rgba(8, 9, 12, 0.82);
-  backdrop-filter: blur(18px) saturate(1.2);
+  background: #0a0a0a;
 }
 
 .public-header-inner {
@@ -4912,5 +4911,4 @@ body {
   margin: 12px 0 !important;
   font-weight: 700 !important;
   letter-spacing: 0.02em !important;
-  backdrop-filter: blur(2px);
 }
