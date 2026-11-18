@@ -286,7 +286,7 @@ code {
 
 .brand {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
   white-space: nowrap;
 }
@@ -4892,4 +4892,14 @@ body {
   padding: 12px 16px;
   border-radius: 8px;
   margin: 12px 0;
+}
+.anon-note {
+  color: var(--red-bright) !important;
+  background: rgba(255, 59, 78, 0.1);
+  border: 1px solid rgba(255, 59, 78, 0.3);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin: 12px 0;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
