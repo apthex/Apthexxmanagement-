@@ -5431,7 +5431,7 @@ body {
 
 /* ---- responsive -------------------------------------------------------- */
 
-@media (max-width: 1280px) {
+@media (max-width: 1360px) {
   .staff-layout { grid-template-columns: 1fr; }
   .staff-layout > aside { position: static; }
 }
