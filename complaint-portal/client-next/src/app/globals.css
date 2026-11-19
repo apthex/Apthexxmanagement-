@@ -4941,3 +4941,33 @@ body {
     }
   }
 }
+
+.summary-container {
+  margin: 24px 0;
+  .summary-label {
+    font-size: 0.875rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    margin-bottom: 16px;
+    display: block;
+  }
+  .summary-row {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 16px;
+    .summary-item {
+      flex: 1;
+      .summary-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text);
+      }
+      .summary-label {
+        font-size: 0.875rem;
+        color: var(--text-soft);
+      }
+    }
+  }
+}

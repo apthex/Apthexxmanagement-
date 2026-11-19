@@ -104,29 +104,53 @@ function Dashboard() {
         {isOwner ? (
           <div className="summary-owner">
             <span className="summary-label">Case Desk Overview</span>
-            <div className="summary-numbers">
-              <span className="summary-total">{summary.total}</span>
-              <span className="summary-urgent">{summary.urgent} Urgent</span>
-              <span className="summary-inproc">{summary.in_process} In Process</span>
-              <span className="summary-completed">{summary.completed} Completed</span>
+            <div className="summary-row">
+              <span className="summary-item">
+                <span className="summary-value">{summary.total}</span>
+                <span className="summary-label">Total</span>
+              </span>
+              <span className="summary-item">
+                <span className="summary-value">{summary.urgent}</span>
+                <span className="summary-label">Urgent</span>
+              </span>
+            </div>
+            <div className="summary-row">
+              <span className="summary-item">
+                <span className="summary-value">{summary.in_process}</span>
+                <span className="summary-label">In Process</span>
+              </span>
+              <span className="summary-item">
+                <span className="summary-value">{summary.completed}</span>
+                <span className="summary-label">Completed</span>
+              </span>
             </div>
           </div>
         ) : isStaff && staffInstituteCode ? (
           <div className="summary-staff">
             <span className="summary-label">Your Institute Cases</span>
-            <div className="summary-numbers">
-              <span className="summary-total">{summary.total}</span>
-              <span className="summary-urgent">{summary.urgent} Urgent</span>
-              <span className="summary-inproc">{summary.in_process} In Process</span>
-              <span className="summary-completed">{summary.completed} Completed</span>
+            <div className="summary-row">
+              <span className="summary-item">
+                <span className="summary-value">{summary.total}</span>
+                <span className="summary-label">Total</span>
+              </span>
+              <span className="summary-item">
+                <span className="summary-value">{summary.urgent}</span>
+                <span className="summary-label">Urgent</span>
+              </span>
             </div>
           </div>
         ) : (
           <div className="summary-all">
             <span className="summary-label">All Cases</span>
-            <div className="summary-numbers">
-              <span className="summary-total">{summary.total}</span>
-              <span className="summary-urgent">{summary.urgent} Urgent</span>
+            <div className="summary-row">
+              <span className="summary-item">
+                <span className="summary-value">{summary.total}</span>
+                <span className="summary-label">Total</span>
+              </span>
+              <span className="summary-item">
+                <span className="summary-value">{summary.urgent}</span>
+                <span className="summary-label">Urgent</span>
+              </span>
             </div>
           </div>
         )}
