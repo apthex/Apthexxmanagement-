@@ -199,8 +199,8 @@ function StaffView() {
       )}
 
       <div className="staff-layout">
-        <section className="card table-card">
-          <div className="card-heading between">
+        <section className="staff-panel">
+          <div className="staff-panel-head">
             <div>
               <h2>Case Desk accounts</h2>
               <p>Deactivating a member revokes their sessions immediately.</p>
@@ -209,95 +209,106 @@ function StaffView() {
           </div>
 
           {loading ? (
-            <Spinner label="Loading staff accounts…" />
+            <div className="card"><Spinner label="Loading staff accounts…" /></div>
           ) : (
-            <div className="table-wrap">
-              <table className="data-table">
-                <thead>
-                  <tr><th>Name</th><th>Position</th><th>Institute</th><th>Status</th><th>2FA</th><th>Last sign-in</th><th>Actions</th></tr>
-                </thead>
-                <tbody>
-                  {members.map((row) => {
-                    const isSelf = row.id === member.id;
-                    const busy = busyId === row.id;
-                    return (
-                      <tr key={row.id}>
-                        <td>
-                          <strong>{row.name}</strong>
-                          <div className="small muted">{row.email}{isSelf ? " · You" : ""}</div>
-                        </td>
-                        <td>
+            <div className="staff-list">
+              {members.map((row) => {
+                const isSelf = row.id === member.id;
+                const busy = busyId === row.id;
+                const initials = row.name
+                  .split(/\s+/)
+                  .filter(Boolean)
+                  .slice(0, 2)
+                  .map((part) => part[0])
+                  .join("")
+                  .toUpperCase();
+                return (
+                  <article className="staff-card" key={row.id}>
+                    <div className="staff-card-head">
+                      <span className="staff-avatar" aria-hidden="true">{initials || "AP"}</span>
+                      <div className="staff-identity">
+                        <strong>
+                          {row.name}
+                          {isSelf && <span className="staff-you">You</span>}
+                        </strong>
+                        <span>{row.email}</span>
+                      </div>
+                      <div className="staff-badges">
+                        <span className={`badge ${row.status === "active" ? "status-completed" : "badge-spam"}`}>{row.status}</span>
+                        <span className={`badge ${row.totp_enabled ? "status-completed" : "badge-urgent"}`}>
+                          {row.totp_enabled ? "2FA enrolled" : "2FA pending"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="staff-card-meta">
+                      <label className="staff-field">
+                        <span className="staff-field-label">Position</span>
+                        <select
+                          className="select select-small"
+                          value={row.role}
+                          disabled={busy}
+                          onChange={(event) => updateMember(
+                            row,
+                            { role: event.target.value },
+                            `${row.name} is now ${event.target.value === "owner" ? "an admin" : "a teacher"}.`
+                          )}
+                        >
+                          <option value="owner">Admin</option>
+                          <option value="case_team">Teacher</option>
+                        </select>
+                      </label>
+                      <label className="staff-field">
+                        <span className="staff-field-label">Institute</span>
+                        {row.role === "case_team" ? (
                           <select
                             className="select select-small"
-                            value={row.role}
+                            value={row.institute_code || ""}
                             disabled={busy}
                             onChange={(event) => updateMember(
                               row,
-                              { role: event.target.value },
-                              `${row.name} is now ${event.target.value === "owner" ? "an admin" : "a teacher"}.`
+                              { institute_code: event.target.value },
+                              `${row.name} is now scoped to ${event.target.value}. They will only see that college's complaints.`
                             )}
                           >
-                            <option value="owner">Admin</option>
-                            <option value="case_team">Teacher</option>
+                            <option value="">— not set —</option>
+                            {institutes.map((institute) => (
+                              <option key={institute.code} value={institute.code}>{institute.code} · {institute.name}</option>
+                            ))}
                           </select>
-                        </td>
-                        <td>
-                          {row.role === "case_team" ? (
-                            <select
-                              className="select select-small"
-                              value={row.institute_code || ""}
-                              disabled={busy}
-                              onChange={(event) => updateMember(
-                                row,
-                                { institute_code: event.target.value },
-                                `${row.name} is now scoped to ${event.target.value}. They will only see that college's complaints.`
-                              )}
-                            >
-                              <option value="">— not set —</option>
-                              {institutes.map((institute) => (
-                                <option key={institute.code} value={institute.code}>{institute.code} · {institute.name}</option>
-                              ))}
-                            </select>
-                          ) : (
-                            <span className="muted">All access</span>
-                          )}
-                        </td>
-                        <td>
-                          <span className={`badge ${row.status === "active" ? "status-completed" : "badge-spam"}`}>{row.status}</span>
-                        </td>
-                        <td>
-                          <span className={`badge ${row.totp_enabled ? "status-completed" : "badge-urgent"}`}>
-                            {row.totp_enabled ? "Enrolled" : "Pending"}
-                          </span>
-                        </td>
-                        <td className="nowrap">{formatDateTime(row.last_login_at)}</td>
-                        <td>
-                          <div className="row row-wrap">
-                            <button
-                              type="button"
-                              className="btn btn-ghost btn-small"
-                              disabled={busy || isSelf}
-                              onClick={() => updateMember(
-                                row,
-                                { status: row.status === "active" ? "inactive" : "active" },
-                                `${row.name} is now ${row.status === "active" ? "inactive" : "active"}.`
-                              )}
-                            >
-                              {row.status === "active" ? "Deactivate" : "Activate"}
-                            </button>
-                            <button type="button" className="btn btn-ghost btn-small" disabled={busy} onClick={() => setResetFor(row.id)}>
-                              Reset password
-                            </button>
-                            <button type="button" className="btn btn-ghost btn-small" disabled={busy} onClick={() => revokeSessions(row)}>
-                              Revoke sessions
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                        ) : (
+                          <span className="staff-static">All access</span>
+                        )}
+                      </label>
+                      <div className="staff-field">
+                        <span className="staff-field-label">Last sign-in</span>
+                        <span className="staff-static">{formatDateTime(row.last_login_at)}</span>
+                      </div>
+                    </div>
+
+                    <div className="staff-card-actions">
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-small"
+                        disabled={busy || isSelf}
+                        onClick={() => updateMember(
+                          row,
+                          { status: row.status === "active" ? "inactive" : "active" },
+                          `${row.name} is now ${row.status === "active" ? "inactive" : "active"}.`
+                        )}
+                      >
+                        {row.status === "active" ? "Deactivate" : "Activate"}
+                      </button>
+                      <button type="button" className="btn btn-ghost btn-small" disabled={busy} onClick={() => setResetFor(row.id)}>
+                        Reset password
+                      </button>
+                      <button type="button" className="btn btn-ghost btn-small" disabled={busy} onClick={() => revokeSessions(row)}>
+                        Revoke sessions
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>

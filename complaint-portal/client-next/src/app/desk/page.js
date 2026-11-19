@@ -114,60 +114,35 @@ function Dashboard() {
         </>
       }
     >
-      <div className="summary-container">
-        {isOwner ? (
-          <div className="summary-owner">
-            <span className="summary-label">Case Desk Overview</span>
-            <div className="summary-row">
-              <span className="summary-item">
-                <span className="summary-value">{summary.total}</span>
-                <span className="summary-label">Total</span>
-              </span>
-              <span className="summary-item">
-                <span className="summary-value">{summary.urgent}</span>
-                <span className="summary-label">Urgent</span>
-              </span>
-            </div>
-            <div className="summary-row">
-              <span className="summary-item">
-                <span className="summary-value">{summary.in_process}</span>
-                <span className="summary-label">In Process</span>
-              </span>
-              <span className="summary-item">
-                <span className="summary-value">{summary.completed}</span>
-                <span className="summary-label">Completed</span>
-              </span>
-            </div>
+      <div className="desk-summary">
+        <article className="summary-card">
+          <span className="summary-card-icon"><Icon name="list" size={17} /></span>
+          <div className="summary-card-copy">
+            <span className="summary-card-value">{summary.total}</span>
+            <span className="summary-card-label">Total cases</span>
           </div>
-        ) : isStaff && staffInstituteCode ? (
-          <div className="summary-staff">
-            <span className="summary-label">Your Institute Cases</span>
-            <div className="summary-row">
-              <span className="summary-item">
-                <span className="summary-value">{summary.total}</span>
-                <span className="summary-label">Total</span>
-              </span>
-              <span className="summary-item">
-                <span className="summary-value">{summary.urgent}</span>
-                <span className="summary-label">Urgent</span>
-              </span>
-            </div>
+        </article>
+        <article className="summary-card summary-card-urgent">
+          <span className="summary-card-icon"><Icon name="alert" size={17} /></span>
+          <div className="summary-card-copy">
+            <span className="summary-card-value">{summary.urgent}</span>
+            <span className="summary-card-label">Urgent open</span>
           </div>
-        ) : (
-          <div className="summary-all">
-            <span className="summary-label">All Cases</span>
-            <div className="summary-row">
-              <span className="summary-item">
-                <span className="summary-value">{summary.total}</span>
-                <span className="summary-label">Total</span>
-              </span>
-              <span className="summary-item">
-                <span className="summary-value">{summary.urgent}</span>
-                <span className="summary-label">Urgent</span>
-              </span>
-            </div>
+        </article>
+        <article className="summary-card">
+          <span className="summary-card-icon"><Icon name="clock" size={17} /></span>
+          <div className="summary-card-copy">
+            <span className="summary-card-value">{summary.in_process}</span>
+            <span className="summary-card-label">In process</span>
           </div>
-        )}
+        </article>
+        <article className="summary-card">
+          <span className="summary-card-icon"><Icon name="check" size={17} /></span>
+          <div className="summary-card-copy">
+            <span className="summary-card-value">{summary.completed}</span>
+            <span className="summary-card-label">Completed</span>
+          </div>
+        </article>
       </div>
 
       <form className="card filter-card" onSubmit={applyFilters}>
