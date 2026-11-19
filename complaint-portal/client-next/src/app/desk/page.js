@@ -95,7 +95,7 @@ function Dashboard() {
 
   return (
     <DeskShell
-      title={isOwner ? "Case overview" : "College complaints"}
+      title={isOwner ? "Case Overview" : "College Complaints"}
       subtitle={
         isOwner
           ? "Every report submitted through the public portal, private to authorised APTHEX staff."
@@ -115,94 +115,105 @@ function Dashboard() {
       }
     >
       <div className="desk-summary">
-        <article className="summary-card">
-          <span className="summary-card-icon"><Icon name="list" size={17} /></span>
+        <article className="summary-card summary-card-total">
+          <span className="summary-card-icon"><Icon name="layers" size={18} /></span>
           <div className="summary-card-copy">
             <span className="summary-card-value">{summary.total}</span>
             <span className="summary-card-label">Total cases</span>
           </div>
+          <svg className="summary-wave" viewBox="0 0 260 80" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 68c30-10 52 6 86-2s58-20 92-14 48 16 82 10v18H0Z" fill="currentColor" />
+          </svg>
         </article>
         <article className="summary-card summary-card-urgent">
-          <span className="summary-card-icon"><Icon name="alert" size={17} /></span>
+          <span className="summary-card-icon"><Icon name="alert" size={18} /></span>
           <div className="summary-card-copy">
             <span className="summary-card-value">{summary.urgent}</span>
             <span className="summary-card-label">Urgent open</span>
           </div>
+          <svg className="summary-wave" viewBox="0 0 260 80" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 70c32-12 58 2 92-6s54-18 90-12 46 14 78 8v20H0Z" fill="currentColor" />
+          </svg>
         </article>
-        <article className="summary-card">
-          <span className="summary-card-icon"><Icon name="clock" size={17} /></span>
+        <article className="summary-card summary-card-process">
+          <span className="summary-card-icon"><Icon name="clock" size={18} /></span>
           <div className="summary-card-copy">
             <span className="summary-card-value">{summary.in_process}</span>
             <span className="summary-card-label">In process</span>
           </div>
+          <svg className="summary-wave" viewBox="0 0 260 80" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 66c30-8 56 8 90 0s58-20 94-14 44 18 76 12v16H0Z" fill="currentColor" />
+          </svg>
         </article>
-        <article className="summary-card">
-          <span className="summary-card-icon"><Icon name="check" size={17} /></span>
+        <article className="summary-card summary-card-done">
+          <span className="summary-card-icon"><Icon name="check" size={18} /></span>
           <div className="summary-card-copy">
             <span className="summary-card-value">{summary.completed}</span>
             <span className="summary-card-label">Completed</span>
           </div>
+          <svg className="summary-wave" viewBox="0 0 260 80" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 69c32-11 56 4 88-4s56-20 92-14 46 18 80 12v17H0Z" fill="currentColor" />
+          </svg>
         </article>
       </div>
 
-      <form className="card filter-card" onSubmit={applyFilters}>
-        <div className="filter-head">
-          <span className="filter-title"><Icon name="layers" size={15} /> Filter complaints</span>
-          <span className="filter-updated small muted">
-            {updatedAt ? `Updated ${formatDateTime(updatedAt)}` : "Loading cases…"}
-          </span>
-        </div>
-        <div className="filter-grid">
-          <label className="field">
-            <span className="field-label">Search reference</span>
-            <input className="input" value={draft.search} onChange={(event) => setDraft({ ...draft, search: event.target.value.toUpperCase() })} placeholder="APX-2601-ABC234" maxLength={16} />
-          </label>
-            {isOwner ? (
-              <label className="field">
-                <span className="field-label">Institute code</span>
-                <input className="input" value={draft.institute_code} onChange={(event) => setDraft({ ...draft, institute_code: event.target.value.toUpperCase() })} placeholder="SCHOOL01" maxLength={32} />
-              </label>
-            ) : isStaff && (
-              <label className="field" style={{ opacity: 0.7 }}>
-                <span className="field-label">Institute</span>
-                <span className="monio">{staffInstituteCode || "—"}</span>
-              </label>
-            )}
-          <label className="field">
-            <span className="field-label">Category</span>
-            <select className="select" value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value })}>
-              <option value="">All categories</option>
-              {CATEGORY_META.map((category) => <option key={category.value} value={category.value}>{category.value}</option>)}
-              <option value={URGENT_CATEGORY}>{URGENT_CATEGORY}</option>
-            </select>
-          </label>
-          <label className="field">
-            <span className="field-label">Status</span>
-            <select className="select" value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value })}>
-              <option value="">All statuses</option>
-              <option value="in_process">In process</option>
-              <option value="completed">Completed</option>
-            </select>
-          </label>
-          {isOwner && (
-            <label className="field">
-              <span className="field-label">Spam</span>
-              <select className="select" value={draft.spam} onChange={(event) => setDraft({ ...draft, spam: event.target.value })}>
-                <option value="false">Visible only</option>
-                <option value="true">Spam only</option>
-                <option value="all">Include spam</option>
-              </select>
+      <form className="card filter-card desk-filter" onSubmit={applyFilters}>
+        <div className="desk-filter-head">
+          <span className="filter-title"><Icon name="filter" size={15} /> Filter complaints</span>
+          <div className="desk-filter-head-right">
+            <label className="checkbox-field desk-urgent-toggle">
+              <input type="checkbox" checked={draft.urgent} onChange={(event) => setDraft({ ...draft, urgent: event.target.checked })} />
+              <span>Urgent only</span>
             </label>
-          )}
+            <span className="filter-updated small muted">
+              {updatedAt ? `Updated ${formatDateTime(updatedAt)}` : "Loading cases…"}
+            </span>
+          </div>
         </div>
-        <div className="between filter-actions">
-          <label className="checkbox-field">
-            <input type="checkbox" checked={draft.urgent} onChange={(event) => setDraft({ ...draft, urgent: event.target.checked })} />
-            <span>Urgent only</span>
+        <div className="desk-filter-row">
+          <label className="desk-search">
+            <Icon name="search" size={16} />
+            <input
+              className="input"
+              aria-label="Search reference"
+              value={draft.search}
+              onChange={(event) => setDraft({ ...draft, search: event.target.value.toUpperCase() })}
+              placeholder="Search reference…"
+              maxLength={16}
+            />
           </label>
-          <div className="filter-buttons">
+          <select className="select" aria-label="Category" value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value })}>
+            <option value="">All categories</option>
+            {CATEGORY_META.map((category) => <option key={category.value} value={category.value}>{category.value}</option>)}
+            <option value={URGENT_CATEGORY}>{URGENT_CATEGORY}</option>
+          </select>
+          <select className="select" aria-label="Status" value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value })}>
+            <option value="">All statuses</option>
+            <option value="in_process">In process</option>
+            <option value="completed">Completed</option>
+          </select>
+          {isOwner ? (
+            <input
+              className="input"
+              aria-label="Institute code"
+              value={draft.institute_code}
+              onChange={(event) => setDraft({ ...draft, institute_code: event.target.value.toUpperCase() })}
+              placeholder="Institute code"
+              maxLength={32}
+            />
+          ) : (
+            <span className="desk-filter-static">Institute · {staffInstituteCode || "—"}</span>
+          )}
+          {isOwner && (
+            <select className="select" aria-label="Spam filter" value={draft.spam} onChange={(event) => setDraft({ ...draft, spam: event.target.value })}>
+              <option value="false">Visible only</option>
+              <option value="true">Spam only</option>
+              <option value="all">Include spam</option>
+            </select>
+          )}
+          <div className="desk-filter-buttons">
             <button type="button" className="btn btn-ghost" onClick={resetFilters}>Clear</button>
-            <button type="submit" className="btn btn-primary"><Icon name="search" size={15} /> Apply filters</button>
+            <button type="submit" className="btn btn-primary"><Icon name="search" size={15} /> Apply</button>
           </div>
         </div>
       </form>
@@ -224,12 +235,11 @@ function Dashboard() {
               <thead>
                 <tr>
                   <th>Reference</th>
-                  <th>Institute</th>
                   <th>Category</th>
                   <th>Status</th>
                   <th>Assigned</th>
                   <th>Received</th>
-                  <th aria-label="Open" />
+                  <th aria-label="Actions" />
                 </tr>
               </thead>
               <tbody>
@@ -248,15 +258,31 @@ function Dashboard() {
                     role="link"
                   >
                     <td data-label="Reference">
-                      <span className="ref-cell">{item.ref_id}</span>
-                      {item.urgent && <span className="badge badge-urgent">Urgent</span>}
+                      <div className="ref-stack">
+                        <span className="ref-line">
+                          <span className="ref-cell">{item.ref_id}</span>
+                          {item.urgent && <span className="badge badge-urgent">Urgent</span>}
+                        </span>
+                        <span className="ref-inst">{item.institute_code}</span>
+                      </div>
                     </td>
-                    <td data-label="Institute"><span className="mono">{item.institute_code}</span></td>
                     <td data-label="Category"><span className="cell-clamp">{item.category}</span></td>
                     <td data-label="Status"><StatusBadge status={item.status} spam={item.flagged_spam} /></td>
                     <td data-label="Assigned">{item.assigned_to?.name || <span className="muted">Unassigned</span>}</td>
                     <td data-label="Received" className="nowrap">{formatDateTime(item.created_at)}</td>
-                    <td className="cell-go" aria-hidden="true"><Icon name="arrowRight" size={16} /></td>
+                    <td className="cell-more">
+                      <button
+                        type="button"
+                        className="row-more"
+                        aria-label={`Open case ${item.ref_id}`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          router.push(`/desk/complaint/${item.ref_id}`);
+                        }}
+                      >
+                        <Icon name="more" size={16} />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

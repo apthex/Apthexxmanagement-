@@ -22,6 +22,7 @@ export default function DeskShell({ children, title, subtitle, actions = null })
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const [error, setError] = useState("");
+  const eyebrow = pathname === "/desk" ? "Case Desk" : "APTHEX admin & teacher area";
 
   async function logout() {
     setLoggingOut(true);
@@ -67,12 +68,14 @@ export default function DeskShell({ children, title, subtitle, actions = null })
         </nav>
 
         <div className="desk-sidebar-foot">
-          <p className="desk-help-line">
-            Need help?<br />
-            <a href="tel:+919421161446">94211 61446</a>
-            {" · "}
-            <a href="mailto:help@apthex.com">help@apthex.com</a>
-          </p>
+          <div className="desk-help-card">
+            <span className="desk-help-icon"><Icon name="headset" size={18} /></span>
+            <div className="desk-help-copy">
+              <span className="desk-help-label">Need help?</span>
+              <a href="tel:+919421161446">94211 61446</a>
+              <a href="mailto:help@apthex.com">help@apthex.com</a>
+            </div>
+          </div>
         </div>
       </aside>
 
@@ -95,7 +98,7 @@ export default function DeskShell({ children, title, subtitle, actions = null })
         <main className="desk-main">
           <div className="desk-title-row">
             <div>
-              <p className="eyebrow">APTHEX admin &amp; teacher area</p>
+              <p className="eyebrow">{eyebrow}</p>
               <h1>{title}</h1>
               {subtitle && <p className="page-subtitle">{subtitle}</p>}
             </div>

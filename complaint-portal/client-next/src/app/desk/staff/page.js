@@ -34,6 +34,7 @@ function StaffView() {
   const [resetFor, setResetFor] = useState("");
   const [resetPassword, setResetPassword] = useState("");
   const [busyId, setBusyId] = useState("");
+  const [menuFor, setMenuFor] = useState("");
 
   const isTeacher = draft.role === "case_team";
 
@@ -57,6 +58,23 @@ function StaffView() {
   useEffect(() => {
     if (member.role === "owner") load();
   }, [load, member.role]);
+
+  // Close the row action menu on an outside click or Escape.
+  useEffect(() => {
+    if (!menuFor) return undefined;
+    function closeOnOutside(event) {
+      if (!event.target.closest(".staff-actions")) setMenuFor("");
+    }
+    function closeOnEscape(event) {
+      if (event.key === "Escape") setMenuFor("");
+    }
+    document.addEventListener("pointerdown", closeOnOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [menuFor]);
 
   if (member.role !== "owner") {
     return (
@@ -177,7 +195,7 @@ function StaffView() {
 
   return (
     <DeskShell
-      title="Staff accounts"
+      title="Staff Accounts"
       subtitle="Create admin and teacher logins. Every teacher gets their own password and sees only their college."
     >
       {error && <div className="alert alert-error" role="alert"><Icon name="alert" size={18} /> {error}</div>}
@@ -189,7 +207,7 @@ function StaffView() {
             <h2>Teacher password — copy it now</h2>
             <p>This is the only time the password is shown. Hand it to the teacher privately.</p>
           </div>
-          <div className="row">
+          <div className="row row-wrap">
             <code className="generated-password mono">{generatedPassword}</code>
             <button type="button" className="btn btn-secondary btn-small" onClick={copyGeneratedPassword}>
               <Icon name={passwordCopied ? "check" : "copy"} size={15} /> {passwordCopied ? "Copied" : "Copy password"}
@@ -199,128 +217,178 @@ function StaffView() {
       )}
 
       <div className="staff-layout">
-        <section className="staff-panel">
-          <div className="staff-panel-head">
-            <div>
-              <h2>Case Desk accounts</h2>
-              <p>Deactivating a member revokes their sessions immediately.</p>
+        <section className="card staff-table-card">
+          <div className="staff-card-head">
+            <div className="staff-card-heading">
+              <span className="staff-card-icon"><Icon name="layers" size={18} /></span>
+              <div>
+                <h2>Case Desk Accounts</h2>
+                <p>Accounts with access to the internal case desk.</p>
+              </div>
             </div>
-            <span className="badge badge-neutral">{members.length} member(s)</span>
+            <span className="staff-count">{members.length} {members.length === 1 ? "Member" : "Members"}</span>
           </div>
 
           {loading ? (
-            <div className="card"><Spinner label="Loading staff accounts…" /></div>
+            <div className="staff-loading"><Spinner label="Loading staff accounts…" /></div>
+          ) : members.length === 0 ? (
+            <div className="empty-state staff-empty">
+              <span className="icon-tile"><Icon name="users" size={24} /></span>
+              <h2>No staff accounts yet</h2>
+              <p>Create the first teacher login using the form on the right.</p>
+            </div>
           ) : (
-            <div className="staff-list">
-              {members.map((row) => {
-                const isSelf = row.id === member.id;
-                const busy = busyId === row.id;
-                const initials = row.name
-                  .split(/\s+/)
-                  .filter(Boolean)
-                  .slice(0, 2)
-                  .map((part) => part[0])
-                  .join("")
-                  .toUpperCase();
-                return (
-                  <article className="staff-card" key={row.id}>
-                    <div className="staff-card-head">
-                      <span className="staff-avatar" aria-hidden="true">{initials || "AP"}</span>
-                      <div className="staff-identity">
-                        <strong>
-                          {row.name}
-                          {isSelf && <span className="staff-you">You</span>}
-                        </strong>
-                        <span>{row.email}</span>
-                      </div>
-                      <div className="staff-badges">
-                        <span className={`badge ${row.status === "active" ? "status-completed" : "badge-spam"}`}>{row.status}</span>
-                        <span className={`badge ${row.totp_enabled ? "status-completed" : "badge-urgent"}`}>
-                          {row.totp_enabled ? "2FA enrolled" : "2FA pending"}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="staff-card-meta">
-                      <label className="staff-field">
-                        <span className="staff-field-label">Position</span>
-                        <select
-                          className="select select-small"
-                          value={row.role}
-                          disabled={busy}
-                          onChange={(event) => updateMember(
-                            row,
-                            { role: event.target.value },
-                            `${row.name} is now ${event.target.value === "owner" ? "an admin" : "a teacher"}.`
-                          )}
-                        >
-                          <option value="owner">Admin</option>
-                          <option value="case_team">Teacher</option>
-                        </select>
-                      </label>
-                      <label className="staff-field">
-                        <span className="staff-field-label">Institute</span>
-                        {row.role === "case_team" ? (
+            <div className="table-wrap">
+              <table className="data-table staff-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Position</th>
+                    <th>Institute</th>
+                    <th>Status</th>
+                    <th>2FA</th>
+                    <th>Last sign-in</th>
+                    <th aria-label="Actions" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {members.map((row) => {
+                    const isSelf = row.id === member.id;
+                    const busy = busyId === row.id;
+                    const lastSignIn = formatDateTime(row.last_login_at);
+                    const [lastDate, lastTime] = lastSignIn === "—" ? ["—", ""] : lastSignIn.split(", ");
+                    return (
+                      <tr key={row.id}>
+                        <td data-label="Name">
+                          <div className="staff-person">
+                            <strong>
+                              {row.name}
+                              {isSelf && <span className="staff-you">You</span>}
+                            </strong>
+                            <span>{row.email}</span>
+                          </div>
+                        </td>
+                        <td data-label="Position">
                           <select
-                            className="select select-small"
-                            value={row.institute_code || ""}
+                            className="select select-small staff-select"
+                            value={row.role}
                             disabled={busy}
+                            aria-label={`Position for ${row.name}`}
                             onChange={(event) => updateMember(
                               row,
-                              { institute_code: event.target.value },
-                              `${row.name} is now scoped to ${event.target.value}. They will only see that college's complaints.`
+                              { role: event.target.value },
+                              `${row.name} is now ${event.target.value === "owner" ? "an admin" : "a teacher"}.`
                             )}
                           >
-                            <option value="">— not set —</option>
-                            {institutes.map((institute) => (
-                              <option key={institute.code} value={institute.code}>{institute.code} · {institute.name}</option>
-                            ))}
+                            <option value="owner">Admin</option>
+                            <option value="case_team">Teacher</option>
                           </select>
-                        ) : (
-                          <span className="staff-static">All access</span>
-                        )}
-                      </label>
-                      <div className="staff-field">
-                        <span className="staff-field-label">Last sign-in</span>
-                        <span className="staff-static">{formatDateTime(row.last_login_at)}</span>
-                      </div>
-                    </div>
-
-                    <div className="staff-card-actions">
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-small"
-                        disabled={busy || isSelf}
-                        onClick={() => updateMember(
-                          row,
-                          { status: row.status === "active" ? "inactive" : "active" },
-                          `${row.name} is now ${row.status === "active" ? "inactive" : "active"}.`
-                        )}
-                      >
-                        {row.status === "active" ? "Deactivate" : "Activate"}
-                      </button>
-                      <button type="button" className="btn btn-ghost btn-small" disabled={busy} onClick={() => setResetFor(row.id)}>
-                        Reset password
-                      </button>
-                      <button type="button" className="btn btn-ghost btn-small" disabled={busy} onClick={() => revokeSessions(row)}>
-                        Revoke sessions
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
+                        </td>
+                        <td data-label="Institute">
+                          {row.role === "case_team" ? (
+                            <select
+                              className="select select-small staff-select staff-select-wide"
+                              value={row.institute_code || ""}
+                              disabled={busy}
+                              aria-label={`Institute for ${row.name}`}
+                              onChange={(event) => updateMember(
+                                row,
+                                { institute_code: event.target.value },
+                                `${row.name} is now scoped to ${event.target.value}. They will only see that college's complaints.`
+                              )}
+                            >
+                              <option value="">—</option>
+                              {institutes.map((institute) => (
+                                <option key={institute.code} value={institute.code}>{institute.code} · {institute.name}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="staff-static">All access</span>
+                          )}
+                        </td>
+                        <td data-label="Status">
+                          <span className={`staff-pill ${row.status === "active" ? "is-ok" : "is-off"}`}>
+                            <span className="staff-pill-dot" />
+                            {row.status === "active" ? "Active" : "Inactive"}
+                          </span>
+                        </td>
+                        <td data-label="2FA">
+                          <span className={`staff-pill ${row.totp_enabled ? "is-ok" : "is-warn"}`}>
+                            <span className="staff-pill-dot" />
+                            {row.totp_enabled ? "Enrolled" : "Pending"}
+                          </span>
+                        </td>
+                        <td data-label="Last sign-in">
+                          <span className="staff-last">
+                            <span>{lastDate}{lastTime ? "," : ""}</span>
+                            {lastTime && <span>{lastTime}</span>}
+                          </span>
+                        </td>
+                        <td className="staff-actions-cell">
+                          <div className="staff-actions">
+                            <button
+                              type="button"
+                              className="staff-more"
+                              aria-label={`Actions for ${row.name}`}
+                              aria-haspopup="menu"
+                              aria-expanded={menuFor === row.id}
+                              onClick={() => setMenuFor(menuFor === row.id ? "" : row.id)}
+                            >
+                              <Icon name="more" size={16} />
+                            </button>
+                            {menuFor === row.id && (
+                              <div className="staff-menu" role="menu">
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  disabled={busy || isSelf}
+                                  onClick={() => {
+                                    setMenuFor("");
+                                    updateMember(
+                                      row,
+                                      { status: row.status === "active" ? "inactive" : "active" },
+                                      `${row.name} is now ${row.status === "active" ? "inactive" : "active"}.`
+                                    );
+                                  }}
+                                >
+                                  {row.status === "active" ? "Deactivate account" : "Activate account"}
+                                </button>
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  disabled={busy}
+                                  onClick={() => { setMenuFor(""); setResetFor(row.id); }}
+                                >
+                                  Reset password
+                                </button>
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  disabled={busy}
+                                  onClick={() => { setMenuFor(""); revokeSessions(row); }}
+                                >
+                                  Revoke sessions
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </section>
 
-        <aside className="stack">
-          <section className="card side-card">
-            <h2>Create a login account</h2>
-            <p className="small muted">
-              Pick the position first. Teachers get a unique password generated here — share it with them — and they only
-              ever see complaints from the college you attach to their account.
-            </p>
-            <form className="stack" onSubmit={createMember}>
+        <aside className="staff-side">
+          <section className="card staff-create-card">
+            <div className="staff-card-heading staff-create-head">
+              <span className="staff-card-icon"><Icon name="userPlus" size={18} /></span>
+              <h2>Create a Login Account</h2>
+            </div>
+            <form className="staff-create-form" onSubmit={createMember}>
               <label className="field">
                 <span className="field-label">Position</span>
                 <select className="select" value={draft.role} onChange={(event) => setDraft({ ...draft, role: event.target.value })}>
@@ -329,16 +397,16 @@ function StaffView() {
                 </select>
               </label>
               <label className="field">
-                <span className="field-label">Full name</span>
-                <input className="input" value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} maxLength={100} required />
+                <span className="field-label">Full Name</span>
+                <input className="input" value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} placeholder="Enter full name" maxLength={100} required />
               </label>
               <label className="field">
-                <span className="field-label">Work email</span>
-                <input className="input" type="email" value={draft.email} onChange={(event) => setDraft({ ...draft, email: event.target.value })} autoComplete="off" required />
+                <span className="field-label">Work Email</span>
+                <input className="input" type="email" value={draft.email} onChange={(event) => setDraft({ ...draft, email: event.target.value })} placeholder="Enter work email" autoComplete="off" required />
               </label>
               {isTeacher ? (
                 <label className="field">
-                  <span className="field-label">Institute (their college)</span>
+                  <span className="field-label">Institute (Their College)</span>
                   <select
                     className="select"
                     value={draft.institute_code}
@@ -350,25 +418,28 @@ function StaffView() {
                       <option key={institute.code} value={institute.code}>{institute.code} · {institute.name}</option>
                     ))}
                   </select>
-                  <span className="small muted">Password is generated automatically — each teacher gets their own.</span>
+                  <span className="field-hint">Password is generated automatically — each teacher gets their own.</span>
                 </label>
               ) : (
                 <label className="field">
                   <span className="field-label">Password</span>
-                  <input className="input" type="password" value={draft.password} onChange={(event) => setDraft({ ...draft, password: event.target.value })} autoComplete="new-password" minLength={12} required />
+                  <input className="input" type="password" value={draft.password} onChange={(event) => setDraft({ ...draft, password: event.target.value })} placeholder="Minimum 12 characters" autoComplete="new-password" minLength={12} required />
                 </label>
               )}
-              <button type="submit" className="btn btn-primary btn-block" disabled={creating}>
-                {creating ? "Creating…" : isTeacher ? "Create teacher account" : "Create admin account"}
+              <button type="submit" className="btn btn-primary btn-block staff-create-submit" disabled={creating}>
+                <Icon name="plus" size={16} /> {creating ? "Creating…" : isTeacher ? "Create Teacher Account" : "Create Admin Account"}
               </button>
             </form>
           </section>
 
           {resetFor && (
-            <section className="card side-card">
-              <h2>Reset password</h2>
-              <p className="small muted">This revokes all sessions for the selected member and clears their 2FA enrolment.</p>
-              <form className="stack" onSubmit={resetMemberPassword}>
+            <section className="card staff-create-card">
+              <div className="staff-card-heading staff-create-head">
+                <span className="staff-card-icon"><Icon name="lock" size={18} /></span>
+                <h2>Reset password</h2>
+              </div>
+              <p className="small muted staff-reset-note">This revokes all sessions for the selected member and clears their 2FA enrolment.</p>
+              <form className="staff-create-form" onSubmit={resetMemberPassword}>
                 <label className="field">
                   <span className="field-label">New password</span>
                   <input className="input" type="password" value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} autoComplete="new-password" minLength={12} required />
