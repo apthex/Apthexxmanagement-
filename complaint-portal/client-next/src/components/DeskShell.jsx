@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "../lib/api.js";
 import { useAuth } from "./Protected.jsx";
+import BrandMark from "./BrandMark.jsx";
 import Icon from "./Icon.jsx";
 
 const links = [
@@ -42,8 +43,13 @@ export default function DeskShell({ children, title, subtitle, actions = null })
     <div className="desk-shell">
       <aside className="desk-sidebar">
         <Link href="/desk" className="desk-brand" aria-label="APTHEX Case Desk home">
-          <span className="brand-mark">APTHEX</span>
-          <span className="desk-brand-sub">{member.role === "owner" ? "Case Desk" : "Teacher Desk"}</span>
+          <span className="desk-brand-lockup">
+            <BrandMark className="desk-brand-logo" size={40} />
+            <span className="desk-brand-copy">
+              <span className="brand-mark">APTHEX</span>
+              <span className="desk-brand-sub">{member.role === "owner" ? "Case Desk" : "Teacher Desk"}</span>
+            </span>
+          </span>
         </Link>
 
         <nav className="desk-nav" aria-label="Case Desk navigation">

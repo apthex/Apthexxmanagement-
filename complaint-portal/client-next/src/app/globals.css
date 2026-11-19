@@ -3093,8 +3093,8 @@ body {
   height: 26px;
   display: block;
   vertical-align: middle;
+  color: var(--red-bright);
 }
-.brand-mark-svg path { fill: var(--red-bright); }
 
 .public-nav a {
   color: var(--text-soft);
@@ -4689,6 +4689,7 @@ body {
   box-shadow: 0 0 0 3px rgba(224, 36, 56, 0.17);
 }
 .auth-shell .auth-input::placeholder { color: rgba(220, 206, 212, 0.4); }
+.auth-shell .auth-input-code::placeholder { letter-spacing: 0.08em; }
 
 /* ---- red CTA (replaces the champagne gradient on the sign-in button) ----- */
 
@@ -4720,6 +4721,79 @@ body {
 .auth-shell :is(a, button, input, summary):focus-visible {
   outline: 2px solid var(--red-bright);
   outline-offset: 2px;
+}
+
+/* ---- full black-red canvas -------------------------------------------- */
+
+.auth-shell {
+  background:
+    radial-gradient(1200px 760px at 84% -14%, rgba(224, 36, 56, 0.28), transparent 62%),
+    radial-gradient(900px 620px at -10% 16%, rgba(164, 19, 31, 0.22), transparent 60%),
+    radial-gradient(860px 540px at 50% 112%, rgba(224, 36, 56, 0.16), transparent 68%),
+    linear-gradient(180deg, #0c0507 0%, #090405 44%, #050203 100%);
+}
+
+/* faint red veins — depth without noise */
+.auth-shell .auth-scene::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(118deg, rgba(224, 36, 56, 0.06) 0 1px, transparent 1px 94px),
+    repeating-linear-gradient(62deg, rgba(255, 59, 78, 0.035) 0 1px, transparent 1px 150px);
+  -webkit-mask-image: radial-gradient(130% 110% at 50% 0%, #000 8%, transparent 78%);
+  mask-image: radial-gradient(130% 110% at 50% 0%, #000 8%, transparent 78%);
+  opacity: 0.75;
+}
+
+/* red top hairline */
+.auth-shell .auth-top {
+  border-bottom: 1px solid rgba(224, 36, 56, 0.08);
+}
+
+/* logo lockup — proper APTHEX mark, red tile + white wing */
+.auth-shell .auth-brand-logo {
+  width: 40px;
+  height: 40px;
+  filter: drop-shadow(0 0 16px rgba(224, 36, 56, 0.45));
+}
+.auth-shell .brand { gap: 12px; }
+.auth-shell .brand-mark {
+  font-size: 1.18rem;
+  letter-spacing: 0.26em;
+}
+
+/* the big APTHEX headline follows the mark */
+.auth-shell .auth-heading-brand { color: #ffb3bb; }
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .auth-shell .auth-heading-brand {
+    background: linear-gradient(180deg, #ffd9de 6%, #ff5a6a 38%, var(--red-bright) 64%, #a4131f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+}
+
+/* red-tinted feature tiles (no champagne wash left) */
+.auth-shell .auth-feature {
+  border-color: rgba(224, 36, 56, 0.14);
+  background: linear-gradient(165deg, rgba(224, 36, 56, 0.055), rgba(255, 240, 242, 0.012));
+  box-shadow: inset 0 1px 0 rgba(255, 214, 220, 0.05);
+}
+
+/* deeper red halo behind the glass panel */
+.auth-shell .auth-panel {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 214, 220, 0.08),
+    0 30px 90px rgba(0, 0, 0, 0.6),
+    0 0 130px rgba(224, 36, 56, 0.14);
+}
+
+/* inputs sit on a red-black base, not warm charcoal */
+.auth-shell .auth-input {
+  border-color: rgba(224, 36, 56, 0.22);
+  background: rgba(10, 4, 5, 0.55);
 }
 
 
@@ -4915,61 +4989,258 @@ body {
   letter-spacing: 0.02em !important;
 }
 
-.summary-container {
-  margin: 24px 0;
-  .summary-label {
-    font-size: 0.875rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    color: var(--text-soft);
-    margin-bottom: 16px;
-    display: block;
-  }
-  .summary-numbers {
-    display: flex;
-    gap: 24px;
-    .summary-total {
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--text);
-    }
-    .summary-urgent,
-    .summary-inproc,
-    .summary-completed {
-      font-size: 0.875rem;
-      color: var(--text-soft);
-      white-space: nowrap;
-    }
-  }
+/* ------------------------------------------------------------ summary stats */
+
+.summary-container { margin: 24px 0; }
+
+.summary-owner,
+.summary-staff,
+.summary-all {
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(165deg, rgba(255, 248, 233, 0.04), rgba(255, 248, 233, 0.012));
 }
 
-.summary-container {
-  margin: 24px 0;
-  .summary-label {
-    font-size: 0.875rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    color: var(--text-soft);
-    margin-bottom: 16px;
-    display: block;
+.summary-label {
+  display: block;
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.summary-row {
+  display: flex;
+  gap: 34px;
+  margin-top: 14px;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.summary-value {
+  font-family: var(--font-serif);
+  font-size: 2.1rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #ffb3bb;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-item .summary-label { margin-top: 2px; font-size: 0.68rem; }
+
+/* ==========================================================================
+   CASE DESK · BLACK-RED ADMIN THEME
+   The signed-in admin area follows the login stage: a deep black-red canvas,
+   red glass panels and red actions. Scoped to .desk-shell so the public pages
+   and the login stage keep their own treatment.
+   ========================================================================== */
+
+.desk-shell {
+  background:
+    radial-gradient(1200px 760px at 86% -10%, rgba(224, 36, 56, 0.22), transparent 62%),
+    radial-gradient(900px 620px at -8% 14%, rgba(164, 19, 31, 0.18), transparent 60%),
+    radial-gradient(800px 520px at 50% 108%, rgba(224, 36, 56, 0.12), transparent 68%),
+    linear-gradient(180deg, #0b0507 0%, #080405 48%, #050203 100%);
+}
+
+/* ---- sidebar ---------------------------------------------------------- */
+
+.desk-sidebar {
+  border-right-color: rgba(224, 36, 56, 0.16);
+  background:
+    radial-gradient(420px 300px at 0% 0%, rgba(224, 36, 56, 0.18), transparent 70%),
+    linear-gradient(180deg, rgba(28, 12, 15, 0.94), rgba(8, 4, 5, 0.97));
+}
+
+/* logo lockup — proper APTHEX tile at the top-left */
+.desk-brand { border-bottom-color: rgba(224, 36, 56, 0.14); }
+.desk-brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.desk-brand-logo {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 0 14px rgba(224, 36, 56, 0.4));
+}
+.desk-brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.desk-brand .brand-mark {
+  font-size: 1.22rem;
+  letter-spacing: 0.2em;
+  color: #ffb3bb;
+}
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .desk-brand .brand-mark {
+    background: linear-gradient(180deg, #ffb9c2 10%, var(--red-bright) 62%, #c8172b 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
   }
-  .summary-row {
-    display: flex;
-    gap: 24px;
-    margin-bottom: 16px;
-    .summary-item {
-      flex: 1;
-      .summary-value {
-        font-size: 2rem;
-        font-weight: 700;
-        color: var(--text);
-      }
-      .summary-label {
-        font-size: 0.875rem;
-        color: var(--text-soft);
-      }
-    }
-  }
+}
+.desk-brand-sub { color: #d99aa1; }
+
+/* ---- navigation ------------------------------------------------------- */
+
+.desk-nav-link::before {
+  background: linear-gradient(180deg, #ff8a96, var(--red-bright));
+}
+.desk-nav-link:hover { color: #fff; background: rgba(224, 36, 56, 0.08); }
+.desk-nav-link:hover svg { color: #ffb3bb; }
+.desk-nav-link.active {
+  color: #ffd7dc;
+  background: linear-gradient(90deg, rgba(224, 36, 56, 0.2), rgba(224, 36, 56, 0.03) 80%);
+  box-shadow: inset 0 0 0 1px rgba(224, 36, 56, 0.26);
+}
+.desk-nav-link.active svg { color: var(--red-bright); }
+.desk-sidebar-foot { border-top-color: rgba(224, 36, 56, 0.14); }
+.desk-help-line a:hover { color: #ffb3bb; }
+
+/* ---- topbar ----------------------------------------------------------- */
+
+.desk-topbar {
+  border-bottom-color: rgba(224, 36, 56, 0.16);
+  background: rgba(9, 4, 5, 0.78);
+}
+.desk-user { border-right-color: rgba(224, 36, 56, 0.2); }
+.desk-public-link:hover { color: #ffb3bb; }
+
+/* ---- headings --------------------------------------------------------- */
+
+.desk-title-row .eyebrow { color: var(--red-bright); }
+.desk-title-row .eyebrow::before {
+  background: linear-gradient(90deg, var(--red-bright), transparent);
+}
+
+/* ---- panels ----------------------------------------------------------- */
+
+.desk-shell .card {
+  border-color: rgba(224, 36, 56, 0.16);
+  background:
+    radial-gradient(560px 260px at 100% 0%, rgba(224, 36, 56, 0.08), transparent 70%),
+    linear-gradient(165deg, rgba(255, 240, 242, 0.04), rgba(255, 240, 242, 0.012));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 214, 220, 0.06),
+    0 24px 80px rgba(0, 0, 0, 0.55);
+}
+.desk-shell .card::before {
+  background: linear-gradient(90deg, transparent, rgba(224, 36, 56, 0.55) 30%, rgba(255, 59, 78, 0.7) 70%, transparent);
+}
+
+/* stat cards */
+.desk-shell .stat-card {
+  border-color: rgba(224, 36, 56, 0.16);
+  background: linear-gradient(155deg, rgba(224, 36, 56, 0.07), rgba(255, 240, 242, 0.012));
+  box-shadow: inset 0 1px 0 rgba(255, 214, 220, 0.05);
+}
+.desk-shell .stat-card:hover {
+  border-color: rgba(224, 36, 56, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 214, 220, 0.08),
+    0 18px 44px rgba(0, 0, 0, 0.45),
+    0 0 30px rgba(224, 36, 56, 0.08);
+}
+.desk-shell .stat-card strong { color: #ffb3bb; }
+
+/* filter card */
+.desk-shell .filter-title svg { color: var(--red-bright); }
+.desk-shell .checkbox-field input { accent-color: var(--red); }
+.desk-shell .filter-actions { border-top-color: rgba(224, 36, 56, 0.14); }
+
+/* inputs */
+.desk-shell :is(.input, .select, .textarea) {
+  border-color: rgba(224, 36, 56, 0.2);
+  background: rgba(10, 4, 5, 0.5);
+}
+.desk-shell :is(.input, .select, .textarea):focus {
+  border-color: rgba(255, 59, 78, 0.6);
+  box-shadow: 0 0 0 3px rgba(224, 36, 56, 0.17);
+}
+
+/* table */
+.desk-shell .data-table th {
+  background: rgba(224, 36, 56, 0.035);
+  border-bottom-color: rgba(224, 36, 56, 0.18);
+}
+.desk-shell .data-table td { border-bottom-color: rgba(255, 240, 242, 0.06); }
+.desk-shell .data-table tbody tr[role="link"]:hover,
+.desk-shell .data-table tbody tr[role="link"]:focus-visible {
+  background: rgba(224, 36, 56, 0.06);
+}
+.desk-shell .data-table tbody tr.row-urgent {
+  background: linear-gradient(90deg, rgba(224, 36, 56, 0.1), transparent 42%);
+}
+.desk-shell .data-table tbody tr:hover .cell-go svg,
+.desk-shell .data-table tbody tr:focus-visible .cell-go svg { color: #ffb3bb; }
+
+/* ---- buttons ---------------------------------------------------------- */
+
+.desk-shell .btn-primary {
+  background: linear-gradient(160deg, #ff4152, #d01a2e 52%, #a0131f);
+  border-color: rgba(255, 92, 106, 0.42);
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    0 12px 34px rgba(224, 36, 56, 0.3);
+}
+.desk-shell .btn-primary:hover:not(:disabled) {
+  background: linear-gradient(160deg, #ff5a6a, #e11e33 52%, #ae1626);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 16px 44px rgba(224, 36, 56, 0.4);
+}
+.desk-shell .btn-secondary {
+  background: rgba(224, 36, 56, 0.08);
+  border-color: rgba(224, 36, 56, 0.22);
+}
+.desk-shell .btn-secondary:hover:not(:disabled) {
+  background: rgba(224, 36, 56, 0.14);
+  border-color: rgba(224, 36, 56, 0.36);
+}
+.desk-shell .btn-ghost {
+  border-color: rgba(224, 36, 56, 0.18);
+  color: var(--text-soft);
+}
+.desk-shell .btn-ghost:hover:not(:disabled) {
+  border-color: rgba(224, 36, 56, 0.38);
+  background: rgba(224, 36, 56, 0.08);
+  color: #fff;
+}
+
+/* ---- summary + focus -------------------------------------------------- */
+
+.desk-shell .summary-owner,
+.desk-shell .summary-staff,
+.desk-shell .summary-all {
+  padding: 18px 20px;
+  border: 1px solid rgba(224, 36, 56, 0.16);
+  border-radius: 16px;
+  background: linear-gradient(165deg, rgba(224, 36, 56, 0.07), rgba(255, 240, 242, 0.012));
+}
+.desk-shell .summary-value { color: #ffb3bb; }
+
+.desk-shell .badge.role-owner {
+  color: #ffd7dc;
+  border-color: rgba(224, 36, 56, 0.4);
+  background: rgba(224, 36, 56, 0.14);
+}
+
+.desk-shell :is(a, button, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--red-bright);
+  outline-offset: 2px;
 }
