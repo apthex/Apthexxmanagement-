@@ -622,7 +622,7 @@ export default function ComplaintPage() {
                   </div>
 
                   <div className="field field-wide">
-                    <span className="field-label">Photos &amp; video (optional)</span>
+                    <span className="field-label">Photos & video <span className="required-star">*</span></span>
                     <div className="row-wrap quick-uploads">
                       <label className="btn btn-secondary btn-small quick-upload">
                         <input
