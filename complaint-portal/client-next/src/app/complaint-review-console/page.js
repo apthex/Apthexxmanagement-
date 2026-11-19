@@ -195,6 +195,30 @@ export default function StaffLoginPage() {
               <p className="auth-panel-sub">Enter your staff password to access the complaint management system.</p>
               <form className="auth-form" onSubmit={login}>
                 <label className="auth-field">
+                  <span className="auth-label">Password</span>
+                  <span className="auth-input-wrap">
+                    <Icon name="lock" size={16} className="auth-input-icon" />
+                    <input
+                      className="auth-input"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      autoComplete="current-password"
+                      required
+                      placeholder="Enter your password"
+                    />
+                    <button
+                      type="button"
+                      className="auth-eye"
+                      onClick={() => setShowPassword((visible) => !visible)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-pressed={showPassword}
+                    >
+                      <Icon name={showPassword ? "eyeOff" : "eye"} size={18} />
+                    </button>
+                  </span>
+                </label>
+                <label className="auth-field">
                   <span className="auth-label">Institute code</span>
                   <span className="auth-input-wrap">
                     <Icon name="lock" size={16} className="auth-input-icon" />
