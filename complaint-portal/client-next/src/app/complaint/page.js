@@ -29,7 +29,7 @@ const EMPTY_FORM = {
 };
 
 const APTHEX_MARK = (
-  <g transform="translate(500, 500) scale(0.859) translate(-623, -607.3)">
+  <g transform="translate(500, 500) scale(0.859) translate(-618.9, -609.75)">
     <path
       fill="currentColor"
       d="M1030.9 1034.8C1015.3 1011.8 986.9 970.4 979.2 959.5C974.5 952.9 960.1 932.4 947.2 914.0C905.1 854.0 835.4 756.3 776.6 675.0C759.9 651.8 756.1 646.6 733.9 616.0C721.7 599.2 708.6 581.2 704.9 576.0C701.1 570.8 697.0 565.3 695.8 563.7L693.5 561.0L680.9 572.2C654.5 595.8 554.0 687.0 500.0 736.4C417.3 812.1 340.7 884.2 234.6 986.2C215.9 1004.2 200.4 1018.7 200.2 1018.6C199.6 1017.9 270.6 921.3 300.5 882.0C384.0 772.4 543.2 571.3 627.9 468.5C649.0 442.9 699.4 382.2 725.6 351.0C788.5 276.0 881.3 170.6 879.7 176.0C879.5 176.8 873.2 196.2 865.7 219.0C858.3 241.8 846.7 277.4 840.0 298.0C833.3 318.6 821.2 355.8 813.0 380.5C804.8 405.2 794.0 438.0 789.1 453.2L780.1 480.9L785.2 491.2C791.4 503.9 812.7 548.2 818.7 561.0C823.3 570.6 825.3 575.1 870.0 670.5C883.9 700.2 899.0 732.6 903.5 742.5C908.0 752.4 915.7 769.0 920.5 779.5C946.0 834.9 995.7 946.0 1018.5 998.5C1024.9 1013.4 1032.0 1029.5 1034.1 1034.4C1036.2 1039.3 1037.8 1043.5 1037.6 1043.7C1037.4 1043.9 1034.4 1039.9 1030.9 1034.8ZM850.0 913.4C804.4 892.3 764.7 875.8 703.6 852.4C691.4 847.7 679.5 842.0 677.0 842.0C674.5 841.0 664.1 837.0 653.8 833.1L635.2 826.1L610.3 834.1C531.9 859.4 416.1 899.1 381.8 912.5C377.1 914.3 381.6 909.7 399.2 894.2C441.1 857.7 515.8 793.9 557.2 759.4L589.9 732.1L638.2 732.7L686.6 733.3L692.2 719.9C695.3 712.5 699.3 702.8 701.1 698.2C702.9 693.7 704.6 690.0 704.9 690.0C705.2 690.0 708.3 694.0 711.7 698.8C715.1 703.6 723.0 714.5 729.2 723.1C742.6 741.6 771.1 781.2 786.5 802.5C792.5 811.0 807.0 831.0 818.6 847.2C854.5 896.9 872.0 921.5 872.0 922.2C872.0 923.5 871.2 923.2 850.0 913.4Z"
@@ -251,6 +251,58 @@ export default function ComplaintPage() {
     // (or send) any of them, and identified mode starts clean.
     setForm((current) => ({ ...current, name: "", class_label: "", roll_no: "", mobile: "", email: "" }));
     setFieldErrors({});
+    setError("");
+    setCurrentPage(1);
+  }
+
+  // Step 1 holds the identity fields, step 2 the complaint itself. This check
+  // mirrors the server rules so Continue never lands the user on a step whose
+  // only possible outcome is a failed submit.
+  function validateStepOne() {
+    const errors = {};
+    const code = form.institute_code.trim();
+    if (!code) errors.institute_code = "Enter your college code.";
+    else if (!/^[A-Z0-9_-]{3,32}$/.test(code)) {
+      errors.institute_code = "College code must be 3-32 letters, numbers, hyphens or underscores.";
+    }
+
+    if (mode === "identified") {
+      const name = form.name.trim();
+      if (!name) errors.name = "Enter your name.";
+      else if (name.length < 2) errors.name = "Name must be at least 2 characters.";
+
+      const mobile = form.mobile.trim();
+      if (!mobile) errors.mobile = "Enter your mobile number.";
+      else if (!/^[+]?[\d\s-]{7,20}$/.test(mobile)) errors.mobile = "Enter a valid mobile number.";
+
+      const email = form.email.trim();
+      if (!email) errors.email = "Enter your email.";
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = "Enter a valid email address.";
+    }
+
+    return errors;
+  }
+
+  const STEP_ONE_FIELD_IDS = {
+    institute_code: "qf-college",
+    name: "qf-name",
+    mobile: "qf-mobile",
+    email: "qf-email",
+  };
+
+  function goToStep(next) {
+    if (next === 2) {
+      const errors = validateStepOne();
+      if (Object.keys(errors).length) {
+        setFieldErrors((current) => ({ ...current, ...errors }));
+        setError("Please fix the highlighted fields and continue.");
+        document.getElementById(STEP_ONE_FIELD_IDS[Object.keys(errors)[0]])?.focus();
+        return;
+      }
+    }
+    setError("");
+    setCurrentPage(next);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function copyRefId() {
@@ -340,8 +392,20 @@ export default function ComplaintPage() {
   async function handleSubmit(event) {
     event.preventDefault();
     if (submitting) return;
+    // Pressing Enter on step 1 should advance, never submit a half-filled form.
+    if (currentPage === 1) {
+      goToStep(2);
+      return;
+    }
     setError("");
     setFieldErrors({});
+    // Validate that at least one photo or video is selected
+    const hasMedia = photos.length > 0 || video;
+    if (!hasMedia) {
+      setError("Please select at least one photo or video to submit the complaint.");
+      setSubmitting(false);
+      return;
+    }
     setSubmitting(true);
     try {
       const data = await submitComplaint(buildFormData());
@@ -355,6 +419,11 @@ export default function ComplaintPage() {
       if (Object.keys(details).length) {
         setFieldErrors(details);
         setError("Please fix the highlighted fields and try again.");
+        // Identity errors from the server belong to step 1 — go back so the
+        // highlighted fields are visible.
+        if (Object.keys(details).some((key) => ["institute_code", "name", "mobile", "email", "contact.name", "contact.mobile", "contact.email"].includes(key))) {
+          setCurrentPage(1);
+        }
       } else if (requestError.status === 409) {
         setError("A very similar complaint was just submitted. If this is a new issue, try again in a few minutes.");
       } else if (requestError.status === 429) {
@@ -443,37 +512,6 @@ export default function ComplaintPage() {
               </p>
             )}
 
-            {/* Page navigation */}
-            {currentPage === 1 && mode === "identified" && (
-              <div className="page-nav">
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => setCurrentPage(2)}
-                >
-                  Continue
-                </button>
-              </div>
-            )}
-            {currentPage === 2 && (
-              <div className="page-nav">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setCurrentPage(1)}
-                >
-                  ← Back
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => setSubmitting(true)}
-                >
-                  Submit complaint
-                </button>
-              </div>
-            )}
-
             {mode === "anonymous" && (
               <p className="anon-note" role="note">
                 <Icon name="lock" size={14} />
@@ -486,157 +524,178 @@ export default function ComplaintPage() {
 
             {error && <p className="alert alert-error" role="alert">{error}</p>}
 
-            <div className="form-grid">
-              <div className="field field-wide">
-                <label className="field-label" htmlFor="qf-college">College code <i aria-hidden="true">*</i></label>
-                <input
-                  id="qf-college"
-                  className="input input-mono"
-                  value={form.institute_code}
-                  onChange={setField("institute_code")}
-                  placeholder="e.g. APS001"
-                  autoComplete="off"
-                  spellCheck={false}
-                  maxLength={32}
-                  required
-                />
-                <p className="field-hint">Type the reference code alloted to your college (e.g. on the notice your college shared).</p>
-                {fieldError("institute_code") && <p className="error-text">{fieldError("institute_code")}</p>}
-              </div>
-
-              {mode === "identified" && (
-                <>
+            {currentPage === 1 ? (
+              <section className="form-step" aria-label="Step 1 of 2: your details">
+                <p className="step-label">Step 1 of 2 · Your details</p>
+                <div className="form-grid">
                   <div className="field field-wide">
-                    <label className="field-label" htmlFor="qf-name">Your name <i aria-hidden="true">*</i></label>
-                    <input id="qf-name" className="input" value={form.name} onChange={setField("name")} autoComplete="name" required />
-                    {fieldError("name") && <p className="error-text">{fieldError("name")}</p>}
+                    <label className="field-label" htmlFor="qf-college">College code <i aria-hidden="true">*</i></label>
+                    <input
+                      id="qf-college"
+                      className="input input-mono"
+                      value={form.institute_code}
+                      onChange={setField("institute_code")}
+                      placeholder="e.g. APS001"
+                      autoComplete="off"
+                      spellCheck={false}
+                      maxLength={32}
+                      required
+                    />
+                    <p className="field-hint">Type the reference code alloted to your college (e.g. on the notice your college shared).</p>
+                    {fieldError("institute_code") && <p className="error-text">{fieldError("institute_code")}</p>}
                   </div>
 
-                  <div className="field field-wide">
-                    <label className="field-label" htmlFor="qf-mobile">Mobile number <i aria-hidden="true">*</i></label>
-                    <input id="qf-mobile" className="input" type="tel" value={form.mobile} onChange={setField("mobile")} autoComplete="tel" placeholder="+91 98765 43210" required />
-                    {fieldError("mobile") && <p className="error-text">{fieldError("mobile")}</p>}
-                  </div>
+                  {mode === "identified" && (
+                    <>
+                      <div className="field field-wide">
+                        <label className="field-label" htmlFor="qf-name">Your name <i aria-hidden="true">*</i></label>
+                        <input id="qf-name" className="input" value={form.name} onChange={setField("name")} autoComplete="name" required />
+                        {fieldError("name") && <p className="error-text">{fieldError("name")}</p>}
+                      </div>
 
-                  <div className="field field-wide">
-                    <label className="field-label" htmlFor="qf-email">Email <i aria-hidden="true">*</i></label>
-                    <input id="qf-email" className="input" type="email" value={form.email} onChange={setField("email")} autoComplete="email" placeholder="you@example.com" required />
-                    <p className="field-hint">The “your complaint is registered” confirmation goes to this email.</p>
-                    {fieldError("email") && <p className="error-text">{fieldError("email")}</p>}
-                  </div>
-                </>
-              )}
+                      <div className="field field-wide">
+                        <label className="field-label" htmlFor="qf-mobile">Mobile number <i aria-hidden="true">*</i></label>
+                        <input id="qf-mobile" className="input" type="tel" value={form.mobile} onChange={setField("mobile")} autoComplete="tel" placeholder="+91 98765 43210" required />
+                        {fieldError("mobile") && <p className="error-text">{fieldError("mobile")}</p>}
+                      </div>
 
-              <div className="field field-wide">
-                <label className="field-label" htmlFor="qf-category">What is the complaint about? <i aria-hidden="true">*</i></label>
-                <select id="qf-category" className="select" value={form.category} onChange={setField("category")} required>
-                  <option value="" disabled>Select a category</option>
-                  {CATEGORY_META.map((category) => (
-                    <option key={category.value} value={category.value}>{category.value}</option>
-                  ))}
-                </select>
-                {fieldError("category") && <p className="error-text">{fieldError("category")}</p>}
-              </div>
-
-              <div className="field field-wide">
-                <div className="between dictate-label-row">
-                  <label className="field-label" htmlFor="qf-details">Describe the complaint <i aria-hidden="true">*</i></label>
-                  {dictation.supported && (
-                    <button
-                      type="button"
-                      className={`btn btn-ghost btn-small dictate-btn${dictation.listening ? " dictate-listening" : ""}`}
-                      onClick={toggleDictation}
-                      aria-pressed={dictation.listening}
-                      aria-label={dictation.listening ? "Stop voice typing" : "Start voice typing"}
-                    >
-                      <Icon name={dictation.listening ? "stop" : "mic"} size={15} />
-                      {dictation.listening ? "Stop voice typing" : "Speak instead"}
-                    </button>
+                      <div className="field field-wide">
+                        <label className="field-label" htmlFor="qf-email">Email <i aria-hidden="true">*</i></label>
+                        <input id="qf-email" className="input" type="email" value={form.email} onChange={setField("email")} autoComplete="email" placeholder="you@example.com" required />
+                        <p className="field-hint">The “your complaint is registered” confirmation goes to this email.</p>
+                        {fieldError("email") && <p className="error-text">{fieldError("email")}</p>}
+                      </div>
+                    </>
                   )}
                 </div>
-                <textarea
-                  id="qf-details"
-                  className="textarea"
-                  value={form.details_text}
-                  onChange={setField("details_text")}
-                  minLength={10}
-                  maxLength={DETAILS_MAX}
-                  rows={3}
-                  placeholder="What happened. Type it — or tap ‘Speak instead’ and just say it."
-                  required
-                />
-                {dictation.error && <p className="error-text">{dictation.error}</p>}
-                {fieldError("details_text") && <p className="error-text">{fieldError("details_text")}</p>}
-              </div>
 
-              <div className="field field-wide">
-                <span className="field-label">Photos &amp; video (optional)</span>
-                <div className="row-wrap quick-uploads">
-                  <label className="btn btn-secondary btn-small quick-upload">
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/gif"
-                      multiple
-                      hidden
-                      onChange={(event) => {
-                        addPhotos(event.target.files);
-                        event.target.value = "";
-                      }}
-                    />
-                    <Icon name="image" size={16} /> Add photos
-                  </label>
-                  <label className="btn btn-secondary btn-small quick-upload">
-                    <input
-                      type="file"
-                      accept="video/mp4,video/webm,.mp4,.webm,.mov"
-                      hidden
-                      onChange={(event) => {
-                        addVideo(event.target.files?.[0]);
-                        event.target.value = "";
-                      }}
-                    />
-                    <Icon name="play" size={16} /> Add video
-                  </label>
+                <div className="page-nav">
+                  <button type="button" className="btn btn-primary btn-large btn-block" onClick={() => goToStep(2)}>
+                    Continue
+                  </button>
                 </div>
-                {(photos.length > 0 || video) && (
-                  <ul className="quick-files">
-                    {photos.map((file, index) => (
-                      <li className="file-chip" key={`${file.name}-${index}`}>
-                        <Icon name="image" size={14} />
-                        <span>{file.name}</span>
-                        <small>{formatBytes(file.size)}</small>
-                        <button type="button" onClick={() => removePhoto(index)} aria-label={`Remove ${file.name}`}>
-                          <Icon name="close" size={13} />
+              </section>
+            ) : (
+              <section className="form-step" aria-label="Step 2 of 2: complaint details">
+                <p className="step-label">Step 2 of 2 · Complaint details</p>
+                <div className="form-grid">
+                  <div className="field field-wide">
+                    <label className="field-label" htmlFor="qf-category">What is the complaint about? <i aria-hidden="true">*</i></label>
+                    <select id="qf-category" className="select" value={form.category} onChange={setField("category")} required>
+                      <option value="" disabled>Select a category</option>
+                      {CATEGORY_META.map((category) => (
+                        <option key={category.value} value={category.value}>{category.value}</option>
+                      ))}
+                    </select>
+                    {fieldError("category") && <p className="error-text">{fieldError("category")}</p>}
+                  </div>
+
+                  <div className="field field-wide">
+                    <div className="between dictate-label-row">
+                      <label className="field-label" htmlFor="qf-details">Describe the complaint <i aria-hidden="true">*</i></label>
+                      {dictation.supported && (
+                        <button
+                          type="button"
+                          className={`btn btn-ghost btn-small dictate-btn${dictation.listening ? " dictate-listening" : ""}`}
+                          onClick={toggleDictation}
+                          aria-pressed={dictation.listening}
+                          aria-label={dictation.listening ? "Stop voice typing" : "Start voice typing"}
+                        >
+                          <Icon name={dictation.listening ? "stop" : "mic"} size={15} />
+                          {dictation.listening ? "Stop voice typing" : "Speak instead"}
                         </button>
-                      </li>
-                    ))}
-                    {video && (
-                      <li className="file-chip">
-                        <Icon name="play" size={14} />
-                        <span>{video.name}</span>
-                        <small>{formatBytes(video.size)}</small>
-                        <button type="button" onClick={() => setVideo(null)} aria-label={`Remove ${video.name}`}>
-                          <Icon name="close" size={13} />
-                        </button>
-                      </li>
+                      )}
+                    </div>
+                    <textarea
+                      id="qf-details"
+                      className="textarea"
+                      value={form.details_text}
+                      onChange={setField("details_text")}
+                      minLength={10}
+                      maxLength={DETAILS_MAX}
+                      rows={3}
+                      placeholder="What happened. Type it — or tap ‘Speak instead’ and just say it."
+                      required
+                    />
+                    {dictation.error && <p className="error-text">{dictation.error}</p>}
+                    {fieldError("details_text") && <p className="error-text">{fieldError("details_text")}</p>}
+                  </div>
+
+                  <div className="field field-wide">
+                    <span className="field-label">Photos &amp; video (optional)</span>
+                    <div className="row-wrap quick-uploads">
+                      <label className="btn btn-secondary btn-small quick-upload">
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/gif"
+                          multiple
+                          hidden
+                          onChange={(event) => {
+                            addPhotos(event.target.files);
+                            event.target.value = "";
+                          }}
+                        />
+                        <Icon name="image" size={16} /> Add photos
+                      </label>
+                      <label className="btn btn-secondary btn-small quick-upload">
+                        <input
+                          type="file"
+                          accept="video/mp4,video/webm,.mp4,.webm,.mov"
+                          hidden
+                          onChange={(event) => {
+                            addVideo(event.target.files?.[0]);
+                            event.target.value = "";
+                          }}
+                        />
+                        <Icon name="play" size={16} /> Add video
+                      </label>
+                    </div>
+                    {(photos.length > 0 || video) && (
+                      <ul className="quick-files">
+                        {photos.map((file, index) => (
+                          <li className="file-chip" key={`${file.name}-${index}`}>
+                            <Icon name="image" size={14} />
+                            <span>{file.name}</span>
+                            <small>{formatBytes(file.size)}</small>
+                            <button type="button" onClick={() => removePhoto(index)} aria-label={`Remove ${file.name}`}>
+                              <Icon name="close" size={13} />
+                            </button>
+                          </li>
+                        ))}
+                        {video && (
+                          <li className="file-chip">
+                            <Icon name="play" size={14} />
+                            <span>{video.name}</span>
+                            <small>{formatBytes(video.size)}</small>
+                            <button type="button" onClick={() => setVideo(null)} aria-label={`Remove ${video.name}`}>
+                              <Icon name="close" size={13} />
+                            </button>
+                          </li>
+                        )}
+                      </ul>
                     )}
-                  </ul>
-                )}
-                {fileNotice && <p className="error-text">{fileNotice}</p>}
-                <p className="field-hint">Up to 5 photos (10 MB each) and one video (50 MB). Evidence helps the college act faster.</p>
-              </div>
+                    {fileNotice && <p className="error-text">{fileNotice}</p>}
+                    <p className="field-hint">Up to 5 photos (10 MB each) and one video (50 MB). Evidence helps the college act faster.</p>
+                  </div>
 
-              {captchaRequired && (
-                <div className="field field-wide">
-                  <span className="field-label">Security check</span>
-                  <CaptchaField lang="en" config={config?.captcha} onSolved={setCaptcha} />
+                  {captchaRequired && (
+                    <div className="field field-wide">
+                      <span className="field-label">Security check</span>
+                      <CaptchaField lang="en" config={config?.captcha} onSolved={setCaptcha} />
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <button type="submit" className="btn btn-primary btn-large btn-block" disabled={submitting}>
-              {submitting ? "Registering…" : mode === "anonymous" ? "Submit anonymous report" : "Register complaint"}
-            </button>
+                <div className="page-nav">
+                  <button type="button" className="btn btn-secondary" onClick={() => goToStep(1)}>
+                    ← Back
+                  </button>
+                  <button type="submit" className="btn btn-primary" disabled={submitting}>
+                    {submitting ? "Registering…" : mode === "anonymous" ? "Submit anonymous report" : "Register complaint"}
+                  </button>
+                </div>
+              </section>
+            )}
 
             <button
               type="button"
