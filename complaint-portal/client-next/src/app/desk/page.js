@@ -37,6 +37,20 @@ function Dashboard() {
   const isStaff = member?.role === "case_team";
   const staffInstituteCode = isStaff ? member?.institute_code || "" : "";
 
+  // Construct query string from filters
+  const query = useMemo(() => {
+    const params = new URLSearchParams();
+    if (filters.institute_code) params.set("institute_code", filters.institute_code.trim().toUpperCase());
+    if (filters.category) params.set("category", filters.category);
+    if (filters.status) params.set("status", filters.status);
+    if (filters.search) params.set("search", filters.search.trim());
+    if (filters.urgent) params.set("urgent", "true");
+    if (filters.spam !== "false") params.set("spam", filters.spam);
+    params.set("page", String(page));
+    params.set("limit", "25");
+    return params.toString();
+  }, [filters, page]);
+
   // Auto-set institute code for staff (case_team) members from their record
   useEffect(() => {
     if (isStaff && staffInstituteCode && !filters.institute_code) {
