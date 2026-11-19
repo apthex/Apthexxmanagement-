@@ -146,8 +146,6 @@ export default function StaffLoginPage() {
             {APTHEX_MARK}
           </svg>
           <span className="brand-mark">APTHEX</span>
-          <span className="brand-sep" aria-hidden="true" />
-          <span className="brand-sub">Complaint Portal</span>
         </Link>
         <div className="auth-top-side">
           <span className="auth-access-chip">
@@ -197,35 +195,17 @@ export default function StaffLoginPage() {
               <p className="auth-panel-sub">Enter your staff password to access the complaint management system.</p>
               <form className="auth-form" onSubmit={login}>
                 <label className="auth-field">
-                  <span className="auth-label">Password</span>
+                  <span className="auth-label">Institute code</span>
                   <span className="auth-input-wrap">
                     <Icon name="lock" size={16} className="auth-input-icon" />
-                    <input
-                      className="auth-input"
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                      autoComplete="current-password"
-                      required
-                      placeholder="Enter your password"
-                    />
                     <input
                       className="auth-input auth-input-code"
                       value={code}
                       onChange={(event) => setCode(event.target.value.replace(/\D/g, "").toUpperCase().slice(0, 8))}
                       inputMode="text"
-                      placeholder="Institute code (e.g. APS001)"
+                      placeholder="e.g. APS001"
                       maxLength={8}
                     />
-                    <button
-                      type="button"
-                      className="auth-eye"
-                      onClick={() => setShowPassword((visible) => !visible)}
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                      aria-pressed={showPassword}
-                    >
-                      <Icon name={showPassword ? "eyeOff" : "eye"} size={18} />
-                    </button>
                   </span>
                 </label>
                 {(needsCode || code) && (
