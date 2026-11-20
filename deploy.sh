@@ -27,7 +27,7 @@ trap 'rm -rf "$STAGE"' EXIT
 
 # Copy the tree WITHOUT .git so Vercel cannot attribute the deploy to the
 # blocked commit author (owner attribution instead → never blocked).
-rsync -a --exclude '.git' --exclude '.vercel' --exclude '*.log' --exclude 'node_modules' ./ "$STAGE"/
+rsync -a --exclude '.git' --exclude '.vercel' --exclude '*.log' --exclude 'node_modules' --exclude '.next' ./ "$STAGE"/
 cp -f .vercel/project.json "$STAGE/.vercel-project.json" 2>/dev/null || true
 mkdir -p "$STAGE/.vercel" && mv "$STAGE/.vercel-project.json" "$STAGE/.vercel/project.json" 2>/dev/null || true
 
