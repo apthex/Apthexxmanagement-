@@ -25,9 +25,22 @@ if ! command -v npx >/dev/null 2>&1; then echo "node/npx required" >&2; exit 1; 
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
 
-# Copy the tree WITHOUT .git so Vercel cannot attribute the deploy to the
-# blocked commit author (owner attribution instead → never blocked).
-rsync -a --exclude '.git' --exclude '.vercel' --exclude '*.log' --exclude 'node_modules' --exclude '.next' ./ "$STAGE"/
+# Copy only the static site files (excluding node_modules, build caches, and
+# internal portal Next.js files so Vercel serves index.html directly).
+rsync -a \
+  --exclude '.git' \
+  --exclude '.vercel' \
+  --exclude '*.log' \
+  --exclude 'node_modules' \
+  --exclude '.next' \
+  --exclude 'public' \
+  --exclude 'src' \
+  --exclude 'package.json' \
+  --exclude 'package-lock.json' \
+  --exclude 'next.config.*' \
+  --exclude 'nextjs-site' \
+  --exclude 'complaint-portal' \
+  ./ "$STAGE"/
 cp -f .vercel/project.json "$STAGE/.vercel-project.json" 2>/dev/null || true
 mkdir -p "$STAGE/.vercel" && mv "$STAGE/.vercel-project.json" "$STAGE/.vercel/project.json" 2>/dev/null || true
 
