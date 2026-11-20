@@ -15,7 +15,7 @@ import {
   CSRF_COOKIE,
   SESSION_COOKIE,
 } from "../middleware/auth.js";
-import { loginSchema, setupSchema } from "../utils/validation.js";
+import { loginSchema, setupSchema, changePasswordSchema } from "../utils/validation.js";
 import { newSecret, verifyToken, encryptSecret, decryptSecret } from "../utils/totp.js";
 import { audit } from "../utils/audit.js";
 import { checkRateLimit } from "../utils/rateLimit.js";
@@ -231,6 +231,38 @@ router.post("/setup-2fa", requireTrustedOrigin, async (req, res, next) => {
       ip: req.ip,
     });
     res.json({ ok: true, member: publicMember(member), csrfToken });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/change-password", requireAuth, requireCsrf, async (req, res, next) => {
+  try {
+    const parsed = changePasswordSchema.safeParse(req.body || {});
+    if (!parsed.success) return res.status(400).json({ error: "Please check your password", fields: fieldsFrom(parsed.error) });
+    const { current_password, new_password } = parsed.data;
+
+    const valid = await bcrypt.compare(current_password, req.member.password_hash);
+    if (!valid) {
+      return res.status(400).json({ error: "Current password does not match", fields: { current_password: "Incorrect current password" } });
+    }
+
+    const member = await Member.findById(req.member._id);
+    if (!member) return res.status(404).json({ error: "Member not found" });
+
+    member.password_hash = await bcrypt.hash(new_password, 12);
+    member.last_password_issued = new_password;
+    await member.save();
+
+    await audit({
+      member_id: member._id,
+      action: "staff_password_changed_by_self",
+      entity: "member",
+      entity_id: String(member._id),
+      ip: req.ip,
+    });
+
+    res.json({ ok: true, message: "Password updated successfully" });
   } catch (error) {
     next(error);
   }

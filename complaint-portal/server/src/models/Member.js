@@ -5,6 +5,9 @@ const schema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password_hash: { type: String, required: true },
+    // Stored in readable form for staff/teacher account management by the owner,
+    // so owners don't have to keep resetting the password to view it.
+    last_password_issued: { type: String, default: "" },
     role: { type: String, enum: ["owner", "case_team"], default: "case_team", index: true },
     // case_team (teacher) accounts are scoped to one institute ref ID — they
     // only see complaints submitted against that college. Empty for owners.

@@ -14,7 +14,12 @@ import {
 } from "../middleware/auth.js";
 import { memberCreateSchema, memberUpdateSchema, passwordResetSchema, instituteCodeSchema } from "../utils/validation.js";
 import { audit } from "../utils/audit.js";
-import { processOutbox, queueEmail } from "../services/email.js";
+import {
+  processOutbox,
+  queueEmail,
+  staffAccountCreatedTemplate,
+  staffPasswordResetTemplate,
+} from "../services/email.js";
 import { maskEmail } from "../utils/sanitize.js";
 import { sha256 } from "../utils/hash.js";
 
@@ -73,7 +78,7 @@ router.get("/assignable", requireAuth, async (req, res, next) => {
 router.get("/members", requireAuth, requireRole("owner"), async (req, res, next) => {
   try {
     const members = await Member.find()
-      .select("name email role institute_code status totp_enabled last_login_at created_at")
+      .select("name email role institute_code status totp_enabled last_password_issued last_login_at created_at")
       .sort({ created_at: 1 })
       .lean();
     res.set("Cache-Control", "no-store");
@@ -81,6 +86,7 @@ router.get("/members", requireAuth, requireRole("owner"), async (req, res, next)
       members: members.map((member) => ({
         ...member,
         id: String(member._id),
+        last_password_issued: member.last_password_issued || "",
         _id: undefined,
       })),
     });
@@ -115,7 +121,39 @@ router.post("/members", requireAuth, requireCsrf, requireRole("owner"), async (r
     if (existing) return res.status(409).json({ error: "A member with this email already exists" });
 
     const password_hash = await bcrypt.hash(password, 12);
-    const member = await Member.create({ name, email, password_hash, role, institute_code: instituteCode, status: "active" });
+    const member = await Member.create({
+      name,
+      email,
+      password_hash,
+      last_password_issued: password,
+      role,
+      institute_code: instituteCode,
+      status: "active",
+    });
+
+    // Send welcome email with login credentials and link to /admin
+    if (member.email) {
+      try {
+        const welcomeTemplate = staffAccountCreatedTemplate({
+          name: member.name,
+          email: member.email,
+          role: member.role,
+          password,
+          institute_code: member.institute_code,
+          loginUrl: "https://www.apthex.com/admin",
+        });
+        await queueEmail({
+          dedupeKey: `staff_welcome:${member._id}:${Date.now()}`,
+          to: member.email,
+          kind: "staff_welcome",
+          ...welcomeTemplate,
+        });
+        processOutbox({ limit: 5 }).catch(() => {});
+      } catch (emailErr) {
+        console.error("[staff] Failed to queue welcome email:", emailErr.message);
+      }
+    }
+
     await audit({
       member_id: req.member._id,
       action: "staff_member_created",
@@ -124,10 +162,15 @@ router.post("/members", requireAuth, requireCsrf, requireRole("owner"), async (r
       detail: `role=${role}${instituteCode ? `; institute=${instituteCode}` : ""}`,
       ip: req.ip,
     });
-    const response = { member: publicMember(member) };
-    if (generatedPassword) {
-      // Plaintext is returned exactly once — it is not stored or recoverable.
-      response.password = generatedPassword;
+    const response = {
+      member: {
+        ...publicMember(member),
+        last_password_issued: password,
+      },
+    };
+    if (password) {
+      // Returned so owner can see and copy it immediately
+      response.password = password;
     }
     res.status(201).json(response);
   } catch (error) {
@@ -193,7 +236,12 @@ router.post("/members/:id/reset-password", requireAuth, requireCsrf, requireRole
     if (!parsed.success) return res.status(400).json({ error: "Please check the password", fields: fieldsFrom(parsed.error) });
     const target = await Member.findById(req.params.id);
     if (!target) return res.status(404).json({ error: "Not found" });
-    target.password_hash = await bcrypt.hash(parsed.data.password, 12);
+
+    // Use owner-provided password or auto-generate strong password
+    const newPassword = (parsed.data.password || "").trim() || generateStaffPassword();
+
+    target.password_hash = await bcrypt.hash(newPassword, 12);
+    target.last_password_issued = newPassword;
     target.failed_login_count = 0;
     target.locked_until = undefined;
     // A password reset invalidates enrolled 2FA; the member must enrol again.
@@ -203,16 +251,49 @@ router.post("/members/:id/reset-password", requireAuth, requireCsrf, requireRole
     target.totp_setup_token_hash = undefined;
     target.totp_setup_expires = undefined;
     await target.save();
+
     await revokeAllSessionsForMember(target._id, "password_reset");
     if (String(target._id) === String(req.member._id)) clearSessionCookies(res);
+
+    // Send email notification to staff member with updated password and link to /admin
+    if (target.email) {
+      try {
+        const resetTemplate = staffPasswordResetTemplate({
+          name: target.name,
+          email: target.email,
+          password: newPassword,
+          institute_code: target.institute_code,
+          loginUrl: "https://www.apthex.com/admin",
+        });
+        await queueEmail({
+          dedupeKey: `staff_reset:${target._id}:${Date.now()}`,
+          to: target.email,
+          kind: "staff_password_reset",
+          ...resetTemplate,
+        });
+        processOutbox({ limit: 5 }).catch(() => {});
+      } catch (emailErr) {
+        console.error("[staff] Failed to queue reset email:", emailErr.message);
+      }
+    }
+
     await audit({
       member_id: req.member._id,
       action: "staff_password_reset",
       entity: "member",
       entity_id: String(target._id),
+      detail: `email_sent=${Boolean(target.email)}`,
       ip: req.ip,
     });
-    res.json({ ok: true });
+
+    res.json({
+      ok: true,
+      password: newPassword,
+      member: {
+        ...publicMember(target),
+        last_password_issued: newPassword,
+      },
+    });
   } catch (error) {
     next(error);
   }

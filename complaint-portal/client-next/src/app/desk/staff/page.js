@@ -11,9 +11,9 @@ import { formatDateTime } from "../../../lib/format.js";
 const EMPTY_MEMBER = { name: "", email: "", password: "", role: "case_team", institute_code: "" };
 
 function passwordProblem(password) {
-  if (password.length < 12) return "Password must be at least 12 characters.";
-  if (!/[a-z]/.test(password)) return "Password must contain a lowercase letter.";
-  if (!/[A-Z]/.test(password)) return "Password must contain an uppercase letter.";
+  if (!password) return "";
+  if (password.length < 8) return "Password must be at least 8 characters.";
+  if (!/[a-zA-Z]/.test(password)) return "Password must contain a letter.";
   if (!/[0-9]/.test(password)) return "Password must contain a number.";
   return "";
 }
@@ -27,10 +27,11 @@ function StaffView() {
   const [notice, setNotice] = useState("");
   const [draft, setDraft] = useState(EMPTY_MEMBER);
   const [creating, setCreating] = useState(false);
-  // Unique generated password — shown exactly once so the owner can hand it
-  // to the teacher. Never stored in plain text server-side.
+  // Active/recent generated password — shown with quick copy
   const [generatedPassword, setGeneratedPassword] = useState("");
   const [passwordCopied, setPasswordCopied] = useState(false);
+  const [revealedPasswords, setRevealedPasswords] = useState({});
+  const [copiedId, setCopiedId] = useState("");
   const [resetFor, setResetFor] = useState("");
   const [resetPassword, setResetPassword] = useState("");
   const [busyId, setBusyId] = useState("");
@@ -88,6 +89,19 @@ function StaffView() {
     );
   }
 
+  function toggleReveal(id) {
+    setRevealedPasswords((prev) => ({ ...prev, [id]: !prev[id] }));
+  }
+
+  async function copyStaffPassword(pwd, id) {
+    if (!pwd) return;
+    try {
+      await navigator.clipboard.writeText(pwd);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(""), 1800);
+    } catch {}
+  }
+
   async function copyGeneratedPassword() {
     try {
       await navigator.clipboard.writeText(generatedPassword);
@@ -128,9 +142,9 @@ function StaffView() {
       setDraft(EMPTY_MEMBER);
       if (result.password) {
         setGeneratedPassword(result.password);
-        setNotice(`${result.member.name} created with their own separate password. Share it with them — it is shown only this once.`);
+        setNotice(`Staff account created for ${result.member.name}. Password: ${result.password} (Email sent with login details to ${result.member.email}).`);
       } else {
-        setNotice(`${result.member.name} created. They will enrol 2FA on their first sign-in.`);
+        setNotice(`${result.member.name} created. Account details emailed to ${result.member.email}.`);
       }
       await load();
     } catch (requestError) {
@@ -159,15 +173,25 @@ function StaffView() {
     event.preventDefault();
     setError("");
     setNotice("");
-    const problem = passwordProblem(resetPassword);
-    if (problem) {
-      setError(problem);
-      return;
+    if (resetPassword.trim()) {
+      const problem = passwordProblem(resetPassword.trim());
+      if (problem) {
+        setError(problem);
+        return;
+      }
     }
     setBusyId(resetFor);
     try {
-      await api(`/api/staff/members/${resetFor}/reset-password`, { method: "POST", json: { password: resetPassword } });
-      setNotice("Password reset. All sessions were revoked and 2FA enrolment is required again.");
+      const result = await api(`/api/staff/members/${resetFor}/reset-password`, {
+        method: "POST",
+        json: { password: resetPassword.trim() || undefined },
+      });
+      if (result.password) {
+        setGeneratedPassword(result.password);
+        setNotice(`Password reset successfully! Updated password: ${result.password}. Email notification sent with login details.`);
+      } else {
+        setNotice("Password reset successfully. All sessions revoked.");
+      }
       setResetFor("");
       setResetPassword("");
       await load();
@@ -245,6 +269,7 @@ function StaffView() {
                     <th>Name</th>
                     <th>Position</th>
                     <th>Institute</th>
+                    <th>Password</th>
                     <th>Status</th>
                     <th>2FA</th>
                     <th>Last sign-in</th>
@@ -304,6 +329,41 @@ function StaffView() {
                             </select>
                           ) : (
                             <span className="staff-static">All access</span>
+                          )}
+                        </td>
+                        <td data-label="Password">
+                          {row.last_password_issued ? (
+                            <div className="staff-pwd-cell">
+                              <code className="mono staff-pwd-pill">
+                                {revealedPasswords[row.id] ? row.last_password_issued : "••••••••••••"}
+                              </code>
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-small staff-pwd-btn"
+                                onClick={() => toggleReveal(row.id)}
+                                title={revealedPasswords[row.id] ? "Hide password" : "Show password"}
+                                aria-label={revealedPasswords[row.id] ? "Hide password" : "Show password"}
+                              >
+                                <Icon name={revealedPasswords[row.id] ? "eyeOff" : "eye"} size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-small staff-pwd-btn"
+                                onClick={() => copyStaffPassword(row.last_password_issued, row.id)}
+                                title="Copy password"
+                                aria-label="Copy password"
+                              >
+                                <Icon name={copiedId === row.id ? "check" : "copy"} size={13} />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-small staff-pwd-set"
+                              onClick={() => { setResetFor(row.id); setResetPassword(""); }}
+                            >
+                              <Icon name="lock" size={12} /> Set pass
+                            </button>
                           )}
                         </td>
                         <td data-label="Status">
@@ -436,17 +496,31 @@ function StaffView() {
             <section className="card staff-create-card">
               <div className="staff-card-heading staff-create-head">
                 <span className="staff-card-icon"><Icon name="lock" size={18} /></span>
-                <h2>Reset password</h2>
+                <h2>Reset / Generate Password</h2>
               </div>
-              <p className="small muted staff-reset-note">This revokes all sessions for the selected member and clears their 2FA enrolment.</p>
+              <p className="small muted staff-reset-note">
+                Type a custom password or leave blank to auto-generate a secure password. An email with the new password and login link to <span className="mono">/admin</span> will be sent automatically.
+              </p>
               <form className="staff-create-form" onSubmit={resetMemberPassword}>
                 <label className="field">
-                  <span className="field-label">New password</span>
-                  <input className="input" type="password" value={resetPassword} onChange={(event) => setResetPassword(event.target.value)} autoComplete="new-password" minLength={12} required />
+                  <span className="field-label">New password (optional)</span>
+                  <input
+                    className="input"
+                    type="text"
+                    value={resetPassword}
+                    onChange={(event) => setResetPassword(event.target.value)}
+                    placeholder="Leave blank to auto-generate"
+                    autoComplete="off"
+                  />
+                  <span className="field-hint">Leave blank or enter custom password (min 8 characters)</span>
                 </label>
-                <div className="row">
-                  <button type="submit" className="btn btn-primary" disabled={busyId === resetFor}>Reset password</button>
-                  <button type="button" className="btn btn-ghost" onClick={() => { setResetFor(""); setResetPassword(""); }}>Cancel</button>
+                <div className="row row-wrap">
+                  <button type="submit" className="btn btn-primary" disabled={busyId === resetFor}>
+                    <Icon name="check" size={15} /> {resetPassword.trim() ? "Update password" : "Auto-generate & send email"}
+                  </button>
+                  <button type="button" className="btn btn-ghost" onClick={() => { setResetFor(""); setResetPassword(""); }}>
+                    Cancel
+                  </button>
                 </div>
               </form>
             </section>

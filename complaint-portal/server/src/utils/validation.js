@@ -209,11 +209,23 @@ export const memberUpdateSchema = z
 export const monthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Month must be YYYY-MM");
 
 export const passwordResetSchema = z.object({
+  // Password is optional: if omitted or empty, the server auto-generates a strong password
   password: z
     .string()
-    .min(12, "Password must be at least 12 characters")
+    .trim()
+    .min(8, "Password must be at least 8 characters")
     .max(128)
-    .regex(/[a-z]/, "Password must contain a lowercase letter")
-    .regex(/[A-Z]/, "Password must contain an uppercase letter")
-    .regex(/[0-9]/, "Password must contain a number"),
+    .optional()
+    .or(z.literal("")),
+});
+
+export const changePasswordSchema = z.object({
+  current_password: z.string().min(1, "Current password is required"),
+  new_password: z
+    .string()
+    .trim()
+    .min(8, "New password must be at least 8 characters")
+    .max(128)
+    .regex(/[a-z]/, "New password must contain a lowercase letter")
+    .regex(/[0-9]/, "New password must contain a number"),
 });

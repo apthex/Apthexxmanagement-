@@ -369,6 +369,80 @@ export async function queueEscalation({ complaint, days }) {
   return queued;
 }
 
+export function staffAccountCreatedTemplate({ name, email, role, password, institute_code, loginUrl }) {
+  const isTeacher = role === "case_team";
+  const portalUrl = loginUrl || "https://www.apthex.com/admin";
+  const roleName = isTeacher ? "Teacher / Case Team" : "Administrator";
+
+  return {
+    subject: `APTHEX Case Desk — Staff Account Created`,
+    html: `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #0A0A0C; color: #F5F5F7; border-radius: 12px; border: 1px solid #26262b;">
+      <h2 style="color: #E60600; margin-top: 0; font-size: 20px;">APTHEX Case Desk</h2>
+      <p style="font-size: 15px;">Hello <strong>${escapeHtml(name)}</strong>,</p>
+      <p style="color: #d1d1d6; line-height: 1.5;">Your staff access account has been created on the APTHEX Complaint Management Portal.</p>
+      
+      <div style="background: #141418; padding: 18px 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #2b2b34;">
+        <p style="margin: 6px 0; font-size: 14px;"><strong>Portal Login:</strong> <a href="${escapeHtml(portalUrl)}" style="color: #ff4d4d; font-weight: bold; text-decoration: underline;">${escapeHtml(portalUrl)}</a></p>
+        <p style="margin: 6px 0; font-size: 14px;"><strong>Work Email:</strong> ${escapeHtml(email)}</p>
+        <p style="margin: 6px 0; font-size: 14px;"><strong>Role:</strong> ${escapeHtml(roleName)}</p>
+        ${institute_code ? `<p style="margin: 6px 0; font-size: 14px;"><strong>Institute Code:</strong> <span style="font-family: monospace; color: #ff8080; font-weight: bold;">${escapeHtml(institute_code)}</span></p>` : ""}
+        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #22222a;">
+          <span style="font-size: 13px; color: #a1a1aa; display: block; margin-bottom: 6px;">Your Login Password:</span>
+          <div style="background: #000; padding: 10px 16px; border-radius: 6px; font-family: monospace; font-size: 16px; color: #00ff66; letter-spacing: 1px; display: inline-block; border: 1px solid #1a3322;">
+            ${escapeHtml(password)}
+          </div>
+        </div>
+      </div>
+
+      <p style="font-weight: 600; margin-bottom: 8px;">How to Sign In:</p>
+      <ol style="padding-left: 20px; color: #d1d1d6; line-height: 1.6; margin-top: 4px;">
+        <li>Go to <a href="${escapeHtml(portalUrl)}" style="color: #ff4d4d;">${escapeHtml(portalUrl)}</a></li>
+        <li>Enter your staff password above to access the desk${isTeacher ? ` (shows complaint metrics for ${escapeHtml(institute_code)})` : ""}.</li>
+      </ol>
+
+      <div style="margin-top: 24px; padding: 14px; background: rgba(255,255,255,0.04); border-radius: 8px; font-size: 13px; color: #9ca3af; border: 1px solid rgba(255,255,255,0.08);">
+        <strong>Password Update:</strong> If you need to change your password or update your details, contact your portal administrator or email <a href="mailto:support@apthex.com" style="color: #ff6666;">support@apthex.com</a>.
+      </div>
+
+      <p style="font-size: 12px; color: #6b7280; margin-top: 24px;">This is an automated system email from APTHEX. Please keep your credentials confidential.</p>
+    </div>`,
+    text: `APTHEX Case Desk — Staff Account Created\n\nHello ${name},\n\nYour staff account has been created.\nPortal URL: ${portalUrl}\nWork Email: ${email}\nRole: ${roleName}\n${institute_code ? `Institute Code: ${institute_code}\n` : ""}Password: ${password}\n\nSign in at ${portalUrl} using your password.\n\nTo update your password, contact your portal administrator.`,
+  };
+}
+
+export function staffPasswordResetTemplate({ name, email, password, institute_code, loginUrl }) {
+  const portalUrl = loginUrl || "https://www.apthex.com/admin";
+  return {
+    subject: `APTHEX Case Desk — Password Updated`,
+    html: `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #0A0A0C; color: #F5F5F7; border-radius: 12px; border: 1px solid #26262b;">
+      <h2 style="color: #E60600; margin-top: 0; font-size: 20px;">APTHEX Case Desk</h2>
+      <p style="font-size: 15px;">Hello <strong>${escapeHtml(name)}</strong>,</p>
+      <p style="color: #d1d1d6; line-height: 1.5;">Your password for the APTHEX Complaint Management Portal has been updated by the administrator.</p>
+      
+      <div style="background: #141418; padding: 18px 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #2b2b34;">
+        <p style="margin: 6px 0; font-size: 14px;"><strong>Portal Login:</strong> <a href="${escapeHtml(portalUrl)}" style="color: #ff4d4d; font-weight: bold; text-decoration: underline;">${escapeHtml(portalUrl)}</a></p>
+        <p style="margin: 6px 0; font-size: 14px;"><strong>Account:</strong> ${escapeHtml(email)}</p>
+        ${institute_code ? `<p style="margin: 6px 0; font-size: 14px;"><strong>Institute Code:</strong> <span style="font-family: monospace; color: #ff8080; font-weight: bold;">${escapeHtml(institute_code)}</span></p>` : ""}
+        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #22222a;">
+          <span style="font-size: 13px; color: #a1a1aa; display: block; margin-bottom: 6px;">Your New Password:</span>
+          <div style="background: #000; padding: 10px 16px; border-radius: 6px; font-family: monospace; font-size: 16px; color: #00ff66; letter-spacing: 1px; display: inline-block; border: 1px solid #1a3322;">
+            ${escapeHtml(password)}
+          </div>
+        </div>
+      </div>
+
+      <p style="color: #d1d1d6; line-height: 1.6;">You can sign in immediately at <a href="${escapeHtml(portalUrl)}" style="color: #ff4d4d;">${escapeHtml(portalUrl)}</a> using this new password.</p>
+
+      <div style="margin-top: 24px; padding: 14px; background: rgba(255,255,255,0.04); border-radius: 8px; font-size: 13px; color: #9ca3af; border: 1px solid rgba(255,255,255,0.08);">
+        <strong>Need an update?</strong> If you want to change your password again, request an update from your administrator or contact <a href="mailto:support@apthex.com" style="color: #ff6666;">support@apthex.com</a>.
+      </div>
+
+      <p style="font-size: 12px; color: #6b7280; margin-top: 24px;">This is an automated system email from APTHEX. Please keep your credentials confidential.</p>
+    </div>`,
+    text: `APTHEX Case Desk — Password Updated\n\nHello ${name},\n\nYour password for the APTHEX Case Desk has been updated.\nPortal URL: ${portalUrl}\nAccount: ${email}\n${institute_code ? `Institute Code: ${institute_code}\n` : ""}New Password: ${password}\n\nPlease sign in at ${portalUrl} with your new password.`,
+  };
+}
+
 export function emailDeliveryConfigured() {
   return Boolean((env.SMTP_USER && env.SMTP_PASS) || (env.RESEND_API_KEY && env.EMAIL_FROM));
 }
