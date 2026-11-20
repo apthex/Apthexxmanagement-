@@ -306,7 +306,7 @@ export default function StaffLoginPage() {
                   onClick={() => {
                     setSetup(null);
                     setPassword("");
-                    setCode("");
+                    setSetupCode("");
                     setError("");
                   }}
                 >
