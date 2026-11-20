@@ -36,7 +36,15 @@ function ComplaintView() {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Staff members must only see counts — individual case details are confidential
+  useEffect(() => {
+    if (member && member.role !== "owner") {
+      router.replace("/desk");
+    }
+  }, [member, router]);
+
   const load = useCallback(async () => {
+    if (!isOwner) return;
     setError("");
     try {
       const result = await api(`/api/complaints/${encodeURIComponent(ref)}`);
@@ -47,7 +55,7 @@ function ComplaintView() {
     } finally {
       setLoading(false);
     }
-  }, [ref]);
+  }, [ref, isOwner]);
 
   useEffect(() => {
     load();
@@ -100,6 +108,19 @@ function ComplaintView() {
       popup?.close();
       setError(requestError.message);
     }
+  }
+
+  if (!isOwner) {
+    return (
+      <DeskShell title="Access Restricted">
+        <div className="card empty-state">
+          <span className="icon-tile icon-tile-gold"><Icon name="shield" size={26} /></span>
+          <h2>Confidential Student Record</h2>
+          <p>Individual complaint details and student identities are strictly confidential to protect student privacy. Staff members have access to complaint counts and category metrics on the Case Desk only.</p>
+          <Link href="/desk" className="btn btn-primary">Back to Case Desk</Link>
+        </div>
+      </DeskShell>
+    );
   }
 
   if (loading) {

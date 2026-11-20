@@ -62,10 +62,11 @@ router.post("/login", requireTrustedOrigin, async (req, res, next) => {
     if (!parsed.success) return res.status(400).json({ error: "Enter a valid email and password", fields: fieldsFrom(parsed.error) });
     const { email, password, code } = parsed.data;
 
+    const maxAttempts = env.NODE_ENV === "production" ? env.RATE_LIMIT_LOGIN_PER_15_MIN : 100;
     const limit = await checkRateLimit(
       `login:${hashIp(req.ip)}:${email ? sha256(email) : "pw"}`,
       15 * 60 * 1000,
-      env.RATE_LIMIT_LOGIN_PER_15_MIN
+      maxAttempts
     );
     if (!limit.allowed) {
       res.set("Retry-After", String(limit.retryAfterSeconds));
@@ -104,7 +105,7 @@ router.post("/login", requireTrustedOrigin, async (req, res, next) => {
       return res.status(401).json({ error: "Incorrect password. Try again." });
     }
     if (member.locked_until && member.locked_until > new Date()) {
-      return res.status(429).json({ error: "This account is temporarily locked. Try again later." });
+      return res.status(423).json({ error: "Account is temporarily locked due to multiple failed attempts. Try again in a few minutes." });
     }
 
     const validPassword = await bcrypt.compare(password, member.password_hash);

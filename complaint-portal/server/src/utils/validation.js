@@ -177,9 +177,10 @@ export const instituteCreateSchema = z.object({
   type: z.enum(["school", "college", "other"]).default("college"),
 });
 
-// Panel flow: the admin generates a random APXJIT-### ref ID. Just the college
+// Panel flow: the admin generates an institute ref ID with APT- prefix (custom or auto). Just the college
 // name is enough to assign it — contact details stay optional extras.
 export const instituteGenerateSchema = z.object({
+  code: z.string().trim().max(35).optional(),
   name: z.string().trim().min(2, "Institute name is required").max(120).optional(),
   head_name: z.string().trim().min(2, "Contact person name is required").max(100).optional(),
   head_email: emailSchema.optional(),

@@ -66,7 +66,7 @@ export default function StaffLoginPage() {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [code, setCode] = useState("");
+  const [totpCode, setTotpCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [needsCode, setNeedsCode] = useState(false);
@@ -85,7 +85,10 @@ export default function StaffLoginPage() {
     try {
       const data = await api("/api/auth/login", {
         method: "POST",
-        json: { password, code: code.trim() || undefined },
+        json: {
+          password,
+          code: needsCode ? totpCode.trim() : undefined,
+        },
       });
       if (data.setupRequired) {
         setSetup({
@@ -228,31 +231,18 @@ export default function StaffLoginPage() {
                     </button>
                   </span>
                 </label>
-                <label className="auth-field">
-                  <span className="auth-label">Institute code</span>
-                  <span className="auth-input-wrap">
-                    <Icon name="lock" size={16} className="auth-input-icon" />
-                    <input
-                      className="auth-input auth-input-code"
-                      value={code}
-                      onChange={(event) => setCode(event.target.value.replace(/\D/g, "").toUpperCase().slice(0, 8))}
-                      inputMode="text"
-                      placeholder="e.g. APS001"
-                      maxLength={8}
-                    />
-                  </span>
-                </label>
-                {(needsCode || code) && (
+                {needsCode && (
                   <label className="auth-field">
                     <span className="auth-label">Authenticator code</span>
                     <input
                       className="auth-input auth-input-code"
-                      value={code}
-                      onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                      value={totpCode}
+                      onChange={(event) => setTotpCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
                       inputMode="numeric"
                       autoComplete="one-time-code"
                       placeholder="6-digit code"
                       maxLength={6}
+                      required
                     />
                   </label>
                 )}

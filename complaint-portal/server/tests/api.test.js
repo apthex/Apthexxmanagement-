@@ -725,7 +725,7 @@ test("owner can add institutes through the panel while case team cannot", async 
   assert.ok(publicList.body.institutes.some((row) => row.name === "Verification College"));
 });
 
-test("institute ref IDs follow the APXJIT-### format and can be assigned later", async () => {
+test("institute ref IDs follow the APT-### format and can be assigned later", async () => {
   // 1. Generate an unassigned code — no college details supplied.
   const generated = await ownerAgent
     .post("/api/institutes")
@@ -733,7 +733,7 @@ test("institute ref IDs follow the APXJIT-### format and can be assigned later",
     .send({});
   assert.equal(generated.status, 201, JSON.stringify(generated.body));
   const code = generated.body.institute.code;
-  assert.match(code, /^APXJIT-\d{3,4}$/);
+  assert.match(code, /^APT-\d{3,4}$/);
 
   // Unassigned codes must not validate publicly until a college is attached.
   const anonymous = await request(app).get(`/api/institutes/validate?code=${code}`);
@@ -787,15 +787,15 @@ test("random ref IDs stay distinct per college and regenerate issues a fresh cod
 
   const firstCode = first.body.institute.code;
   const secondCode = second.body.institute.code;
-  assert.match(firstCode, /^APXJIT-\d{3,4}$/);
-  assert.match(secondCode, /^APXJIT-\d{3,4}$/);
+  assert.match(firstCode, /^APT-\d{3,4}$/);
+  assert.match(secondCode, /^APT-\d{3,4}$/);
   // Har college ka apna alag ref ID — kabhi same nahi mil sakta.
   assert.notEqual(firstCode, secondCode);
 
   // Codes are random, not sequential: strip the prefix and confirm the two
   // numbers are not adjacent (this holds for different colleges by design).
-  const firstNumber = Number.parseInt(firstCode.replace("APXJIT-", ""), 10);
-  const secondNumber = Number.parseInt(secondCode.replace("APXJIT-", ""), 10);
+  const firstNumber = Number.parseInt(firstCode.replace("APT-", ""), 10);
+  const secondNumber = Number.parseInt(secondCode.replace("APT-", ""), 10);
   assert.notEqual(secondNumber, firstNumber + 1);
 
   // Regenerate: the same college gets a new code, the old one stops working.
@@ -805,12 +805,35 @@ test("random ref IDs stay distinct per college and regenerate issues a fresh cod
   assert.equal(regenerated.status, 200, JSON.stringify(regenerated.body));
   assert.equal(regenerated.body.institute.name, "Random College B");
   assert.notEqual(regenerated.body.institute.code, secondCode);
-  assert.match(regenerated.body.institute.code, /^APXJIT-\d{3,4}$/);
+  assert.match(regenerated.body.institute.code, /^APT-\d{3,4}$/);
 
   const oldLookup = await request(app).get(`/api/institutes/validate?code=${secondCode}`);
   assert.equal(oldLookup.status, 404);
   const newLookup = await request(app).get(`/api/institutes/validate?code=${regenerated.body.institute.code}`);
   assert.equal(newLookup.status, 200);
+
+  // Test custom institute code creation with APT- prefix and availability check
+  const checkAvailable = await ownerAgent.get("/api/institutes/check-code?code=APT-CUSTOM99");
+  assert.equal(checkAvailable.status, 200);
+  assert.equal(checkAvailable.body.exists, false);
+
+  const customInst = await ownerAgent
+    .post("/api/institutes")
+    .set("X-CSRF-Token", ownerCsrf)
+    .send({ name: "Custom Code College", code: "APT-CUSTOM99" });
+  assert.equal(customInst.status, 201);
+  assert.equal(customInst.body.institute.code, "APT-CUSTOM99");
+
+  const checkTaken = await ownerAgent.get("/api/institutes/check-code?code=APT-CUSTOM99");
+  assert.equal(checkTaken.status, 200);
+  assert.equal(checkTaken.body.exists, true);
+
+  // Duplicate custom code must fail with 409 Conflict
+  const duplicate = await ownerAgent
+    .post("/api/institutes")
+    .set("X-CSRF-Token", ownerCsrf)
+    .send({ name: "Another College", code: "APT-CUSTOM99" });
+  assert.equal(duplicate.status, 409);
 
   const partial = await ownerAgent
     .patch(`/api/institutes/${regenerated.body.institute.code}`)

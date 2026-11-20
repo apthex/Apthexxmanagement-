@@ -13,11 +13,10 @@ import {
 
 const router = express.Router();
 
-// Every institute ref ID follows the APXJIT-### format, e.g. APXJIT-234.
-// Numbers are random instead of sequential so an ID reveals nothing about the
-// order colleges were added in, and every college keeps its own distinct ID.
-const CODE_PREFIX = "APXJIT-";
-// 3-digit pool first (APXJIT-100 … APXJIT-999); the wider 4-digit pool only
+// Every institute ref ID follows the APT-### format (e.g. APT-101, APT-KWW).
+// Codes use the APT- prefix, custom-chosen or randomly allocated.
+const CODE_PREFIX = "APT-";
+// 3-digit pool first (APT-100 … APT-999); the wider 4-digit pool only
 // kicks in if the small pool is ever exhausted.
 const CODE_RANGES = [
   [100, 999],
@@ -29,6 +28,16 @@ function fieldsFrom(error) {
   const fields = {};
   for (const issue of error.issues) fields[issue.path.join(".") || "form"] = issue.message;
   return fields;
+}
+
+// Normalizes an institute code ensuring the APT- prefix and uppercase formatting.
+function normalizeInstituteCode(input) {
+  if (!input) return "";
+  let trimmed = input.trim().toUpperCase();
+  if (!trimmed.startsWith(CODE_PREFIX)) {
+    trimmed = `${CODE_PREFIX}${trimmed.replace(/^APT-?/i, "")}`;
+  }
+  return trimmed;
 }
 
 // Picks a random unused number inside the range. `Institute.exists` keeps the
@@ -59,37 +68,90 @@ function instituteView(institute) {
   };
 }
 
-// Owner generates a new institute ref ID. With college details it is created
-// assigned; without them it is an unassigned code the panel can attach later.
+// Owner checks if a custom code already exists before generating.
+router.get("/check-code", requireAuth, requireRole("owner"), async (req, res, next) => {
+  try {
+    const raw = (req.query.code || "").trim();
+    if (!raw) return res.status(400).json({ error: "Code is required to check availability" });
+
+    const code = normalizeInstituteCode(raw);
+    const existing = await Institute.findOne({ code }).select("code name status").lean();
+    if (existing) {
+      return res.json({
+        exists: true,
+        code: existing.code,
+        name: existing.name || "",
+        status: existing.status,
+        message: `Code '${existing.code}' already exists${existing.name ? ` for "${existing.name}"` : ""}.`,
+      });
+    }
+
+    return res.json({
+      exists: false,
+      code,
+      message: `Code '${code}' is available.`,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Owner generates a new institute ref ID. Supports custom APT- code with duplicate verification,
+// or auto-allocates an APT-### code.
 router.post("/", requireAuth, requireCsrf, requireRole("owner"), async (req, res, next) => {
   try {
     const parsed = instituteGenerateSchema.safeParse(req.body || {});
     if (!parsed.success) {
       return res.status(400).json({ error: "Please check the institute details", fields: fieldsFrom(parsed.error) });
     }
-    const { name, head_name, head_email, type } = parsed.data;
+    const { name, head_name, head_email, type, code: customCode } = parsed.data;
+
+    let targetCode = "";
+    if (customCode && customCode.trim()) {
+      targetCode = normalizeInstituteCode(customCode);
+      if (!/^APT-[A-Z0-9_-]{1,30}$/.test(targetCode)) {
+        return res.status(400).json({
+          error: "Invalid institute code format. Code must start with APT- and contain letters, numbers, hyphens or underscores (e.g. APT-101 or APT-KWW).",
+          fields: { code: "Invalid format. E.g. APT-101" },
+        });
+      }
+
+      // Check if code already exists in database
+      const existing = await Institute.findOne({ code: targetCode });
+      if (existing) {
+        return res.status(409).json({
+          error: `Institute code '${targetCode}' already exists for "${existing.name || "another college"}". Please choose a different code.`,
+          fields: { code: `Code '${targetCode}' already exists` },
+        });
+      }
+    } else {
+      targetCode = await allocateCode();
+    }
+
+    if (!targetCode) {
+      return res.status(500).json({ error: "Could not allocate an institute code, please retry" });
+    }
 
     let institute = null;
-    for (let attempt = 0; attempt < 5 && !institute; attempt += 1) {
-      const code = await allocateCode();
-      if (!code) break;
-      try {
-        institute = await Institute.create({
-          code,
-          name: name || "",
-          type,
-          head_name: name ? head_name : "",
-          head_email: name ? head_email : "",
-          status: "active",
-          created_at: new Date(),
-          updated_at: new Date(),
+    try {
+      institute = await Institute.create({
+        code: targetCode,
+        name: name || "",
+        type,
+        head_name: name ? head_name : "",
+        head_email: name ? head_email : "",
+        status: "active",
+        created_at: new Date(),
+        updated_at: new Date(),
+      });
+    } catch (error) {
+      if (error?.code === 11000) {
+        return res.status(409).json({
+          error: `Institute code '${targetCode}' already exists. Please choose a different code.`,
+          fields: { code: "Code already exists" },
         });
-      } catch (error) {
-        if (error?.code !== 11000) throw error; // rare race → pick another random code
       }
-    }
-    if (!institute) {
-      return res.status(500).json({ error: "Could not allocate an institute code, please retry" });
+      throw error;
     }
 
     await audit({
@@ -206,22 +268,40 @@ router.post("/:code/regenerate", requireAuth, requireCsrf, requireRole("owner"),
     if (!institute) return res.status(404).json({ error: "Institute code not recognised" });
 
     const previousCode = institute.code;
-    let updated = null;
-    for (let attempt = 0; attempt < 5 && !updated; attempt += 1) {
-      const code = await allocateCode();
-      if (!code) break;
-      if (code === previousCode) continue; // cannot happen (previous is taken), kept as a guard
-      try {
-        updated = await Institute.findOneAndUpdate(
-          { code: previousCode },
-          { $set: { code, updated_at: new Date() } },
-          { returnDocument: "after" }
-        );
-      } catch (error) {
-        if (error?.code !== 11000) throw error; // rare race → pick another random code
+    const requestedCode = (req.body?.new_code || "").trim();
+    let newCode = "";
+
+    if (requestedCode) {
+      newCode = normalizeInstituteCode(requestedCode);
+      if (!/^APT-[A-Z0-9_-]{1,30}$/.test(newCode)) {
+        return res.status(400).json({ error: "Invalid code format. Must start with APT- (e.g. APT-102)" });
       }
+      if (newCode === previousCode) {
+        return res.status(400).json({ error: "New code must be different from current code" });
+      }
+      const existing = await Institute.findOne({ code: newCode });
+      if (existing) {
+        return res.status(409).json({ error: `Institute code '${newCode}' already exists for "${existing.name || "another college"}". Please choose a different code.` });
+      }
+    } else {
+      newCode = await allocateCode();
     }
-    if (!updated) return res.status(500).json({ error: "Could not allocate a new code, please retry" });
+
+    if (!newCode) return res.status(500).json({ error: "Could not allocate a new code, please retry" });
+
+    let updated = null;
+    try {
+      updated = await Institute.findOneAndUpdate(
+        { code: previousCode },
+        { $set: { code: newCode, updated_at: new Date() } },
+        { returnDocument: "after" }
+      );
+    } catch (error) {
+      if (error?.code === 11000) {
+        return res.status(409).json({ error: `Code '${newCode}' is already taken.` });
+      }
+      throw error;
+    }
 
     await audit({
       member_id: req.member._id,

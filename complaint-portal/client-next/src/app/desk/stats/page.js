@@ -135,7 +135,7 @@ function StatsView() {
             <h2>Institute ref IDs</h2>
             <p className="small muted">
               College codes are issued from <strong>Institute ref IDs</strong> in the side menu — type the
-              college's name there and a unique <span className="mono">APXJIT-###</span> code is generated
+              college's name there and a unique <span className="mono">APT-###</span> code is generated
               instantly. New codes appear in the student form right away.
             </p>
             <Link href="/desk/institutes" className="btn btn-secondary btn-block">

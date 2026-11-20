@@ -43,7 +43,7 @@ function Leaderboard() {
 
   const max = rows && rows.length ? Math.max(...rows.map((row) => row.total)) : 0;
 
-  // Search sirf client-side: ref ID (APXJIT-234) ya college name se filter.
+  // Search sirf client-side: ref ID (APT-101) ya college name se filter.
   const needle = query.trim().toLowerCase();
   const visible = rows
     ? rows.filter((row) => !needle || row.code.toLowerCase().includes(needle) || row.name.toLowerCase().includes(needle))
@@ -83,7 +83,7 @@ function Leaderboard() {
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search by ref ID (APXJIT-234) or college name…"
+            placeholder="Search by ref ID (APT-101) or college name…"
             aria-label="Search the leaderboard by ref ID or college name"
           />
           {query && (

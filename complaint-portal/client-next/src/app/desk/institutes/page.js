@@ -8,7 +8,7 @@ import Icon from "../../../components/Icon.jsx";
 import { api } from "../../../lib/api.js";
 import { formatDateTime } from "../../../lib/format.js";
 
-const EMPTY_DRAFT = { name: "" };
+const EMPTY_DRAFT = { name: "", codeSuffix: "" };
 
 function Dashboard() {
   const { member } = useAuth();
@@ -18,6 +18,7 @@ function Dashboard() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [draft, setDraft] = useState(EMPTY_DRAFT);
+  const [codeStatus, setCodeStatus] = useState({ checking: false, exists: null, message: "" });
   const [submitting, setSubmitting] = useState(false);
   const [copiedCode, setCopiedCode] = useState("");
   const [busyCode, setBusyCode] = useState("");
@@ -27,6 +28,26 @@ function Dashboard() {
   useEffect(() => {
     if (member && member.role !== "owner") router.replace("/desk");
   }, [member, router]);
+
+  // Live code availability check for custom APT- code
+  useEffect(() => {
+    const raw = (draft.codeSuffix || "").trim();
+    if (!raw) {
+      setCodeStatus({ checking: false, exists: null, message: "" });
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setCodeStatus((prev) => ({ ...prev, checking: true }));
+      try {
+        const fullCode = `APT-${raw.replace(/^APT-?/i, "").toUpperCase()}`;
+        const result = await api(`/api/institutes/check-code?code=${encodeURIComponent(fullCode)}`);
+        setCodeStatus({ checking: false, exists: result.exists, message: result.message });
+      } catch {
+        setCodeStatus({ checking: false, exists: null, message: "" });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [draft.codeSuffix]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -53,10 +74,20 @@ function Dashboard() {
     setError("");
     setNotice("");
     try {
-      const result = await api("/api/institutes", { method: "POST", json: { name: draft.name } });
+      const customCode = draft.codeSuffix.trim()
+        ? `APT-${draft.codeSuffix.trim().replace(/^APT-?/i, "").toUpperCase()}`
+        : undefined;
+      const result = await api("/api/institutes", {
+        method: "POST",
+        json: {
+          name: draft.name.trim(),
+          code: customCode,
+        },
+      });
       const row = result.institute;
       setNotice(`${row.code} issued for ${row.name}. Share this ref ID with the college — students can report against it right away.`);
       setDraft(EMPTY_DRAFT);
+      setCodeStatus({ checking: false, exists: null, message: "" });
       await load();
     } catch (requestError) {
       setError(
@@ -70,12 +101,22 @@ function Dashboard() {
   }
 
   async function regenerate(row) {
-    if (!window.confirm(`Issue a fresh ref ID for ${row.name || "this code"}?\n\nThe current code ${row.code} will stop working immediately. Share the new code with the college.`)) return;
+    const input = window.prompt(
+      `Issue a fresh ref ID for ${row.name || "this code"}?\n\nCurrent code: ${row.code}\n\nType a custom code suffix (e.g. 102 for APT-102), or leave blank to auto-allocate a random APT-### code:`,
+      ""
+    );
+    if (input === null) return;
+    const requestedCode = input.trim()
+      ? `APT-${input.trim().replace(/^APT-?/i, "").toUpperCase()}`
+      : undefined;
     setBusyCode(row.code);
     setError("");
     setNotice("");
     try {
-      const result = await api(`/api/institutes/${encodeURIComponent(row.code)}/regenerate`, { method: "POST" });
+      const result = await api(`/api/institutes/${encodeURIComponent(row.code)}/regenerate`, {
+        method: "POST",
+        json: { new_code: requestedCode },
+      });
       setNotice(`${result.previous_code} retired → ${result.institute.code} is the new ref ID for ${result.institute.name || "this college"}.`);
       await load();
     } catch (requestError) {
@@ -124,7 +165,7 @@ function Dashboard() {
   return (
     <DeskShell
       title="Institute ref IDs"
-      subtitle="Type a college's name, get its unique APXJIT-### code — the full register stays right below."
+      subtitle="Issue a unique APT-### or custom institute code for colleges — students report against it directly."
       actions={
         <button type="button" className="btn btn-secondary btn-small" onClick={load} disabled={loading}>
           <Icon name="refresh" size={16} /> {loading ? "Refreshing…" : "Refresh"}
@@ -136,15 +177,15 @@ function Dashboard() {
 
       <section className="card refid-panel">
         <div className="card-heading">
-          <h2>Generate an institute ref ID</h2>
+          <h2>Generate or Customize an Institute Ref ID</h2>
           <p>
-            Every college gets its own unique reporting code. Fill the name below and the code is created for
-            you — it can never be guessed or reused by another college.
+            Every college gets its own unique reporting code starting with <strong>APT-</strong>. Type a custom
+            code suffix (like 101, DYP, etc.) or leave it blank to auto-allocate a unique random APT-### code.
           </p>
           <ul className="check-list compact refid-steps">
-            <li><Icon name="check" size={15} /> Type the college's full name in the box below.</li>
-            <li><Icon name="check" size={15} /> Click <strong>Generate ref ID</strong> — a unique <span className="mono">APXJIT-###</span> code (like <span className="mono">APXJIT-234</span>) is created instantly.</li>
-            <li><Icon name="check" size={15} /> The new code appears at the top of the register below — copy it and share it with the college.</li>
+            <li><Icon name="check" size={15} /> Type the college's full name.</li>
+            <li><Icon name="check" size={15} /> Enter a custom suffix after <span className="mono">APT-</span> or leave blank for a random <span className="mono">APT-###</span> code.</li>
+            <li><Icon name="check" size={15} /> The code appears in the register below — copy and share it with the college.</li>
           </ul>
         </div>
 
@@ -154,14 +195,40 @@ function Dashboard() {
             <input
               className="input"
               value={draft.name}
-              onChange={(event) => setDraft({ name: event.target.value })}
+              onChange={(event) => setDraft({ ...draft, name: event.target.value })}
               placeholder="e.g. K.K. Wagh Institute"
               maxLength={120}
               required
             />
           </label>
+
+          <label className="field">
+            <span className="field-label">Custom Code (Optional)</span>
+            <div className="code-input-wrap">
+              <span className="code-input-prefix">APT-</span>
+              <input
+                className="input code-input-field"
+                value={draft.codeSuffix}
+                onChange={(event) => {
+                  const cleaned = event.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toUpperCase();
+                  setDraft({ ...draft, codeSuffix: cleaned });
+                }}
+                placeholder="101, DYP, etc."
+                maxLength={25}
+              />
+            </div>
+            {codeStatus.message ? (
+              <span className={`code-status-pill ${codeStatus.exists ? "code-status-taken" : "code-status-avail"}`}>
+                <Icon name={codeStatus.exists ? "alert" : "check"} size={13} />
+                {codeStatus.message}
+              </span>
+            ) : (
+              <span className="field-hint">Leave blank to auto-generate random APT-###</span>
+            )}
+          </label>
+
           <div className="refid-form-actions">
-            <button type="submit" className="btn btn-primary" disabled={submitting}>
+            <button type="submit" className="btn btn-primary" disabled={submitting || codeStatus.exists === true}>
               <Icon name="building" size={16} /> {submitting ? "Generating…" : "Generate ref ID"}
             </button>
           </div>
@@ -184,7 +251,7 @@ function Dashboard() {
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by ref ID (APXJIT-234) or college name…"
+              placeholder="Search by ref ID (APT-101) or college name…"
               aria-label="Search the ref-ID register by code or college name"
             />
             {query && (
@@ -201,7 +268,7 @@ function Dashboard() {
           <div className="empty-state">
             <span className="icon-tile"><Icon name="building" size={24} /></span>
             <h2>No ref IDs yet</h2>
-            <p>Generate the first APXJIT-### code and hand it to a college.</p>
+            <p>Generate the first APT-### code and hand it to a college.</p>
           </div>
         ) : visible.length === 0 ? (
           <div className="empty-state">

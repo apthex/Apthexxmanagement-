@@ -294,15 +294,15 @@ router.get("/", requireAuth, requireRole("owner", "case_team"), async (req, res,
     const limit = parsePositive(req.query.limit, 25, 100);
     const filter = { flagged_spam: false };
 
-    // Teachers (case_team) are scoped to their own college: their institute
-    // ref ID is forced server-side, query overrides and spam review are
-    // ignored (spam review stays an owner concern).
+    // Teachers (case_team) can query their own institute code or one entered to view its counts.
+    // Query overrides and spam review stay an owner concern.
     const isOwner = req.member.role === "owner";
-    const instituteScope = isOwner ? "" : req.member.institute_code || "\u0000unscoped";
+    const requestedCode = (req.query.institute_code || "").trim().toUpperCase();
+    const instituteScope = isOwner
+      ? requestedCode
+      : (requestedCode || req.member.institute_code || "\u0000unscoped");
     if (instituteScope) {
       filter.institute_code = instituteScope;
-    } else if (req.query.institute_code) {
-      filter.institute_code = String(req.query.institute_code).toUpperCase();
     }
     if (req.query.category && CATEGORIES.includes(String(req.query.category))) filter.category = String(req.query.category);
     if (req.query.status && ["in_process", "completed"].includes(String(req.query.status))) filter.status = String(req.query.status);
@@ -318,7 +318,7 @@ router.get("/", requireAuth, requireRole("owner", "case_team"), async (req, res,
 
     // Summary cards follow the same scope as the list (teachers: their college).
     const summaryBase = isOwner
-      ? { flagged_spam: false }
+      ? (instituteScope ? { flagged_spam: false, institute_code: instituteScope } : { flagged_spam: false })
       : { flagged_spam: false, institute_code: instituteScope };
     const [items, total, summaryRaw] = await Promise.all([
       Complaint.find(filter)
@@ -334,10 +334,18 @@ router.get("/", requireAuth, requireRole("owner", "case_team"), async (req, res,
         Complaint.countDocuments({ ...summaryBase, urgent: true, status: "in_process" }),
         Complaint.countDocuments({ ...summaryBase, status: "in_process" }),
         Complaint.countDocuments({ ...summaryBase, status: "completed" }),
+        Complaint.aggregate([
+          { $match: summaryBase },
+          { $group: { _id: "$category", count: { $sum: 1 } } },
+        ]),
       ]),
     ]);
 
-    const [totalAll, urgentOpen, inProcess, completed] = summaryRaw;
+    const [totalAll, urgentOpen, inProcess, completed, categoryCountsRaw] = summaryRaw;
+    const byCategory = {};
+    for (const entry of (categoryCountsRaw || [])) {
+      if (entry._id) byCategory[entry._id] = entry.count;
+    }
     await audit({
       member_id: req.member._id,
       action: "complaint_list_view",
@@ -364,6 +372,7 @@ router.get("/", requireAuth, requireRole("owner", "case_team"), async (req, res,
         urgent: urgentOpen,
         in_process: inProcess,
         completed,
+        by_category: byCategory,
       },
     });
   } catch (error) {
@@ -387,6 +396,14 @@ router.get("/:ref_id", requireAuth, requireRole("owner", "case_team"), async (re
     // other reference behaves as if it does not exist.
     if (req.member.role !== "owner" && complaint.institute_code !== req.member.institute_code) {
       return res.status(404).json({ error: "Not found" });
+    }
+
+    // Staff/Teachers must NOT see sensitive student information:
+    // "kisne ki" (student contact identity) and "kyu kya" (complaint narrative/details)
+    if (req.member.role !== "owner") {
+      return res.status(403).json({
+        error: "Access restricted. Individual case details and student identity are confidential to protect student privacy.",
+      });
     }
 
     const contact = complaint.mode === "identified"
