@@ -1,0 +1,98 @@
+(function () {
+  'use strict';
+  try {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    if (localStorage.getItem('apthex_ignore') === '1') return;
+    if (/bot|googlebot|crawler|spider|robot|crawling/i.test(navigator.userAgent)) return;
+
+    function getUUID() {
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = (Math.random() * 16) | 0;
+        return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+      });
+    }
+
+    var VID_KEY = 'apthex_vid';
+    var SID_KEY = 'apthex_sid';
+    var vid = localStorage.getItem(VID_KEY);
+    if (!vid) {
+      vid = 'v_' + getUUID();
+      localStorage.setItem(VID_KEY, vid);
+    }
+
+    var sid = sessionStorage.getItem(SID_KEY);
+    if (!sid) {
+      sid = 's_' + getUUID();
+      sessionStorage.setItem(SID_KEY, sid);
+    }
+
+    var startTime = Date.now();
+    var page = window.location.pathname || '/';
+    var referrer = document.referrer || '';
+
+    function send(data) {
+      try {
+        var payload = JSON.stringify(Object.assign({
+          visit_id: sid,
+          visitor_id: vid,
+          page: page,
+          referrer: referrer
+        }, data));
+
+        var endpoint = '/api/c';
+        if (navigator.sendBeacon) {
+          var blob = new Blob([payload], { type: 'application/json' });
+          navigator.sendBeacon(endpoint, blob);
+        } else {
+          fetch(endpoint, {
+            method: 'POST',
+            body: payload,
+            headers: { 'Content-Type': 'application/json' },
+            keepalive: true
+          }).catch(function () {});
+        }
+      } catch (e) {}
+    }
+
+    // 1. Send initial pageview beacon
+    send({ type: 'pageview' });
+
+    // 2. Heartbeat to capture active time on page
+    setInterval(function () {
+      var duration = Math.round((Date.now() - startTime) / 1000);
+      send({ type: 'heartbeat', duration: duration });
+    }, 25000);
+
+    function onLeave() {
+      var duration = Math.round((Date.now() - startTime) / 1000);
+      send({ type: 'heartbeat', duration: duration });
+    }
+    window.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') onLeave();
+    });
+    window.addEventListener('beforeunload', onLeave);
+
+    // 3. Track contact form submissions (no fields/values recorded)
+    document.addEventListener('submit', function (e) {
+      try {
+        var target = e.target;
+        if (target && (target.id === 'form' || target.classList.contains('modal__form') || target.closest('#form'))) {
+          send({ type: 'contact_form_submit' });
+        }
+      } catch (err) {}
+    }, true);
+
+    // 4. Track apply button clicks (records role name)
+    document.addEventListener('click', function (e) {
+      try {
+        var link = e.target && e.target.closest ? e.target.closest('a.apply') : null;
+        if (link) {
+          var article = link.closest('article');
+          var role = article && article.querySelector('h2') ? article.querySelector('h2').textContent.trim() : '';
+          send({ type: 'apply_click', role: role || 'Open Role' });
+        }
+      } catch (err) {}
+    }, true);
+  } catch (err) {}
+})();

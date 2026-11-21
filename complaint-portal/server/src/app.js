@@ -15,6 +15,8 @@ import statsRoutes from "./routes/stats.js";
 import reportRoutes from "./routes/reports.js";
 import configRoutes from "./routes/config.js";
 import captchaRoutes from "./routes/captcha.js";
+import collectorRoutes from "./routes/collector.js";
+import livewebRoutes from "./routes/liveweb.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.js";
 
 const app = express();
@@ -84,6 +86,8 @@ app.use("/api/attachments", attachmentRoutes);
 app.use("/api/staff", staffRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/c", collectorRoutes);
+app.use("/api/liveweb", livewebRoutes);
 
 app.use("/api", notFoundHandler);
 app.use(errorHandler);

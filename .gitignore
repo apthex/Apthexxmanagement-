@@ -11,3 +11,6 @@ Thumbs.db
 *.swp
 .vercel
 .env*
+node_modules/
+.next/
+*.tsbuildinfo

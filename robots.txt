@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /complaint-review-console
+Disallow: /admin
+Disallow: /desk
+Disallow: /api/
+
+Sitemap: https://www.apthex.com/sitemap.xml
