@@ -2,6 +2,8 @@ User-agent: *
 Allow: /
 Disallow: /complaint-review-console
 Disallow: /admin
+Disallow: /portal
+Disallow: /login
 Disallow: /desk
 Disallow: /api/
 
