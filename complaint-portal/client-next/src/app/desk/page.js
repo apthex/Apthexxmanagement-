@@ -116,6 +116,31 @@ function Dashboard() {
         </>
       }
     >
+      {isOwner && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "12px 18px",
+            borderRadius: "12px",
+            background: "linear-gradient(135deg, rgba(225, 29, 46, 0.08), rgba(20, 20, 26, 0.6))",
+            border: "1px solid rgba(225, 29, 46, 0.2)",
+            marginBottom: "16px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#10b981", boxShadow: "0 0 8px #10b981" }} />
+            <span style={{ fontSize: "0.85rem", color: "var(--text)" }}>
+              <strong>apthex.com Live Analytics</strong> — real-time visitors, traffic channels &amp; page reading.
+            </span>
+          </div>
+          <Link href="/desk/liveweb" className="btn btn-secondary btn-small" style={{ fontSize: "0.75rem", padding: "4px 12px" }}>
+            Open LiveWeb →
+          </Link>
+        </div>
+      )}
+
       <div className="desk-summary">
         <article className="summary-card summary-card-total">
           <span className="summary-card-icon"><Icon name="layers" size={18} /></span>

@@ -10,7 +10,8 @@ import Icon from "./Icon.jsx";
 
 const links = [
   { href: "/desk", label: "Complaints", icon: "home" },
-  { href: "/desk/leaderboard", label: "Leaderboard", icon: "chart" },
+  { href: "/desk/liveweb", label: "LiveWeb Analytics", icon: "chart", owner: true },
+  { href: "/desk/leaderboard", label: "Leaderboard", icon: "layers" },
   { href: "/desk/institutes", label: "Institute ref IDs", icon: "building", owner: true },
   { href: "/desk/stats", label: "Reporting", icon: "list", owner: true },
   { href: "/desk/staff", label: "Staff accounts", icon: "users", owner: true },
