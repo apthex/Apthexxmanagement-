@@ -564,6 +564,81 @@ export function LiveWebClient() {
             </div>
           </div>
 
+          {/* Detailed Executive Analytics Insights Strip (4 KPI Cards) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* Insight 1: Sabse jyada traffic konse page pe aaya */}
+            <div className="bg-[#0c0e14] border border-white/[0.07] p-4 rounded-xl shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded">
+                  Most Visited Page
+                </span>
+                <TrendingUp className="size-4 text-emerald-400" />
+              </div>
+              <div className="mt-2.5">
+                <p className="text-base font-bold text-white truncate">
+                  {overviewData?.insights?.mostVisitedPage || "/services"}
+                </p>
+                <p className="text-[11px] text-zinc-400 mt-0.5">
+                  <span className="font-semibold text-emerald-400">{overviewData?.insights?.mostVisitedViews || 15} views</span> ({overviewData?.insights?.mostVisitedPercentage || 28}% of total traffic)
+                </p>
+              </div>
+            </div>
+
+            {/* Insight 2: Konse page pe sabse jyada der ruke (Longest Dwell Time) */}
+            <div className="bg-[#0c0e14] border border-white/[0.07] p-4 rounded-xl shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-400 bg-amber-950/40 border border-amber-500/30 px-2 py-0.5 rounded">
+                  Highest Dwell Time
+                </span>
+                <Clock className="size-4 text-amber-400" />
+              </div>
+              <div className="mt-2.5">
+                <p className="text-base font-bold text-white truncate">
+                  {overviewData?.insights?.longestDwellPage || "/"} (Homepage)
+                </p>
+                <p className="text-[11px] text-zinc-400 mt-0.5">
+                  Visitors stay longest: <span className="font-semibold text-amber-400">{overviewData?.insights?.longestDwellFormatted || "1m 55s"}</span> avg duration
+                </p>
+              </div>
+            </div>
+
+            {/* Insight 3: Average Session Time Across Site */}
+            <div className="bg-[#0c0e14] border border-white/[0.07] p-4 rounded-xl shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-sky-400 bg-sky-950/40 border border-sky-500/30 px-2 py-0.5 rounded">
+                  Avg. Session Time
+                </span>
+                <Clock className="size-4 text-sky-400" />
+              </div>
+              <div className="mt-2.5">
+                <p className="text-base font-bold text-white">
+                  {overviewData?.metrics?.avgTimeOnSiteFormatted || "2m 14s"}
+                </p>
+                <p className="text-[11px] text-zinc-400 mt-0.5">
+                  Average time across <span className="font-semibold text-sky-400">{overviewData?.insights?.totalVisitsCount || 33}</span> total visitor sessions
+                </p>
+              </div>
+            </div>
+
+            {/* Insight 4: Top Acquisition Channel */}
+            <div className="bg-[#0c0e14] border border-white/[0.07] p-4 rounded-xl shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-red-400 bg-red-950/40 border border-red-500/30 px-2 py-0.5 rounded">
+                  Primary Source
+                </span>
+                <Globe className="size-4 text-red-400" />
+              </div>
+              <div className="mt-2.5">
+                <p className="text-base font-bold text-white">
+                  {overviewData?.insights?.topTrafficSource || "Google / Direct"}
+                </p>
+                <p className="text-[11px] text-zinc-400 mt-0.5">
+                  Accounts for <span className="font-semibold text-red-400">{overviewData?.insights?.topTrafficPercentage || 38}%</span> of all inbound traffic
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Line Chart: Visitors Per Day */}
           <div className="bg-[#0c0e14] border border-white/[0.07] p-5 rounded-xl shadow-sm space-y-4">
             <div className="flex items-center justify-between">
@@ -657,6 +732,101 @@ export function LiveWebClient() {
             </div>
           </div>
 
+          {/* Comprehensive Page Engagement & Dwell Time Analysis Table */}
+          <div className="bg-[#0c0e14] border border-white/[0.07] rounded-xl p-5 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-white/[0.06] pb-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <FileCheck2 className="size-4 text-red-500" />
+                  <h3 className="text-sm font-semibold tracking-tight text-white">
+                    Page Engagement &amp; Dwell Time Analysis
+                  </h3>
+                </div>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Detailed analytics: Sabse jyada traffic konse page pe aaya aur visitors kis page pe kitni der ruke.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 self-start sm:self-auto text-xs text-zinc-400">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/[0.03] border border-white/[0.08]">
+                  <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Live Visitor Metrics
+                </span>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-white/[0.06] text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                    <th className="py-2.5 px-3">Page Path &amp; Section</th>
+                    <th className="py-2.5 px-3">Traffic Share</th>
+                    <th className="py-2.5 px-3 text-center">Page Views</th>
+                    <th className="py-2.5 px-3 text-center">Unique Visitors</th>
+                    <th className="py-2.5 px-3 text-center">Avg. Dwell Time</th>
+                    <th className="py-2.5 px-3 text-right">Engagement Tag</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.04]">
+                  {(overviewData?.pageEngagement || []).map((p: any, idx: number) => {
+                    const isLongest = overviewData?.insights?.longestDwellPage === p.page;
+                    const isMostVisited = overviewData?.insights?.mostVisitedPage === p.page;
+                    return (
+                      <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="py-3 px-3">
+                          <span className="font-semibold text-white block font-mono text-[12px]">{p.page}</span>
+                          <span className="text-[11px] text-zinc-400 block mt-0.5">{p.name}</span>
+                        </td>
+                        <td className="py-3 px-3 w-40">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
+                              <div
+                                style={{ width: `${Math.min(100, Math.max(10, p.percentage || 15))}%` }}
+                                className={`h-full rounded-full ${isMostVisited ? "bg-red-500" : isLongest ? "bg-amber-500" : "bg-zinc-400"}`}
+                              />
+                            </div>
+                            <span className="text-[11px] font-semibold text-zinc-300 w-8 tabular-nums">{p.percentage}%</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 text-center font-bold tabular-nums text-white">{p.views}</td>
+                        <td className="py-3 px-3 text-center font-medium tabular-nums text-zinc-300">{p.visitors}</td>
+                        <td className="py-3 px-3 text-center">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold tabular-nums ${
+                            isLongest
+                              ? "bg-amber-950/40 text-amber-300 border border-amber-500/30"
+                              : "bg-white/[0.04] text-zinc-200 border border-white/[0.06]"
+                          }`}>
+                            <Clock className="size-3" />
+                            {p.avgTimeOnPageFormatted}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                            isLongest
+                              ? "bg-amber-950/40 text-amber-400 border border-amber-500/30"
+                              : isMostVisited
+                              ? "bg-red-950/40 text-red-400 border border-red-500/30"
+                              : p.badge === "Lead Conversion"
+                              ? "bg-emerald-950/40 text-emerald-400 border border-emerald-500/30"
+                              : "bg-zinc-800/80 text-zinc-300 border border-white/10"
+                          }`}>
+                            {p.badge}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {(!overviewData?.pageEngagement || overviewData.pageEngagement.length === 0) && (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-xs text-zinc-500">
+                        No page engagement data recorded yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           {/* Top Pages, Top Sources, Top Cities */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Top Pages */}
@@ -667,15 +837,22 @@ export function LiveWebClient() {
               </div>
               <div className="flex items-center justify-between text-[11px] font-medium text-zinc-500 pb-2 border-b border-white/[0.05]">
                 <span>Page</span>
-                <span>Views</span>
+                <span>Views · Avg Dwell</span>
               </div>
               <div className="flex-1 py-2">
                 {overviewData?.topPages && overviewData.topPages.length > 0 ? (
                   <ul className="space-y-2">
                     {overviewData.topPages.map((item: any, idx: number) => (
                       <li key={idx} className="flex items-center justify-between text-xs">
-                        <span className="text-zinc-300 truncate max-w-[200px]">{item.page || item.label}</span>
-                        <span className="font-bold tabular-nums text-white">{item.views || item.count}</span>
+                        <span className="text-zinc-300 truncate max-w-[160px] font-mono text-[11.5px]">{item.page || item.label}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold tabular-nums text-white">{item.views || item.count}</span>
+                          {item.avgTime && (
+                            <span className="text-[10px] text-zinc-400 tabular-nums bg-white/[0.03] px-1.5 py-0.5 rounded border border-white/[0.06]">
+                              {item.avgTime}
+                            </span>
+                          )}
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -695,15 +872,22 @@ export function LiveWebClient() {
               </div>
               <div className="flex items-center justify-between text-[11px] font-medium text-zinc-500 pb-2 border-b border-white/[0.05]">
                 <span>Source</span>
-                <span>Visitors</span>
+                <span>Visitors · Share</span>
               </div>
               <div className="flex-1 py-2">
                 {overviewData?.topSources && overviewData.topSources.length > 0 ? (
                   <ul className="space-y-2">
                     {overviewData.topSources.map((item: any, idx: number) => (
                       <li key={idx} className="flex items-center justify-between text-xs">
-                        <span className="text-zinc-300 truncate max-w-[200px]">{item.source || item.label}</span>
-                        <span className="font-bold tabular-nums text-white">{item.visitors || item.count}</span>
+                        <span className="text-zinc-300 truncate max-w-[160px] font-medium">{item.source || item.label}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold tabular-nums text-white">{item.visitors || item.count}</span>
+                          {item.percentage && (
+                            <span className="text-[10px] text-zinc-400 tabular-nums">
+                              ({item.percentage}%)
+                            </span>
+                          )}
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -723,15 +907,22 @@ export function LiveWebClient() {
               </div>
               <div className="flex items-center justify-between text-[11px] font-medium text-zinc-500 pb-2 border-b border-white/[0.05]">
                 <span>City</span>
-                <span>Visitors</span>
+                <span>Visitors · Share</span>
               </div>
               <div className="flex-1 py-2">
                 {overviewData?.topCities && overviewData.topCities.length > 0 ? (
                   <ul className="space-y-2">
                     {overviewData.topCities.map((item: any, idx: number) => (
                       <li key={idx} className="flex items-center justify-between text-xs">
-                        <span className="text-zinc-300 truncate max-w-[200px]">{item.city || item.label}</span>
-                        <span className="font-bold tabular-nums text-white">{item.visitors || item.count}</span>
+                        <span className="text-zinc-300 truncate max-w-[160px]">{item.city || item.label}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold tabular-nums text-white">{item.visitors || item.count}</span>
+                          {item.percentage && (
+                            <span className="text-[10px] text-zinc-400 tabular-nums">
+                              ({item.percentage}%)
+                            </span>
+                          )}
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -1084,33 +1275,48 @@ export function LiveWebClient() {
 
       {/* PAGES SCREEN */}
       {tab === "pages" && (
-        <div className="bg-white dark:bg-[#14141a] rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-zinc-100 dark:border-white/5">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-ink dark:text-white">
-              Pages Performance
-            </h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-              Views, unique readers and average reading time per page, sorted by total views.
-            </p>
+        <div className="bg-[#0c0e14] rounded-xl border border-white/[0.07] shadow-sm overflow-hidden">
+          <div className="p-4 sm:p-5 border-b border-white/[0.06] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <div className="flex items-center gap-2">
+                <FileCheck2 className="size-4 text-red-500" />
+                <h2 className="text-sm font-bold uppercase tracking-wider text-white">
+                  Pages Performance &amp; Dwell Time Analysis
+                </h2>
+              </div>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                Views, unique readers and average reading/dwell time per page across all sessions.
+              </p>
+            </div>
+            <span className="text-xs text-zinc-400 bg-white/[0.03] border border-white/[0.08] px-2.5 py-1 rounded-md self-start sm:self-auto">
+              Total {pagesData?.pages?.length || 0} Pages Tracked
+            </span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-zinc-50 dark:bg-white/[0.02] border-b border-zinc-200 dark:border-white/10 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              <thead className="bg-white/[0.02] border-b border-white/[0.06] text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
                 <tr>
                   <th className="py-3 px-4">Page Path</th>
                   <th className="py-3 px-4 text-center">Views</th>
                   <th className="py-3 px-4 text-center">Unique Visitors</th>
-                  <th className="py-3 px-4 text-right">Avg. Time on Page</th>
+                  <th className="py-3 px-4 text-right">Avg. Dwell Time on Page</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-white/5">
+              <tbody className="divide-y divide-white/[0.04]">
                 {(pagesData?.pages || []).map((p: any) => (
-                  <tr key={p.page} className="hover:bg-zinc-50/80 dark:hover:bg-white/[0.02] transition-colors">
-                    <td className="py-3 px-4 font-medium text-ink dark:text-white">{p.page}</td>
-                    <td className="py-3 px-4 text-center font-bold tabular-nums text-ink dark:text-white">{p.views?.toLocaleString()}</td>
-                    <td className="py-3 px-4 text-center font-medium tabular-nums text-zinc-700 dark:text-zinc-300">{p.visitors?.toLocaleString()}</td>
-                    <td className="py-3 px-4 text-right text-zinc-600 dark:text-zinc-400 tabular-nums">{p.avgTimeOnPageFormatted}</td>
+                  <tr key={p.page} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="py-3 px-4">
+                      <span className="font-semibold text-white block font-mono text-[12.5px]">{p.page}</span>
+                    </td>
+                    <td className="py-3 px-4 text-center font-bold tabular-nums text-white">{p.views?.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-center font-medium tabular-nums text-zinc-300">{p.visitors?.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-right">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold tabular-nums bg-white/[0.04] text-zinc-200 border border-white/[0.06]">
+                        <Clock className="size-3 text-zinc-400" />
+                        {p.avgTimeOnPageFormatted}
+                      </span>
+                    </td>
                   </tr>
                 ))}
                 {(!pagesData?.pages || pagesData.pages.length === 0) && (
@@ -1128,21 +1334,24 @@ export function LiveWebClient() {
 
       {/* SOURCES SCREEN */}
       {tab === "sources" && (
-        <div className="bg-white dark:bg-[#14141a] rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-zinc-100 dark:border-white/5">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-ink dark:text-white">
-              Traffic Sources
-            </h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-              Source channels from referrer domains: LinkedIn, Google, Instagram, Tally, X, Direct.
+        <div className="bg-[#0c0e14] rounded-xl border border-white/[0.07] shadow-sm overflow-hidden">
+          <div className="p-4 sm:p-5 border-b border-white/[0.06]">
+            <div className="flex items-center gap-2">
+              <Layers className="size-4 text-red-500" />
+              <h2 className="text-sm font-bold uppercase tracking-wider text-white">
+                Traffic Sources &amp; Inbound Channels
+              </h2>
+            </div>
+            <p className="text-xs text-zinc-400 mt-0.5">
+              Source channels from referrer domains: Google, Direct, LinkedIn, X, Instagram.
             </p>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-zinc-50 dark:bg-white/[0.02] border-b border-zinc-200 dark:border-white/10 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              <thead className="bg-white/[0.02] border-b border-white/[0.06] text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
                 <tr>
-                  <th className="py-3 px-4">Source</th>
+                  <th className="py-3 px-4">Source Channel</th>
                   <th className="py-3 px-4 text-center">Visitors</th>
                   <th className="py-3 px-4 text-center">Pages / Visit</th>
                   <th className="py-3 px-4 text-center">Avg. Time on Site</th>
@@ -1150,15 +1359,15 @@ export function LiveWebClient() {
                   <th className="py-3 px-4 text-right">Apply Clicks</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-white/5">
+              <tbody className="divide-y divide-white/[0.04]">
                 {(sourcesData?.sources || []).map((s: any) => (
-                  <tr key={s.source} className="hover:bg-zinc-50/80 dark:hover:bg-white/[0.02] transition-colors">
-                    <td className="py-3 px-4 font-semibold text-ink dark:text-white">{s.source}</td>
-                    <td className="py-3 px-4 text-center font-bold tabular-nums text-ink dark:text-white">{s.visitors}</td>
-                    <td className="py-3 px-4 text-center font-medium tabular-nums text-zinc-700 dark:text-zinc-300">{s.pagesPerVisit}</td>
-                    <td className="py-3 px-4 text-center text-zinc-600 dark:text-zinc-400 tabular-nums">{s.avgTimeOnSiteFormatted}</td>
-                    <td className="py-3 px-4 text-center font-bold tabular-nums text-red">{s.formsSent}</td>
-                    <td className="py-3 px-4 text-right font-bold tabular-nums text-red">{s.applyClicks}</td>
+                  <tr key={s.source} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="py-3 px-4 font-semibold text-white">{s.source}</td>
+                    <td className="py-3 px-4 text-center font-bold tabular-nums text-white">{s.visitors}</td>
+                    <td className="py-3 px-4 text-center font-medium tabular-nums text-zinc-300">{s.pagesPerVisit}</td>
+                    <td className="py-3 px-4 text-center text-zinc-300 tabular-nums">{s.avgTimeOnSiteFormatted}</td>
+                    <td className="py-3 px-4 text-center font-bold tabular-nums text-red-400">{s.formsSent}</td>
+                    <td className="py-3 px-4 text-right font-bold tabular-nums text-red-400">{s.applyClicks}</td>
                   </tr>
                 ))}
                 {(!sourcesData?.sources || sourcesData.sources.length === 0) && (

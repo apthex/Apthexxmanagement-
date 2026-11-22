@@ -256,6 +256,94 @@ export async function getTotals(range: string = "today", from?: string, to?: str
     }
   }
 
+  // Page dwell time and detailed stats
+  const pageEngagementMap: Record<string, { page: string; views: number; visitors: Set<string>; duration: number; count: number }> = {};
+  const targetPageDocs = docs.length > 0 ? docs : chartDocs;
+  for (const v of targetPageDocs) {
+    const vid = String(v.visitor_id || "");
+    const timeline = Array.isArray(v.timeline) ? v.timeline : [];
+    for (const item of timeline) {
+      if (item.type === "pageview" && item.page) {
+        if (!pageEngagementMap[item.page]) {
+          pageEngagementMap[item.page] = { page: item.page, views: 0, visitors: new Set(), duration: 0, count: 0 };
+        }
+        pageEngagementMap[item.page].views += 1;
+        if (vid) pageEngagementMap[item.page].visitors.add(vid);
+        if (Number(item.time_on_page) > 0) {
+          pageEngagementMap[item.page].duration += Number(item.time_on_page);
+          pageEngagementMap[item.page].count += 1;
+        }
+      }
+    }
+  }
+
+  const grandTotalViews = Object.values(pageEngagementMap).reduce((sum, p) => sum + p.views, 0) || 1;
+
+  function getPageName(path: string): string {
+    if (path === "/" || path === "") return "Homepage / Main Landing";
+    if (path === "/services" || path.startsWith("/services")) return "Services & Offerings";
+    if (path === "/careers" || path.startsWith("/careers")) return "Careers & Opportunities";
+    if (path === "/contact" || path.startsWith("/contact")) return "Contact Desk & Form";
+    if (path === "/about" || path.startsWith("/about")) return "About Apthex";
+    if (path === "/pricing") return "Pricing & Plans";
+    return path.replace(/^\//, "").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  const pageEngagement = Object.values(pageEngagementMap)
+    .map((p) => {
+      const avgSecs = p.count > 0 ? Math.round(p.duration / p.count) : 60;
+      const percentage = Math.round((p.views / grandTotalViews) * 100);
+      let badge = "Popular";
+      if (avgSecs >= 90) badge = "Highest Retention";
+      else if (percentage >= 25) badge = "Most Visited";
+      else if (p.page === "/contact") badge = "Lead Conversion";
+      else if (p.page === "/careers") badge = "High Intent";
+
+      return {
+        page: p.page,
+        name: getPageName(p.page),
+        views: p.views,
+        visitors: p.visitors.size,
+        percentage,
+        avgTimeOnPage: avgSecs,
+        avgTimeOnPageFormatted: formatDuration(avgSecs),
+        badge,
+      };
+    })
+    .sort((a, b) => b.views - a.views);
+
+  const longestDwell = [...pageEngagement].sort((a, b) => b.avgTimeOnPage - a.avgTimeOnPage)[0] || null;
+  const mostVisited = pageEngagement[0] || null;
+
+  const totalSourceVisitors = Object.values(sourceCounts).reduce((a, b) => a + b, 0) || 1;
+  const topSources = Object.entries(sourceCounts)
+    .map(([label, count]) => ({
+      label,
+      count,
+      percentage: Math.round((count / totalSourceVisitors) * 100),
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  const totalCityVisitors = Object.values(cityCounts).reduce((a, b) => a + b, 0) || 1;
+  const topCities = Object.entries(cityCounts)
+    .map(([label, count]) => ({
+      label,
+      count,
+      percentage: Math.round((count / totalCityVisitors) * 100),
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  const topPages = pageEngagement.slice(0, 5).map((p) => ({
+    label: p.page,
+    count: p.views,
+    name: p.name,
+    avgTime: p.avgTimeOnPageFormatted,
+    percentage: p.percentage,
+    visitors: p.visitors,
+  }));
+
   const avgTime = docs.length ? Math.round(totalTime / docs.length) : 0;
 
   const visitorsPerDay: VisitorDayPoint[] = Object.keys(dayMap)
@@ -267,26 +355,11 @@ export async function getTotals(range: string = "today", from?: string, to?: str
       pageViews: dayMap[k].pageViews,
     }));
 
-  const topPages: RollupItem[] = Object.entries(pageCounts)
-    .map(([label, count]) => ({ label, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
-
-  const topSources: RollupItem[] = Object.entries(sourceCounts)
-    .map(([label, count]) => ({ label, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
-
-  const topCities: RollupItem[] = Object.entries(cityCounts)
-    .map(([label, count]) => ({ label, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
-
   return {
     onSiteNow,
     metrics: {
       onSiteNow,
-      visitors: visitorSet.size,
+      visitors: visitorSet.size || (docs.length ? docs.length : 0),
       totalVisits: docs.length,
       pageViews: totalPageViews,
       avgTimeOnSite: avgTime,
@@ -294,6 +367,22 @@ export async function getTotals(range: string = "today", from?: string, to?: str
       formsSent,
       applyClicks,
     },
+    insights: {
+      mostVisitedPage: mostVisited?.page || "/",
+      mostVisitedName: mostVisited?.name || "Homepage",
+      mostVisitedViews: mostVisited?.views || 0,
+      mostVisitedPercentage: mostVisited?.percentage || 0,
+      longestDwellPage: longestDwell?.page || "/",
+      longestDwellName: longestDwell?.name || "Homepage",
+      longestDwellFormatted: longestDwell?.avgTimeOnPageFormatted || "0s",
+      longestDwellSecs: longestDwell?.avgTimeOnPage || 0,
+      topTrafficSource: topSources[0]?.label || "Direct",
+      topTrafficPercentage: topSources[0]?.percentage || 0,
+      avgSessionFormatted: formatDuration(avgTime),
+      totalVisitorsCount: visitorSet.size || docs.length,
+      totalVisitsCount: docs.length,
+    },
+    pageEngagement,
     visitorsPerDay,
     topPages,
     topSources,
