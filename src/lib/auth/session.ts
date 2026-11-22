@@ -2,6 +2,7 @@ import { and, eq, gt, isNull, lt } from "drizzle-orm";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { NextRequest } from "next/server";
+import { randomUUID } from "node:crypto";
 import { db, ensureDbReady, type AppDatabase } from "@/lib/db";
 import { members, sessions, type Member } from "@/lib/db/schema";
 import { env, SESSION_ABSOLUTE_MS, SESSION_COOKIE, SESSION_IDLE_MS } from "@/lib/env";
@@ -157,7 +158,7 @@ export async function createSession(
   executor: Pick<AppDatabase, "insert"> = db,
   memberInfo?: Pick<Member, "id" | "name" | "email" | "roleTitle" | "accessLevel" | "status">,
 ): Promise<CreatedSession> {
-  const sessionId = randomToken(16);
+  const sessionId = randomUUID();
   const now = new Date();
   const expiresAt = new Date(now.getTime() + SESSION_ABSOLUTE_MS);
 
