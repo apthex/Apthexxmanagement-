@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, Eye, EyeOff, KeyRound, Loader2, Lock, Mail } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { apiFetch, errorMessage, fieldErrors } from "@/lib/api-client";
 import { InlineAlert } from "@/components/portal/ui";
 
@@ -11,7 +11,6 @@ type LoginResponse = { ok: true; redirect: string; name: string };
 export function LoginForm() {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const [code, setCode] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -25,7 +24,7 @@ export function LoginForm() {
     try {
       const result = await apiFetch<LoginResponse>("/api/auth/login", {
         method: "POST",
-        body: JSON.stringify({ email, password, code }),
+        body: JSON.stringify({ email, password, code: "" }),
       });
       window.location.assign(result.redirect);
     } catch (loginError) {
@@ -49,7 +48,7 @@ export function LoginForm() {
 
       {/* Supporting Text (Inter 400, 15px to 15.5px) */}
       <p className="mt-2.5 font-sans text-[15px] sm:text-[15.5px] font-normal leading-relaxed text-zinc-600 mb-7">
-        Use your Apthex email and password to sign in.
+        Enter your work email and password to sign in.
       </p>
 
       {/* Error alert if any */}
@@ -75,7 +74,7 @@ export function LoginForm() {
               autoComplete="username"
               autoCapitalize="none"
               spellCheck={false}
-              placeholder="you@apthex.com"
+              placeholder="apthexx@gmail.com"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               className="w-full h-full bg-transparent pl-12 pr-4 font-sans text-[16px] font-normal text-zinc-900 placeholder:text-zinc-400 outline-none rounded-xl"
@@ -114,35 +113,6 @@ export function LoginForm() {
             </button>
           </div>
           {fields.password ? <p className="font-sans text-[12px] text-red pt-0.5">{fields.password}</p> : null}
-        </div>
-
-        {/* Authenticator or Recovery Code Field */}
-        <div className="space-y-2">
-          {/* Form Label (Inter 500, 14.5px) */}
-          <label htmlFor="code" className="flex items-center gap-1 font-sans text-[14.5px] font-medium text-zinc-800">
-            Authenticator or recovery code <span className="text-zinc-400 font-normal text-[12px]">(Optional)</span>
-          </label>
-          <div className="relative h-[54px] rounded-xl border border-zinc-300/80 bg-white/70 hover:bg-white/90 focus-within:bg-white focus-within:border-zinc-900 focus-within:ring-2 focus-within:ring-[#E11D2E]/15 transition-all shadow-xs flex items-center">
-            <KeyRound className="pointer-events-none absolute left-4 size-[19px] text-zinc-400" aria-hidden />
-            <input
-              id="code"
-              name="code"
-              type="text"
-              inputMode="text"
-              autoComplete="one-time-code"
-              autoCapitalize="none"
-              spellCheck={false}
-              placeholder="Optional if 2FA disabled"
-              value={code}
-              onChange={(event) => setCode(event.target.value)}
-              className="w-full h-full bg-transparent pl-12 pr-4 font-mono text-[16px] font-normal tracking-[0.08em] text-zinc-900 placeholder:text-zinc-400 outline-none rounded-xl"
-            />
-          </div>
-          {/* Authenticator Helper Text */}
-          <p className="font-mono text-[13px] font-normal leading-normal text-zinc-500 pt-0.5">
-            Leave blank if 2FA is not enabled for your account.
-          </p>
-          {fields.code ? <p className="font-sans text-[12px] text-red">{fields.code}</p> : null}
         </div>
 
         {/* Links Row */}

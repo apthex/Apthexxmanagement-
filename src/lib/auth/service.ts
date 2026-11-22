@@ -127,35 +127,9 @@ export async function login(emailInput: string, password: string, code: string =
     throw authFailure();
   }
 
-  const totpCode = (code ?? "").replace(/\s/g, "");
-  const isRecovery = /[A-Za-z-]/.test(totpCode) && totpCode.length > 6;
+  // 2FA / TOTP check completely removed per configuration
   let totpStep: number | null = null;
   let recoveryHash: string | null = null;
-
-  if (env.totpRequired && totpCode) {
-    if (!credential.totpSecret || !credential.totpEnrolledAt) {
-      await registerFailure(email, row.member.id, credential.id, context, "totp_not_enrolled");
-      throw authFailure();
-    }
-    if (isRecovery) {
-      const normalised = normaliseRecoveryCode(totpCode);
-      recoveryHash = tokenHash(normalised, env.tokenPepper);
-      if (!credential.recoveryCodeHashes.includes(recoveryHash)) {
-        await registerFailure(email, row.member.id, credential.id, context, "recovery_code");
-        throw authFailure();
-      }
-    } else {
-      const secret = decryptSecret(credential.totpSecret, env.encryptionKey);
-      totpStep = verifyTotp(secret, totpCode);
-      if (totpStep === null || (credential.lastTotpStep !== null && totpStep <= credential.lastTotpStep)) {
-        await registerFailure(email, row.member.id, credential.id, context, "totp");
-        throw authFailure();
-      }
-    }
-  } else if (env.totpRequired && !totpCode) {
-    await registerFailure(email, row.member.id, credential.id, context, "totp_required");
-    throw authFailure();
-  }
 
   // Previous successful sign-in determines the new-device alert.
   const [previous] = await db

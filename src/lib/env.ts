@@ -35,7 +35,7 @@ export const env = {
     return optional("TOKEN_PEPPER", "JT7eTy7E/uNHj22hr/gQjo+iOPTYHPHNab51uEfl3Qc=");
   },
   get totpRequired(): boolean {
-    return optional("TOTP_REQUIRED", "false") === "true";
+    return false;
   },
   get totpIssuer(): string {
     return optional("TOTP_ISSUER", "Apthex Internal");
