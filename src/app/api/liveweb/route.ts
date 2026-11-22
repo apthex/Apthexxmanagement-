@@ -1,7 +1,8 @@
 import type { NextRequest } from "next/server";
 import { requireApiSession } from "@/lib/auth/session";
-import { requirePermission } from "@/lib/auth/guards";
-import { noStoreJson, withApi } from "@/lib/http";
+import { requirePermission, auditDenial } from "@/lib/auth/guards";
+import { can } from "@/lib/permissions";
+import { noStoreJson, withApi, notFound } from "@/lib/http";
 import {
   getLive,
   getTotals,
@@ -17,13 +18,23 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   return withApi(async () => {
     const session = await requireApiSession(request);
-    await requirePermission(session, "liveweb.read");
 
     const searchParams = request.nextUrl.searchParams;
     const tab = searchParams.get("tab") || "overview";
     const range = searchParams.get("range") || "today";
     const from = searchParams.get("from") || undefined;
     const to = searchParams.get("to") || undefined;
+
+    // Overview metrics are accessible if member has dashboard.view OR liveweb.read
+    // Detailed tabs (live, visitors, single visit) and exports require liveweb.read
+    if (tab === "overview") {
+      if (!can(session.member.accessLevel, "dashboard.view") && !can(session.member.accessLevel, "liveweb.read")) {
+        await auditDenial(session, "dashboard.view", { path: "/api/liveweb" });
+        throw notFound();
+      }
+    } else {
+      await requirePermission(session, "liveweb.read", { path: "/api/liveweb" });
+    }
 
     if (tab === "live") {
       const data = await getLive();

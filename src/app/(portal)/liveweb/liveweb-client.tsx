@@ -1212,7 +1212,7 @@ export function LiveWebClient() {
                           <td className="py-3 px-4 text-zinc-600 dark:text-zinc-400">{v.location}</td>
                           <td className="py-3 px-4 text-zinc-600 dark:text-zinc-400">{v.device}</td>
                           <td className="py-3 px-4 font-medium text-ink dark:text-white">{v.source}</td>
-                          <td className="py-3 px-4 text-red font-medium">{v.currentPage}</td>
+                          <td className="py-3 px-4 text-red-400 font-medium">{v.onPage || "/"}</td>
                           <td className="py-3 px-4 text-center font-bold tabular-nums text-ink dark:text-white">{v.pages}</td>
                           <td className="py-3 px-4 text-right text-zinc-600 dark:text-zinc-400 tabular-nums">{v.timeOnSiteFormatted}</td>
                           <td className="py-3 px-4 text-center">
@@ -1242,10 +1242,10 @@ export function LiveWebClient() {
                 </div>
 
                 {/* Pagination */}
-                {visitorsData?.pagination && visitorsData.pagination.pages > 1 && (
+                {((visitorsData?.pagination?.pages ?? visitorsData?.pages ?? 0) > 1) && (
                   <div className="flex items-center justify-between px-4 py-3 bg-zinc-50 dark:bg-white/[0.02] border-t border-zinc-200 dark:border-white/10 text-xs text-zinc-500 dark:text-zinc-400">
                     <span>
-                      Page {visitorsData.pagination.page} of {visitorsData.pagination.pages} ({visitorsData.pagination.total} total)
+                      Page {visitorsData?.pagination?.page ?? visitorsData?.page ?? page} of {visitorsData?.pagination?.pages ?? visitorsData?.pages} ({visitorsData?.pagination?.total ?? visitorsData?.total} total)
                     </span>
                     <div className="flex items-center gap-1">
                       <button
@@ -1258,7 +1258,7 @@ export function LiveWebClient() {
                       </button>
                       <button
                         type="button"
-                        disabled={page >= visitorsData.pagination.pages}
+                        disabled={page >= (visitorsData?.pagination?.pages ?? visitorsData?.pages ?? 1)}
                         onClick={() => setPage((p) => p + 1)}
                         className="px-2 py-1 rounded border border-zinc-200 dark:border-white/10 disabled:opacity-40 hover:bg-white dark:hover:bg-white/5 transition"
                       >

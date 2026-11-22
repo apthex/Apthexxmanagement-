@@ -2,7 +2,23 @@
   'use strict';
   try {
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
-    if (localStorage.getItem('apthex_ignore') === '1') return;
+
+    var storage = {
+      get: function (type, key) {
+        try {
+          return (type === 'session' ? window.sessionStorage : window.localStorage).getItem(key);
+        } catch (e) {
+          return null;
+        }
+      },
+      set: function (type, key, val) {
+        try {
+          (type === 'session' ? window.sessionStorage : window.localStorage).setItem(key, val);
+        } catch (e) {}
+      }
+    };
+
+    if (storage.get('local', 'apthex_ignore') === '1') return;
     if (/bot|googlebot|crawler|spider|robot|crawling/i.test(navigator.userAgent)) return;
 
     function getUUID() {
@@ -15,16 +31,16 @@
 
     var VID_KEY = 'apthex_vid';
     var SID_KEY = 'apthex_sid';
-    var vid = localStorage.getItem(VID_KEY);
+    var vid = storage.get('local', VID_KEY);
     if (!vid) {
       vid = 'v_' + getUUID();
-      localStorage.setItem(VID_KEY, vid);
+      storage.set('local', VID_KEY, vid);
     }
 
-    var sid = sessionStorage.getItem(SID_KEY);
+    var sid = storage.get('session', SID_KEY);
     if (!sid) {
       sid = 's_' + getUUID();
-      sessionStorage.setItem(SID_KEY, sid);
+      storage.set('session', SID_KEY, sid);
     }
 
     var startTime = Date.now();

@@ -86,6 +86,17 @@ export type SourceStat = {
   applyClicks: number;
 };
 
+function safeIsoDate(val: any): string {
+  if (!val) return new Date().toISOString();
+  try {
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return new Date().toISOString();
+    return d.toISOString();
+  } catch {
+    return new Date().toISOString();
+  }
+}
+
 function formatDuration(seconds: number): string {
   if (!seconds || seconds <= 0) return "0s";
   const mins = Math.floor(seconds / 60);
@@ -147,7 +158,7 @@ export async function getLive() {
     pages: Number(v.pages_viewed || 1),
     timeOnSite: Number(v.time_on_site || 0),
     timeOnSiteFormatted: formatDuration(Number(v.time_on_site || 0)),
-    lastSeen: new Date(v.last_seen).toISOString(),
+    lastSeen: safeIsoDate(v.last_seen),
     formSent: Boolean(v.form_sent),
     applyClicked: Boolean(v.apply_clicked),
   }));
@@ -185,6 +196,20 @@ export async function getTotals(range: string = "today", from?: string, to?: str
   const dayMap: Record<string, { date: string; label: string; visitors: Set<string>; pageViews: number }> = {};
   const istOffset = 5.5 * 60 * 60 * 1000;
 
+  // Pre-seed continuous chronological daily buckets so the chart never has gaps
+  const daysToSeed = range === "30d" ? 30 : 7;
+  for (let i = daysToSeed - 1; i >= 0; i--) {
+    const d = new Date(now.getTime() + istOffset);
+    d.setUTCDate(d.getUTCDate() - i);
+    const dayKey = d.toISOString().slice(0, 10);
+    dayMap[dayKey] = {
+      date: dayKey,
+      label: d.toLocaleDateString("en-US", { day: "numeric", month: "short", timeZone: "UTC" }),
+      visitors: new Set(),
+      pageViews: 0,
+    };
+  }
+
   const pageCounts: Record<string, number> = {};
   const sourceCounts: Record<string, number> = {};
   const cityCounts: Record<string, number> = {};
@@ -220,8 +245,9 @@ export async function getTotals(range: string = "today", from?: string, to?: str
     }
   }
 
-  // Daily buckets from chartDocs (guarantees 7-day trend even on Today)
+  // Daily buckets from chartDocs (guarantees continuous 7-day trend even on Today)
   for (const v of chartDocs) {
+    if (!v.first_seen) continue;
     const vid = String(v.visitor_id || "");
     const pages = Number(v.pages_viewed || 1);
     const istDate = new Date(new Date(v.first_seen).getTime() + istOffset);
@@ -236,23 +262,23 @@ export async function getTotals(range: string = "today", from?: string, to?: str
     }
     if (vid) dayMap[dayKey].visitors.add(vid);
     dayMap[dayKey].pageViews += pages;
+  }
 
-    // Fallback rollups if current range has 0
-    if (Object.keys(pageCounts).length === 0) {
+  // Safe fallback for breakdown rollups if current range has 0 (e.g. start of day)
+  if (docs.length === 0) {
+    for (const v of chartDocs) {
       const timeline = Array.isArray(v.timeline) ? v.timeline : [];
       for (const t of timeline) {
         if (t.type === "pageview" && t.page) {
           pageCounts[t.page] = (pageCounts[t.page] || 0) + 1;
         }
       }
-    }
-    if (Object.keys(sourceCounts).length === 0) {
       const src = String(v.source || "Direct");
       sourceCounts[src] = (sourceCounts[src] || 0) + 1;
-    }
-    if (Object.keys(cityCounts).length === 0) {
       const city = v.city || (v.location && v.location !== "Unknown" ? String(v.location).split(",")[0] : null);
-      if (city) cityCounts[city] = (cityCounts[city] || 0) + 1;
+      if (city) {
+        cityCounts[city] = (cityCounts[city] || 0) + 1;
+      }
     }
   }
 
@@ -441,7 +467,7 @@ export async function getVisits(params: {
     pages: Number(v.pages_viewed || 1),
     timeOnSite: Number(v.time_on_site || 0),
     timeOnSiteFormatted: formatDuration(Number(v.time_on_site || 0)),
-    lastSeen: new Date(v.last_seen).toISOString(),
+    lastSeen: safeIsoDate(v.last_seen),
     formSent: Boolean(v.form_sent),
     applyClicked: Boolean(v.apply_clicked),
     applyRole: String(v.apply_role || ""),
@@ -449,12 +475,20 @@ export async function getVisits(params: {
     isReturning: Number(v.visit_count || 1) > 1,
   }));
 
+  const totalPages = Math.ceil(total / limit) || 1;
+
   return {
     visits,
     total,
     page,
-    pages: Math.ceil(total / limit),
+    pages: totalPages,
     limit,
+    pagination: {
+      total,
+      page,
+      pages: totalPages,
+      limit,
+    },
   };
 }
 
@@ -464,14 +498,18 @@ export async function getVisit(id: string): Promise<VisitDetail | null> {
   if (!v) return null;
 
   const istOffset = 5.5 * 60 * 60 * 1000;
-  const istFirstSeen = new Date(new Date(v.first_seen).getTime() + istOffset);
+  const rawFirstSeen = v.first_seen ? new Date(v.first_seen) : new Date();
+  const validFirstSeen = isNaN(rawFirstSeen.getTime()) ? new Date() : rawFirstSeen;
+  const istFirstSeen = new Date(validFirstSeen.getTime() + istOffset);
 
   const timelineRaw = Array.isArray(v.timeline) ? v.timeline : [];
   const timeline: VisitTimelineItem[] = timelineRaw.map((item) => {
-    const itemIst = new Date(new Date(item.time).getTime() + istOffset);
+    const rawItemTime = item.time ? new Date(item.time) : new Date();
+    const validItemTime = isNaN(rawItemTime.getTime()) ? new Date() : rawItemTime;
+    const itemIst = new Date(validItemTime.getTime() + istOffset);
     const timeStr = itemIst.toISOString().substring(11, 16);
     return {
-      time: new Date(item.time).toISOString(),
+      time: validItemTime.toISOString(),
       timeStr,
       page: String(item.page || "/"),
       type: String(item.type || "pageview"),
@@ -489,7 +527,7 @@ export async function getVisit(id: string): Promise<VisitDetail | null> {
     device: `${v.device || "Desktop"} · ${v.browser || "Unknown"}`,
     source: String(v.source || "Direct"),
     visitCount: Number(v.visit_count || 1),
-    firstSeen: new Date(v.first_seen).toISOString(),
+    firstSeen: safeIsoDate(v.first_seen),
     firstSeenFormatted: istFirstSeen.toLocaleDateString("en-GB", {
       weekday: "short",
       day: "numeric",
