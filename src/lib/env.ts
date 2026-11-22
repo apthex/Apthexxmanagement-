@@ -81,6 +81,6 @@ export const env = {
   },
 } as const;
 
-export const SESSION_COOKIE = "__Host-apt_session";
+export const SESSION_COOKIE = "apt_session";
 export const SESSION_IDLE_MS = 8 * 60 * 60 * 1000;
 export const SESSION_ABSOLUTE_MS = 7 * 24 * 60 * 60 * 1000;

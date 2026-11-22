@@ -12,17 +12,27 @@ export class ApiClientError extends Error {
 }
 
 export async function apiFetch<T>(url: string, options: RequestInit = {}): Promise<T> {
+  let localToken: string | null = null;
+  if (typeof window !== "undefined") {
+    try {
+      localToken = localStorage.getItem("apt_session");
+    } catch {}
+  }
+
   const response = await fetch(url, {
     ...options,
     credentials: "same-origin",
     headers: {
       ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...(localToken ? { Authorization: `Bearer ${localToken}` } : {}),
       ...(options.headers ?? {}),
     },
   });
 
   if (response.status === 401 && !url.includes("/api/auth/login")) {
-    if (typeof window !== "undefined") window.location.assign("/login");
+    if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+      window.location.assign("/login");
+    }
     throw new ApiClientError("Authentication required", 401);
   }
 

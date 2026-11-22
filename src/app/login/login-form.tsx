@@ -6,7 +6,7 @@ import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { apiFetch, errorMessage, fieldErrors } from "@/lib/api-client";
 import { InlineAlert } from "@/components/portal/ui";
 
-type LoginResponse = { ok: true; redirect: string; name: string };
+type LoginResponse = { ok: true; redirect: string; name: string; token?: string };
 
 export function LoginForm() {
   const [email, setEmail] = React.useState("");
@@ -24,9 +24,15 @@ export function LoginForm() {
     try {
       const result = await apiFetch<LoginResponse>("/api/auth/login", {
         method: "POST",
-        body: JSON.stringify({ email, password, code: "" }),
+        body: JSON.stringify({ email: email.trim(), password, code: "" }),
       });
-      window.location.assign(result.redirect);
+      if (result.token) {
+        try {
+          localStorage.setItem("apt_session", result.token);
+          document.cookie = `apt_session=${encodeURIComponent(result.token)}; path=/; max-age=604800; SameSite=Lax; Secure`;
+        } catch {}
+      }
+      window.location.href = result.redirect || "/dashboard";
     } catch (loginError) {
       setError(errorMessage(loginError));
       setFields(fieldErrors(loginError));

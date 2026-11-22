@@ -18,8 +18,12 @@ export async function POST(request: NextRequest) {
       ok: true,
       redirect: landingPath(result.accessLevel),
       name: result.name,
+      token: result.token,
     });
-    response.cookies.set(SESSION_COOKIE, result.token, result.cookieOptions);
+    response.cookies.set("apt_session", result.token, result.cookieOptions);
+    try {
+      response.cookies.set("__Host-apt_session", result.token, result.cookieOptions);
+    } catch {}
     return response;
   });
 }

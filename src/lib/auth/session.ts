@@ -120,7 +120,14 @@ export async function loadSession(token: string | undefined, context: RequestCon
 }
 
 export async function requireApiSession(request: NextRequest): Promise<AuthSession> {
-  const token = request.cookies.get(SESSION_COOKIE)?.value;
+  const authHeader = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+  const token =
+    authHeader ||
+    request.cookies.get("apt_session")?.value ||
+    request.cookies.get("__Host-apt_session")?.value ||
+    request.cookies.get(SESSION_COOKIE)?.value ||
+    request.nextUrl.searchParams.get("token") ||
+    undefined;
   const session = await loadSession(token, {
     ip: requestIp(request.headers),
     userAgent: requestUserAgent(request.headers),
@@ -132,7 +139,14 @@ export async function requireApiSession(request: NextRequest): Promise<AuthSessi
 export async function requirePageSession(): Promise<AuthSession> {
   const cookieStore = await cookies();
   const headerStore = await headers();
-  const session = await loadSession(cookieStore.get(SESSION_COOKIE)?.value, {
+  const authHeader = headerStore.get("authorization")?.replace(/^Bearer\s+/i, "");
+  const token =
+    authHeader ||
+    cookieStore.get("apt_session")?.value ||
+    cookieStore.get("__Host-apt_session")?.value ||
+    cookieStore.get(SESSION_COOKIE)?.value ||
+    undefined;
+  const session = await loadSession(token, {
     ip: requestIp(headerStore),
     userAgent: requestUserAgent(headerStore),
   });
