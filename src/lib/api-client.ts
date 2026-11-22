@@ -21,7 +21,7 @@ export async function apiFetch<T>(url: string, options: RequestInit = {}): Promi
     },
   });
 
-  if (response.status === 401) {
+  if (response.status === 401 && !url.includes("/api/auth/login")) {
     if (typeof window !== "undefined") window.location.assign("/login");
     throw new ApiClientError("Authentication required", 401);
   }

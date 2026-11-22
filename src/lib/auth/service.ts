@@ -203,6 +203,14 @@ export async function login(emailInput: string, password: string, code: string =
         row.member.id,
         { ip: context.ip, userAgent: context.userAgent },
         tx,
+        {
+          id: row.member.id,
+          name: row.member.name,
+          email: row.member.email,
+          roleTitle: row.member.roleTitle,
+          accessLevel: row.member.accessLevel,
+          status: row.member.status,
+        },
       );
 
       await writeAudit(tx, {
