@@ -154,7 +154,7 @@ async function main() {
   console.log("\nALL ATTRIBUTES AND COLLECTIONS SUCCESSFULLY CREATED AND SYNCED TO MONGODB!");
   
   await closeDb();
-  const mongoClient = await clientPromise;
+  const mongoClient = await clientPromise();
   await mongoClient.close();
 }
 
