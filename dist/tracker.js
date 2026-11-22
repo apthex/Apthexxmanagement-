@@ -40,7 +40,7 @@
           referrer: referrer
         }, data));
 
-        var endpoint = '/api/c';
+        var endpoint = window.location.hostname === 'apt-root.apthex.com' ? '/api/c' : 'https://apt-root.apthex.com/api/c';
         if (navigator.sendBeacon) {
           var blob = new Blob([payload], { type: 'application/json' });
           navigator.sendBeacon(endpoint, blob);
@@ -49,6 +49,7 @@
             method: 'POST',
             body: payload,
             headers: { 'Content-Type': 'application/json' },
+            mode: 'cors',
             keepalive: true
           }).catch(function () {});
         }

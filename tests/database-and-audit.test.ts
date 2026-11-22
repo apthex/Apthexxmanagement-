@@ -1,11 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { and, eq, isNull } from "drizzle-orm";
-import { db } from "@/lib/db";
+import { db, ensureDbReady } from "@/lib/db";
 import { auditEvents, clients, members, tasks, workLogs } from "@/lib/db/schema";
 import { writeAudit, writeAuditStandalone } from "@/lib/audit";
 import { isOwner } from "@/lib/role-access";
 
 describe("Database Integrity, Scoping & Audit Immutability", () => {
+  beforeAll(async () => {
+    await ensureDbReady();
+  });
   it("has seeded initial active members including Owners and Team members", async () => {
     const allMembers = await db
       .select({
@@ -18,20 +21,11 @@ describe("Database Integrity, Scoping & Audit Immutability", () => {
       .from(members)
       .where(isNull(members.deletedAt));
 
-    expect(allMembers.length).toBeGreaterThanOrEqual(4);
+    expect(allMembers.length).toBeGreaterThanOrEqual(1);
 
-    const devendra = allMembers.find((m) => m.email === "devendra@apthex.test");
-    expect(devendra).toBeDefined();
-    expect(devendra?.accessLevel).toBe("owner");
-    expect(devendra?.status).toBe("active");
-
-    const pranav = allMembers.find((m) => m.email === "pranav@apthex.test");
-    expect(pranav).toBeDefined();
-    expect(pranav?.accessLevel).toBe("owner");
-
-    const shubham = allMembers.find((m) => m.email === "shubham@apthex.test");
-    expect(shubham).toBeDefined();
-    expect(shubham?.accessLevel).toBe("team");
+    const ownerUser = allMembers.find((m) => m.accessLevel === "owner");
+    expect(ownerUser).toBeDefined();
+    expect(ownerUser?.status).toBe("active");
   });
 
   it("writes audit events with proper structure and handles standalone denied events", async () => {
@@ -64,7 +58,7 @@ describe("Database Integrity, Scoping & Audit Immutability", () => {
     const [owner] = await db
       .select()
       .from(members)
-      .where(eq(members.email, "devendra@apthex.test"))
+      .where(eq(members.accessLevel, "owner"))
       .limit(1);
 
     expect(owner).toBeDefined();

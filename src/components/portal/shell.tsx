@@ -39,22 +39,23 @@ type NavItem = {
   icon: LucideIcon;
   permission: Permission;
   exact?: boolean;
+  badge?: string;
+  pulse?: boolean;
 };
 
 const WORKSPACE_NAV: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, permission: "dashboard.view", exact: true },
-  { href: "/leads", label: "Leads", icon: Target, permission: "leads.read" },
-  { href: "/clients", label: "Clients", icon: Building2, permission: "clients.read" },
-  { href: "/tasks", label: "Tasks", icon: ListChecks, permission: "tasks.read" },
-  { href: "/worklogs", label: "Work Logs", icon: NotebookPen, permission: "worklogs.write_own" },
-  { href: "/meetings", label: "Meetings", icon: CalendarDays, permission: "meetings.read" },
+  { href: "/dashboard", label: "Live Analytics", icon: Activity, permission: "dashboard.view", exact: true, pulse: true },
+  { href: "/leads", label: "Leads", icon: Target, permission: "leads.read", badge: "Soon" },
+  { href: "/clients", label: "Clients", icon: Building2, permission: "clients.read", badge: "Soon" },
+  { href: "/tasks", label: "Tasks", icon: ListChecks, permission: "tasks.read", badge: "Soon" },
+  { href: "/worklogs", label: "Work Logs", icon: NotebookPen, permission: "worklogs.write_own", badge: "Soon" },
+  { href: "/meetings", label: "Meetings", icon: CalendarDays, permission: "meetings.read", badge: "Soon" },
 ];
 
 const COMPANY_NAV: NavItem[] = [
-  { href: "/finance", label: "Finance", icon: Wallet, permission: "finance.read" },
-  { href: "/members", label: "Members", icon: Users, permission: "members.read" },
-  { href: "/audit", label: "Audit", icon: ScrollText, permission: "audit.read" },
-  { href: "/liveweb", label: "LiveWeb", icon: Activity, permission: "liveweb.read" },
+  { href: "/finance", label: "Finance", icon: Wallet, permission: "finance.read", badge: "Soon" },
+  { href: "/members", label: "Members", icon: Users, permission: "members.read", badge: "Soon" },
+  { href: "/audit", label: "Audit", icon: ScrollText, permission: "audit.read", badge: "Soon" },
 ];
 
 function visible(items: NavItem[], allowed: (permission: Permission) => boolean) {
@@ -159,7 +160,18 @@ function NavLink({ item, active, onNavigate }: { item: NavItem; active: boolean;
         )}
         aria-hidden
       />
-      <span>{item.label}</span>
+      <span className="truncate">{item.label}</span>
+      {item.pulse ? (
+        <span className="ml-auto flex size-2 items-center justify-center">
+          <span className="absolute size-2 rounded-full bg-emerald-500 animate-ping opacity-75" />
+          <span className="relative size-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_#10b981]" />
+        </span>
+      ) : null}
+      {item.badge ? (
+        <span className="ml-auto rounded px-1.5 py-0.5 text-[10px] font-mono font-medium tracking-wide bg-zinc-100 text-zinc-500 dark:bg-white/[0.06] dark:text-zinc-400">
+          {item.badge}
+        </span>
+      ) : null}
     </Link>
   );
 }

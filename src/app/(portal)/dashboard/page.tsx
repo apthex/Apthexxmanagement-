@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { requirePageAccess } from "@/lib/auth/guards";
-import { DashboardClient } from "./dashboard-client";
+import { LiveWebClient } from "../liveweb/liveweb-client";
 
-export const metadata: Metadata = { title: "Dashboard" };
+export const metadata: Metadata = { title: "Live Analytics · Apthex Operations" };
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   await requirePageAccess("dashboard.view", "/dashboard");
-  return <DashboardClient />;
+  return <LiveWebClient />;
 }
