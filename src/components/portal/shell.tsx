@@ -15,13 +15,11 @@ import {
   Menu,
   Moon,
   NotebookPen,
-  ScrollText,
   Search,
   ShieldCheck,
   Sun,
   Target,
   Users,
-  Wallet,
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -46,12 +44,6 @@ const WORKSPACE_NAV: NavItem[] = [
   { href: "/tasks", label: "Tasks", icon: ListChecks },
   { href: "/worklogs", label: "Work Logs", icon: NotebookPen },
   { href: "/meetings", label: "Meetings", icon: CalendarDays },
-];
-
-const COMPANY_NAV: NavItem[] = [
-  { href: "/finance", label: "Finance", icon: Wallet },
-  { href: "/members", label: "Members", icon: Users },
-  { href: "/audit", label: "Audit", icon: ScrollText },
 ];
 
 function Brand() {
@@ -129,41 +121,6 @@ function NavLinks({
                     <span className="relative size-1.5 rounded-full bg-red-500 shadow-[0_0_6px_#ef4444]" />
                   </span>
                 ) : null}
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
-      <div>
-        <div className="mb-1.5 px-3 text-[10.5px] font-semibold tracking-wider text-zinc-500 uppercase">
-          COMPANY
-        </div>
-        <div className="space-y-0.5">
-          {COMPANY_NAV.map((item) => {
-            const Icon = item.icon;
-            const active = isItemActive(item);
-            return (
-              <Link
-                key={item.label}
-                href={item.href}
-                onClick={onNavigate}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "group relative flex h-9 items-center gap-2.5 rounded-lg px-3 text-[12.5px] font-medium transition-all duration-150",
-                  active
-                    ? "bg-red-950/40 text-red-400 border border-red-500/30 font-semibold shadow-[0_0_12px_rgba(239,68,68,0.12)]"
-                    : "text-zinc-400 hover:bg-white/[0.05] hover:text-zinc-100",
-                )}
-              >
-                <Icon
-                  className={cn(
-                    "size-4 shrink-0 transition-colors",
-                    active ? "text-red-500" : "text-zinc-400 group-hover:text-zinc-200",
-                  )}
-                  aria-hidden
-                />
-                <span className="truncate">{item.label}</span>
               </Link>
             );
           })}
