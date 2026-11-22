@@ -38,6 +38,13 @@ export function makeNodeDb(pool: Pool): AppDatabase {
   return drizzleNode(pool, { schema }) as unknown as AppDatabase;
 }
 
+export async function ensureDbReady(): Promise<void> {
+  getDb();
+  if (globalForDb.__apthexPglite) {
+    await ensurePgliteReady(globalForDb.__apthexPglite);
+  }
+}
+
 function build(): AppDatabase {
   const url = process.env.DATABASE_URL?.trim();
 

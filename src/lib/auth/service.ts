@@ -1,6 +1,6 @@
 import { and, desc, eq, gt, isNull, lt, sql } from "drizzle-orm";
 import QRCode from "qrcode";
-import { db } from "@/lib/db";
+import { db, ensureDbReady } from "@/lib/db";
 import { auditEvents, credentials, members, rateLimits, sessions, type Member } from "@/lib/db/schema";
 import { createSession, type CreatedSession } from "@/lib/auth/session";
 import { hashPassword, validateNewPassword, verifyPassword } from "@/lib/auth/password";
@@ -95,6 +95,7 @@ async function findMemberWithCredentials(email: string) {
  * Supports direct email + password sign in when TOTP is disabled.
  */
 export async function login(emailInput: string, password: string, code: string = "", context: LoginContext): Promise<LoginResult> {
+  await ensureDbReady();
   const email = emailInput.trim().toLowerCase();
   const ipKey = `login:ip:${context.ip}`;
   const accountKey = `login:account:${email}`;
