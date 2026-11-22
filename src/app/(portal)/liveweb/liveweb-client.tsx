@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Activity,
   ArrowLeft,
@@ -39,10 +40,36 @@ type ActiveTab = "overview" | "live" | "visitors" | "pages" | "sources";
 type DateRange = "today" | "7d" | "30d" | "custom";
 
 export function LiveWebClient() {
-  const [tab, setTab] = React.useState<ActiveTab>("overview");
+  const searchParams = useSearchParams();
+  const urlTab = (searchParams.get("tab") as ActiveTab) || "overview";
+
+  const [tab, setTab] = React.useState<ActiveTab>(
+    ["overview", "live", "visitors", "pages", "sources"].includes(urlTab) ? urlTab : "overview"
+  );
   const [range, setRange] = React.useState<DateRange>("today");
   const [customFrom, setCustomFrom] = React.useState<string>("");
   const [customTo, setCustomTo] = React.useState<string>("");
+
+  React.useEffect(() => {
+    if (urlTab && ["overview", "live", "visitors", "pages", "sources"].includes(urlTab)) {
+      setTab(urlTab);
+    }
+  }, [urlTab]);
+
+  const switchTab = (newTab: ActiveTab) => {
+    setTab(newTab);
+    setSelectedVisitId(null);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (newTab === "overview") {
+        params.delete("tab");
+      } else {
+        params.set("tab", newTab);
+      }
+      const q = params.toString();
+      window.history.replaceState(null, "", q ? `?${q}` : window.location.pathname);
+    }
+  };
 
   // Live screen state
   const [liveData, setLiveData] = React.useState<any>(null);
@@ -217,24 +244,22 @@ export function LiveWebClient() {
     }
   }, [getQueryString]);
 
-  // Auto-refresh timer for live screen
+  // Frequent polling for real-time live visitor updates (every 10s)
   React.useEffect(() => {
-    if (tab !== "live") return;
     fetchLive();
     const liveInterval = setInterval(() => {
       fetchLive();
-    }, 30000);
+    }, 10000);
     return () => clearInterval(liveInterval);
-  }, [tab, fetchLive]);
+  }, [fetchLive]);
 
-  // Elapsed seconds timer for live
+  // Elapsed seconds timer
   React.useEffect(() => {
-    if (tab !== "live") return;
     const tick = setInterval(() => {
       setSecondsAgo(Math.floor((Date.now() - lastLiveFetch) / 1000));
     }, 1000);
     return () => clearInterval(tick);
-  }, [tab, lastLiveFetch]);
+  }, [lastLiveFetch]);
 
   // Trigger loads on tab or range change
   React.useEffect(() => {
@@ -255,8 +280,10 @@ export function LiveWebClient() {
 
   const onSelectVisit = (visitId: string) => {
     setSelectedVisitId(visitId);
-    setTab("visitors");
+    switchTab("visitors");
   };
+
+  const onSiteCount = liveData?.onSiteNow ?? overviewData?.onSiteNow ?? 0;
 
   return (
     <div className="space-y-6">
@@ -264,19 +291,19 @@ export function LiveWebClient() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="relative flex size-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full size-2.5 bg-emerald-500"></span>
+            <span className="relative flex size-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red opacity-75"></span>
+              <span className="relative inline-flex rounded-full size-2 bg-red"></span>
             </span>
-            <span className="font-mono text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-              Live Web Analytics · apthex.com
+            <span className="text-[11px] font-semibold tracking-wider text-red uppercase">
+              LIVE WEB ANALYTICS · APTHEX.COM
             </span>
           </div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-ink dark:text-white sm:text-3xl mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-ink dark:text-white sm:text-3xl mt-1">
             Website Traffic &amp; Visitors
           </h1>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-            Real-time visitors, user journey timelines, channels &amp; conversion tracking.
+            Real-time visitors, user journey timelines, channels and conversion tracking.
           </p>
         </div>
 
@@ -340,10 +367,7 @@ export function LiveWebClient() {
             <button
               key={t}
               type="button"
-              onClick={() => {
-                setSelectedVisitId(null);
-                setTab(t);
-              }}
+              onClick={() => switchTab(t)}
               className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors capitalize ${
                 active
                   ? "bg-red/[0.12] text-red border border-red/30 font-semibold"
@@ -358,8 +382,8 @@ export function LiveWebClient() {
               <span>{t === "live" ? "Live Active" : t}</span>
               {t === "live" && (
                 <span className="relative flex size-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full size-2 bg-emerald-500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red opacity-75"></span>
+                  <span className="relative inline-flex rounded-full size-2 bg-red"></span>
                 </span>
               )}
             </button>
@@ -370,82 +394,155 @@ export function LiveWebClient() {
       {/* OVERVIEW SCREEN */}
       {tab === "overview" && (
         <div className="space-y-6">
-          {/* Live Counter Banner */}
-          <div className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-[#14141a] border border-zinc-200 dark:border-white/10 shadow-sm">
-            <div className="flex items-center gap-3">
-              <span className="relative flex size-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full size-3 bg-emerald-500"></span>
+          {/* Live Counter Banner with Heartbeat & Wave */}
+          <div className="flex items-center justify-between p-5 rounded-2xl bg-white dark:bg-[#14141a] border border-zinc-200 dark:border-white/10 shadow-sm">
+            <div className="flex items-center gap-4">
+              <span className="flex size-11 items-center justify-center rounded-xl bg-red/10 border border-red/20 text-red shadow-[0_0_12px_rgba(225,29,46,0.25)]">
+                <Activity className="size-5 animate-pulse" />
               </span>
               <div>
-                <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400">On site now</h3>
-                <p className="text-2xl font-bold font-mono text-ink dark:text-white">
-                  {overviewData?.onSiteNow ?? 0}
+                <span className="text-[11px] font-semibold tracking-wider text-zinc-500 dark:text-zinc-400 uppercase">
+                  On Site Now
+                </span>
+                <p className="text-3xl font-bold tabular-nums text-ink dark:text-white leading-tight">
+                  {onSiteCount}
                 </p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setTab("live")}
-              className="inline-flex items-center gap-1 text-xs font-medium text-red hover:underline"
-            >
-              View live visitors <ChevronRight className="size-3.5" />
-            </button>
+
+            <div className="flex items-center gap-6">
+              {/* Soundwave Bars Visual */}
+              <div className="hidden md:flex items-center gap-1 opacity-70">
+                <span className="w-1 h-3 rounded-full bg-red animate-pulse" />
+                <span className="w-1 h-6 rounded-full bg-red animate-pulse delay-75" />
+                <span className="w-1 h-2 rounded-full bg-red animate-pulse delay-150" />
+                <span className="w-1 h-7 rounded-full bg-red animate-pulse" />
+                <span className="w-1 h-4 rounded-full bg-red animate-pulse delay-100" />
+                <span className="w-1 h-3 rounded-full bg-red animate-pulse delay-200" />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => switchTab("live")}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red/30 bg-red/[0.08] text-xs font-semibold text-red hover:bg-red/15 transition shadow-sm"
+              >
+                <span>View Live Visitors</span>
+                <ChevronRight className="size-3.5" />
+              </button>
+            </div>
           </div>
 
-          {/* 6 Metric Cards */}
+          {/* 6 Metric Cards with Sparklines */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            <div className="bg-white dark:bg-[#14141a] p-4 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Visitors</span>
-              <p className="text-2xl font-bold font-mono text-ink dark:text-white mt-1">
-                {overviewData?.metrics?.visitors?.toLocaleString() ?? 0}
-              </p>
+            {/* 1. Visitors */}
+            <div className="bg-white dark:bg-[#14141a] p-4 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-medium tracking-wide text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                  <Users className="size-3.5" /> Visitors
+                </span>
+                <p className="text-2xl font-bold tabular-nums text-ink dark:text-white mt-1">
+                  {overviewData?.metrics?.visitors?.toLocaleString() ?? 0}
+                </p>
+              </div>
+              <svg className="w-12 h-6 text-zinc-400 dark:text-zinc-600 shrink-0" viewBox="0 0 64 32" fill="none">
+                <path d="M2 28 C 16 28, 24 16, 36 22 C 48 26, 52 8, 62 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
             </div>
 
-            <div className="bg-white dark:bg-[#14141a] p-4 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Page Views</span>
-              <p className="text-2xl font-bold font-mono text-ink dark:text-white mt-1">
-                {overviewData?.metrics?.pageViews?.toLocaleString() ?? 0}
-              </p>
+            {/* 2. Page Views */}
+            <div className="bg-white dark:bg-[#14141a] p-4 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-medium tracking-wide text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                  <FileCheck2 className="size-3.5" /> Page Views
+                </span>
+                <p className="text-2xl font-bold tabular-nums text-ink dark:text-white mt-1">
+                  {overviewData?.metrics?.pageViews?.toLocaleString() ?? 0}
+                </p>
+              </div>
+              <svg className="w-12 h-6 text-zinc-400 dark:text-zinc-600 shrink-0" viewBox="0 0 64 32" fill="none">
+                <path d="M2 24 C 14 26, 22 18, 32 20 C 44 22, 50 10, 62 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
             </div>
 
-            <div className="bg-white dark:bg-[#14141a] p-4 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Avg. Time</span>
-              <p className="text-2xl font-bold font-mono text-ink dark:text-white mt-1">
-                {overviewData?.metrics?.avgTimeOnSiteFormatted ?? "0s"}
-              </p>
+            {/* 3. Avg. Time */}
+            <div className="bg-white dark:bg-[#14141a] p-4 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-medium tracking-wide text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                  <Clock className="size-3.5" /> Avg. Time
+                </span>
+                <p className="text-2xl font-bold tabular-nums text-ink dark:text-white mt-1">
+                  {overviewData?.metrics?.avgTimeOnSiteFormatted ?? "0s"}
+                </p>
+              </div>
+              <svg className="w-12 h-6 text-zinc-400 dark:text-zinc-600 shrink-0" viewBox="0 0 64 32" fill="none">
+                <path d="M2 20 C 18 20, 26 24, 38 16 C 46 10, 54 14, 62 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
             </div>
 
-            <div className="bg-white dark:bg-[#14141a] p-4 rounded-xl border border-red/20 shadow-sm">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-red">Forms Sent</span>
-              <p className="text-2xl font-bold font-mono text-red mt-1">
-                {overviewData?.metrics?.formsSent ?? 0}
-              </p>
+            {/* 4. Forms Sent */}
+            <div className="bg-white dark:bg-[#14141a] p-4 rounded-xl border border-red/30 shadow-sm flex items-center justify-between bg-gradient-to-br from-transparent to-red/[0.04]">
+              <div>
+                <span className="text-[11px] font-medium tracking-wide text-red flex items-center gap-1">
+                  <Send className="size-3.5" /> Forms Sent
+                </span>
+                <p className="text-2xl font-bold tabular-nums text-red mt-1">
+                  {overviewData?.metrics?.formsSent ?? 0}
+                </p>
+              </div>
+              <svg className="w-12 h-6 text-red/60 shrink-0" viewBox="0 0 64 32" fill="none">
+                <path d="M2 28 C 16 28, 24 16, 36 22 C 48 26, 52 8, 62 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
             </div>
 
-            <div className="bg-white dark:bg-[#14141a] p-4 rounded-xl border border-red/20 shadow-sm">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-red">Apply Clicks</span>
-              <p className="text-2xl font-bold font-mono text-red mt-1">
-                {overviewData?.metrics?.applyClicks ?? 0}
-              </p>
+            {/* 5. Apply Clicks */}
+            <div className="bg-white dark:bg-[#14141a] p-4 rounded-xl border border-red/30 shadow-sm flex items-center justify-between bg-gradient-to-br from-transparent to-red/[0.04]">
+              <div>
+                <span className="text-[11px] font-medium tracking-wide text-red flex items-center gap-1">
+                  <MousePointerClick className="size-3.5" /> Apply Clicks
+                </span>
+                <p className="text-2xl font-bold tabular-nums text-red mt-1">
+                  {overviewData?.metrics?.applyClicks ?? 0}
+                </p>
+              </div>
+              <svg className="w-12 h-6 text-red/60 shrink-0" viewBox="0 0 64 32" fill="none">
+                <path d="M2 26 C 14 26, 26 12, 38 18 C 48 22, 54 6, 62 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
             </div>
 
-            <div className="bg-white dark:bg-[#14141a] p-4 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Total Visits</span>
-              <p className="text-2xl font-bold font-mono text-ink dark:text-white mt-1">
-                {overviewData?.metrics?.totalVisits?.toLocaleString() ?? 0}
-              </p>
+            {/* 6. Total Visits */}
+            <div className="bg-white dark:bg-[#14141a] p-4 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-medium tracking-wide text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                  <Eye className="size-3.5" /> Total Visits
+                </span>
+                <p className="text-2xl font-bold tabular-nums text-ink dark:text-white mt-1">
+                  {overviewData?.metrics?.totalVisits?.toLocaleString() ?? 0}
+                </p>
+              </div>
+              <svg className="w-12 h-6 text-zinc-400 dark:text-zinc-600 shrink-0" viewBox="0 0 64 32" fill="none">
+                <path d="M2 22 C 16 26, 28 14, 40 18 C 50 20, 56 10, 62 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
             </div>
           </div>
 
           {/* Line Chart: Visitors Per Day */}
-          <div className="bg-white dark:bg-[#14141a] p-5 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-[#14141a] p-5 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold font-mono uppercase tracking-wider text-ink dark:text-white">
-                  Visitors Per Day
+                <h3 className="text-sm font-bold tracking-tight text-ink dark:text-white">
+                  Visitors per Day
                 </h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Daily unique visitors and pageviews (IST)</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  Daily unique visitors and pageviews (IST)
+                </p>
+              </div>
+              <div className="flex items-center gap-4 text-xs">
+                <span className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300">
+                  <span className="size-2 rounded-full bg-emerald-500" /> Visitors
+                </span>
+                <span className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300">
+                  <span className="size-2 rounded-full bg-red" /> Page Views
+                </span>
               </div>
             </div>
 
@@ -453,7 +550,7 @@ export function LiveWebClient() {
               {overviewData?.visitorsPerDay && overviewData.visitorsPerDay.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={overviewData.visitorsPerDay}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.15)" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.12)" />
                     <XAxis dataKey="label" stroke="#888888" fontSize={11} tickLine={false} />
                     <YAxis stroke="#888888" fontSize={11} tickLine={false} />
                     <Tooltip
@@ -486,8 +583,9 @@ export function LiveWebClient() {
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex items-center justify-center text-xs text-zinc-400">
-                  {overviewLoading ? "Loading visitor metrics…" : "No visitor data in this date range yet."}
+                <div className="h-full flex flex-col items-center justify-center text-xs text-zinc-400 gap-2">
+                  <Activity className="size-6 text-zinc-400/60" />
+                  <span>{overviewLoading ? "Loading visitor metrics…" : "No visitor data in this date range yet."}</span>
                 </div>
               )}
             </div>
@@ -496,18 +594,18 @@ export function LiveWebClient() {
           {/* Top Pages, Top Sources, Top Cities */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Top Pages */}
-            <div className="bg-white dark:bg-[#14141a] p-5 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm">
+            <div className="bg-white dark:bg-[#14141a] p-5 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm">
               <div className="flex items-center justify-between mb-3 border-b border-zinc-100 dark:border-white/5 pb-2">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-ink dark:text-zinc-200">
-                  Top Pages
+                <span className="text-xs font-bold uppercase tracking-wider text-ink dark:text-zinc-200 flex items-center gap-1.5">
+                  <FileCheck2 className="size-3.5 text-zinc-400" /> Top Pages
                 </span>
-                <span className="text-[11px] font-mono text-zinc-400">Views</span>
+                <span className="text-[11px] text-zinc-400">Views</span>
               </div>
               <ul className="space-y-2.5">
                 {(overviewData?.topPages || []).map((item: any, idx: number) => (
                   <li key={idx} className="flex items-center justify-between text-xs">
-                    <span className="font-mono text-zinc-700 dark:text-zinc-300 truncate max-w-[200px]">{item.page || item.label}</span>
-                    <span className="font-mono font-semibold text-ink dark:text-white">{item.views || item.count}</span>
+                    <span className="text-zinc-700 dark:text-zinc-300 truncate max-w-[200px]">{item.page || item.label}</span>
+                    <span className="font-bold tabular-nums text-ink dark:text-white">{item.views || item.count}</span>
                   </li>
                 ))}
                 {(!overviewData?.topPages || overviewData.topPages.length === 0) && (
@@ -517,18 +615,18 @@ export function LiveWebClient() {
             </div>
 
             {/* Top Sources */}
-            <div className="bg-white dark:bg-[#14141a] p-5 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm">
+            <div className="bg-white dark:bg-[#14141a] p-5 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm">
               <div className="flex items-center justify-between mb-3 border-b border-zinc-100 dark:border-white/5 pb-2">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-ink dark:text-zinc-200">
-                  Top Sources
+                <span className="text-xs font-bold uppercase tracking-wider text-ink dark:text-zinc-200 flex items-center gap-1.5">
+                  <Layers className="size-3.5 text-zinc-400" /> Top Sources
                 </span>
-                <span className="text-[11px] font-mono text-zinc-400">Visitors</span>
+                <span className="text-[11px] text-zinc-400">Visitors</span>
               </div>
               <ul className="space-y-2.5">
                 {(overviewData?.topSources || []).map((item: any, idx: number) => (
                   <li key={idx} className="flex items-center justify-between text-xs">
                     <span className="font-medium text-zinc-700 dark:text-zinc-300">{item.source || item.label}</span>
-                    <span className="font-mono font-semibold text-ink dark:text-white">{item.visitors || item.count}</span>
+                    <span className="font-bold tabular-nums text-ink dark:text-white">{item.visitors || item.count}</span>
                   </li>
                 ))}
                 {(!overviewData?.topSources || overviewData.topSources.length === 0) && (
@@ -538,18 +636,18 @@ export function LiveWebClient() {
             </div>
 
             {/* Top Cities */}
-            <div className="bg-white dark:bg-[#14141a] p-5 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm">
+            <div className="bg-white dark:bg-[#14141a] p-5 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm">
               <div className="flex items-center justify-between mb-3 border-b border-zinc-100 dark:border-white/5 pb-2">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-ink dark:text-zinc-200">
-                  Top Cities
+                <span className="text-xs font-bold uppercase tracking-wider text-ink dark:text-zinc-200 flex items-center gap-1.5">
+                  <MapPin className="size-3.5 text-zinc-400" /> Top Cities
                 </span>
-                <span className="text-[11px] font-mono text-zinc-400">Visitors</span>
+                <span className="text-[11px] text-zinc-400">Visitors</span>
               </div>
               <ul className="space-y-2.5">
                 {(overviewData?.topCities || []).map((item: any, idx: number) => (
                   <li key={idx} className="flex items-center justify-between text-xs">
                     <span className="text-zinc-700 dark:text-zinc-300 truncate max-w-[200px]">{item.city || item.label}</span>
-                    <span className="font-mono font-semibold text-ink dark:text-white">{item.visitors || item.count}</span>
+                    <span className="font-bold tabular-nums text-ink dark:text-white">{item.visitors || item.count}</span>
                   </li>
                 ))}
                 {(!overviewData?.topCities || overviewData.topCities.length === 0) && (
@@ -558,60 +656,30 @@ export function LiveWebClient() {
               </ul>
             </div>
           </div>
-
-          {/* Device Distribution */}
-          <div className="bg-white dark:bg-[#14141a] p-5 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm">
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-ink dark:text-zinc-200 block mb-3">
-              Device Distribution
-            </span>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="p-3 bg-zinc-50 dark:bg-white/[0.02] rounded-lg border border-zinc-100 dark:border-white/5">
-                <Laptop className="size-4 mx-auto text-zinc-400 mb-1" />
-                <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 block">Desktop</span>
-                <span className="text-base font-bold font-mono text-ink dark:text-white">
-                  {overviewData?.devices?.desktop ?? 0}
-                </span>
-              </div>
-              <div className="p-3 bg-zinc-50 dark:bg-white/[0.02] rounded-lg border border-zinc-100 dark:border-white/5">
-                <Globe className="size-4 mx-auto text-zinc-400 mb-1" />
-                <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 block">Mobile</span>
-                <span className="text-base font-bold font-mono text-ink dark:text-white">
-                  {overviewData?.devices?.mobile ?? 0}
-                </span>
-              </div>
-              <div className="p-3 bg-zinc-50 dark:bg-white/[0.02] rounded-lg border border-zinc-100 dark:border-white/5">
-                <Layers className="size-4 mx-auto text-zinc-400 mb-1" />
-                <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 block">Tablet</span>
-                <span className="text-base font-bold font-mono text-ink dark:text-white">
-                  {overviewData?.devices?.tablet ?? 0}
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
       )}
 
       {/* LIVE ACTIVE SCREEN */}
       {tab === "live" && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between p-4 rounded-xl bg-white dark:bg-[#14141a] border border-zinc-200 dark:border-white/10 shadow-sm">
+          <div className="flex items-center justify-between p-5 rounded-2xl bg-white dark:bg-[#14141a] border border-zinc-200 dark:border-white/10 shadow-sm">
             <div className="flex items-center gap-3">
               <span className="relative flex size-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full size-3 bg-emerald-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red opacity-75"></span>
+                <span className="relative inline-flex rounded-full size-3 bg-red"></span>
               </span>
               <div>
-                <span className="text-xs font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-bold">
+                <span className="text-xs font-semibold tracking-wider text-red uppercase">
                   Live Active Visitors
                 </span>
-                <p className="text-2xl font-bold font-mono text-ink dark:text-white">
-                  {liveData?.onSiteNow ?? 0} active now
+                <p className="text-2xl font-bold tabular-nums text-ink dark:text-white">
+                  {onSiteCount} active now
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
-              <span className="font-mono">Updated {secondsAgo}s ago</span>
+              <span className="tabular-nums">Updated {secondsAgo}s ago</span>
               <button
                 type="button"
                 onClick={fetchLive}
@@ -624,10 +692,10 @@ export function LiveWebClient() {
           </div>
 
           {/* Live Visitors Table */}
-          <div className="bg-white dark:bg-[#14141a] rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-[#14141a] rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-zinc-50 dark:bg-white/[0.02] border-b border-zinc-200 dark:border-white/10 text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                <thead className="bg-zinc-50 dark:bg-white/[0.02] border-b border-zinc-200 dark:border-white/10 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                   <tr>
                     <th className="py-3 px-4">IP</th>
                     <th className="py-3 px-4">Location</th>
@@ -645,13 +713,13 @@ export function LiveWebClient() {
                       onClick={() => onSelectVisit(v.id)}
                       className="hover:bg-zinc-50/80 dark:hover:bg-white/[0.02] cursor-pointer transition-colors"
                     >
-                      <td className="py-3 px-4 font-mono font-medium text-ink dark:text-white">{v.ip}</td>
+                      <td className="py-3 px-4 font-medium tabular-nums text-ink dark:text-white">{v.ip}</td>
                       <td className="py-3 px-4 text-zinc-600 dark:text-zinc-400">{v.location}</td>
                       <td className="py-3 px-4 text-zinc-600 dark:text-zinc-400">{v.device}</td>
-                      <td className="py-3 px-4 font-mono text-red font-medium">{v.onPage}</td>
+                      <td className="py-3 px-4 text-red font-medium">{v.onPage}</td>
                       <td className="py-3 px-4 text-zinc-700 dark:text-zinc-300 font-medium">{v.cameFrom}</td>
-                      <td className="py-3 px-4 text-center font-mono font-semibold text-ink dark:text-white">{v.pages}</td>
-                      <td className="py-3 px-4 text-right font-mono text-zinc-600 dark:text-zinc-400">{v.timeOnSiteFormatted}</td>
+                      <td className="py-3 px-4 text-center font-bold tabular-nums text-ink dark:text-white">{v.pages}</td>
+                      <td className="py-3 px-4 text-right text-zinc-600 dark:text-zinc-400 tabular-nums">{v.timeOnSiteFormatted}</td>
                     </tr>
                   ))}
                   {(!liveData?.visits || liveData.visits.length === 0) && (
@@ -673,7 +741,7 @@ export function LiveWebClient() {
         <div className="space-y-4">
           {selectedVisitId && visitDetail ? (
             /* Single Visit Detail View */
-            <div className="bg-white dark:bg-[#14141a] rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm p-6 space-y-6">
+            <div className="bg-white dark:bg-[#14141a] rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm p-6 space-y-6">
               <div className="flex items-center justify-between border-b border-zinc-100 dark:border-white/5 pb-4">
                 <div className="flex items-center gap-3">
                   <button
@@ -683,12 +751,12 @@ export function LiveWebClient() {
                   >
                     <ArrowLeft className="size-3.5" /> Back to list
                   </button>
-                  <h2 className="text-base font-bold text-ink dark:text-white font-mono">
+                  <h2 className="text-base font-bold text-ink dark:text-white">
                     Visit · {visitDetail.firstSeenFormatted}
                   </h2>
                 </div>
 
-                <span className="text-xs font-mono text-zinc-500 dark:text-zinc-400">
+                <span className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
                   Total Time: {visitDetail.timeOnSiteFormatted}
                 </span>
               </div>
@@ -696,27 +764,27 @@ export function LiveWebClient() {
               {/* Visitor Meta Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-zinc-50 dark:bg-white/[0.02] p-4 rounded-xl border border-zinc-200 dark:border-white/10 text-xs">
                 <div>
-                  <span className="font-mono uppercase tracking-wider text-[10px] text-zinc-400 block mb-0.5">
+                  <span className="uppercase tracking-wider text-[10px] text-zinc-400 block mb-0.5">
                     WHO
                   </span>
-                  <span className="font-medium text-ink dark:text-white font-mono">
+                  <span className="font-semibold text-ink dark:text-white tabular-nums">
                     {visitDetail.ip} · {visitDetail.location}
                   </span>
                 </div>
                 <div>
-                  <span className="font-mono uppercase tracking-wider text-[10px] text-zinc-400 block mb-0.5">
+                  <span className="uppercase tracking-wider text-[10px] text-zinc-400 block mb-0.5">
                     DEVICE
                   </span>
                   <span className="font-medium text-ink dark:text-white">{visitDetail.device}</span>
                 </div>
                 <div>
-                  <span className="font-mono uppercase tracking-wider text-[10px] text-zinc-400 block mb-0.5">
+                  <span className="uppercase tracking-wider text-[10px] text-zinc-400 block mb-0.5">
                     CAME FROM
                   </span>
                   <span className="font-medium text-ink dark:text-white">{visitDetail.source}</span>
                 </div>
                 <div>
-                  <span className="font-mono uppercase tracking-wider text-[10px] text-zinc-400 block mb-0.5">
+                  <span className="uppercase tracking-wider text-[10px] text-zinc-400 block mb-0.5">
                     HISTORY
                   </span>
                   <span className="font-medium text-ink dark:text-white">
@@ -727,12 +795,12 @@ export function LiveWebClient() {
 
               {/* Chronological Page Trail */}
               <div className="space-y-2">
-                <h3 className="text-xs font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                   Pages &amp; Actions in Order
                 </h3>
 
                 <div className="border border-zinc-200 dark:border-white/10 rounded-xl overflow-hidden divide-y divide-zinc-100 dark:divide-white/5">
-                  <div className="grid grid-cols-12 bg-zinc-50 dark:bg-white/[0.02] px-4 py-2 text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                  <div className="grid grid-cols-12 bg-zinc-50 dark:bg-white/[0.02] px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                     <span className="col-span-2">Time (IST)</span>
                     <span className="col-span-8">Page / Action</span>
                     <span className="col-span-2 text-right">Time on Page</span>
@@ -743,10 +811,10 @@ export function LiveWebClient() {
                       key={idx}
                       className="grid grid-cols-12 px-4 py-3 text-xs items-center hover:bg-zinc-50/50 dark:hover:bg-white/[0.02] transition-colors"
                     >
-                      <span className="col-span-2 font-mono text-zinc-500 dark:text-zinc-400">{ev.timeStr}</span>
+                      <span className="col-span-2 text-zinc-500 dark:text-zinc-400 tabular-nums">{ev.timeStr}</span>
                       <div className="col-span-8 flex items-center gap-2">
                         {ev.type === "pageview" && (
-                          <span className="font-mono font-medium text-ink dark:text-white">{ev.page}</span>
+                          <span className="font-medium text-ink dark:text-white">{ev.page}</span>
                         )}
                         {ev.type === "contact_form_submit" && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red/10 text-red text-[11px] font-semibold">
@@ -759,7 +827,7 @@ export function LiveWebClient() {
                           </span>
                         )}
                       </div>
-                      <span className="col-span-2 text-right font-mono text-zinc-600 dark:text-zinc-400">
+                      <span className="col-span-2 text-right text-zinc-600 dark:text-zinc-400 tabular-nums">
                         {ev.timeOnPageFormatted || "—"}
                       </span>
                     </div>
@@ -771,10 +839,10 @@ export function LiveWebClient() {
             /* Visitor Log Table with Filters */
             <div className="space-y-4">
               {/* Filter Bar */}
-              <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-[#14141a] p-3 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm text-xs">
+              <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-[#14141a] p-3 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm text-xs">
                 <div className="flex items-center gap-1.5 text-zinc-500 dark:text-zinc-400">
                   <Filter className="size-3.5" />
-                  <span className="font-mono uppercase tracking-wider text-[11px]">Filter:</span>
+                  <span className="uppercase tracking-wider text-[11px] font-semibold">Filter:</span>
                 </div>
 
                 <input
@@ -833,10 +901,10 @@ export function LiveWebClient() {
               </div>
 
               {/* Table */}
-              <div className="bg-white dark:bg-[#14141a] rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm overflow-hidden">
+              <div className="bg-white dark:bg-[#14141a] rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-zinc-50 dark:bg-white/[0.02] border-b border-zinc-200 dark:border-white/10 text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    <thead className="bg-zinc-50 dark:bg-white/[0.02] border-b border-zinc-200 dark:border-white/10 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                       <tr>
                         <th className="py-3 px-4">Visitor</th>
                         <th className="py-3 px-4">Location</th>
@@ -856,9 +924,9 @@ export function LiveWebClient() {
                           className="hover:bg-zinc-50/80 dark:hover:bg-white/[0.02] cursor-pointer transition-colors"
                         >
                           <td className="py-3 px-4">
-                            <span className="font-mono font-medium text-ink dark:text-white block">{v.ip}</span>
+                            <span className="font-semibold tabular-nums text-ink dark:text-white block">{v.ip}</span>
                             {v.isReturning && (
-                              <span className="inline-block mt-0.5 text-[10px] bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 px-1.5 py-0.2 rounded font-mono">
+                              <span className="inline-block mt-0.5 text-[10px] bg-zinc-100 dark:bg-white/10 text-zinc-600 dark:text-zinc-300 px-1.5 py-0.2 rounded font-sans">
                                 {v.visitCount} visits
                               </span>
                             )}
@@ -866,9 +934,9 @@ export function LiveWebClient() {
                           <td className="py-3 px-4 text-zinc-600 dark:text-zinc-400">{v.location}</td>
                           <td className="py-3 px-4 text-zinc-600 dark:text-zinc-400">{v.device}</td>
                           <td className="py-3 px-4 font-medium text-ink dark:text-white">{v.source}</td>
-                          <td className="py-3 px-4 font-mono text-red">{v.currentPage}</td>
-                          <td className="py-3 px-4 text-center font-mono font-semibold text-ink dark:text-white">{v.pages}</td>
-                          <td className="py-3 px-4 text-right font-mono text-zinc-600 dark:text-zinc-400">{v.timeOnSiteFormatted}</td>
+                          <td className="py-3 px-4 text-red font-medium">{v.currentPage}</td>
+                          <td className="py-3 px-4 text-center font-bold tabular-nums text-ink dark:text-white">{v.pages}</td>
+                          <td className="py-3 px-4 text-right text-zinc-600 dark:text-zinc-400 tabular-nums">{v.timeOnSiteFormatted}</td>
                           <td className="py-3 px-4 text-center">
                             {v.formSent && (
                               <span className="inline-block bg-red/10 text-red text-[10px] font-semibold px-2 py-0.5 rounded-full mr-1">
@@ -929,19 +997,19 @@ export function LiveWebClient() {
 
       {/* PAGES SCREEN */}
       {tab === "pages" && (
-        <div className="bg-white dark:bg-[#14141a] rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-[#14141a] rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-zinc-100 dark:border-white/5">
-            <h2 className="text-sm font-bold font-mono uppercase tracking-wider text-ink dark:text-white">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-ink dark:text-white">
               Pages Performance
             </h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
               Views, unique readers and average reading time per page, sorted by total views.
             </p>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-zinc-50 dark:bg-white/[0.02] border-b border-zinc-200 dark:border-white/10 text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              <thead className="bg-zinc-50 dark:bg-white/[0.02] border-b border-zinc-200 dark:border-white/10 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                 <tr>
                   <th className="py-3 px-4">Page Path</th>
                   <th className="py-3 px-4 text-center">Views</th>
@@ -952,10 +1020,10 @@ export function LiveWebClient() {
               <tbody className="divide-y divide-zinc-100 dark:divide-white/5">
                 {(pagesData?.pages || []).map((p: any) => (
                   <tr key={p.page} className="hover:bg-zinc-50/80 dark:hover:bg-white/[0.02] transition-colors">
-                    <td className="py-3 px-4 font-mono font-medium text-ink dark:text-white">{p.page}</td>
-                    <td className="py-3 px-4 text-center font-mono font-bold text-ink dark:text-white">{p.views?.toLocaleString()}</td>
-                    <td className="py-3 px-4 text-center font-mono text-zinc-700 dark:text-zinc-300">{p.visitors?.toLocaleString()}</td>
-                    <td className="py-3 px-4 text-right font-mono text-zinc-600 dark:text-zinc-400">{p.avgTimeOnPageFormatted}</td>
+                    <td className="py-3 px-4 font-medium text-ink dark:text-white">{p.page}</td>
+                    <td className="py-3 px-4 text-center font-bold tabular-nums text-ink dark:text-white">{p.views?.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-center font-medium tabular-nums text-zinc-700 dark:text-zinc-300">{p.visitors?.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-right text-zinc-600 dark:text-zinc-400 tabular-nums">{p.avgTimeOnPageFormatted}</td>
                   </tr>
                 ))}
                 {(!pagesData?.pages || pagesData.pages.length === 0) && (
@@ -973,19 +1041,19 @@ export function LiveWebClient() {
 
       {/* SOURCES SCREEN */}
       {tab === "sources" && (
-        <div className="bg-white dark:bg-[#14141a] rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-[#14141a] rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-zinc-100 dark:border-white/5">
-            <h2 className="text-sm font-bold font-mono uppercase tracking-wider text-ink dark:text-white">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-ink dark:text-white">
               Traffic Sources
             </h2>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
               Source channels from referrer domains: LinkedIn, Google, Instagram, Tally, X, Direct.
             </p>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-zinc-50 dark:bg-white/[0.02] border-b border-zinc-200 dark:border-white/10 text-[11px] font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              <thead className="bg-zinc-50 dark:bg-white/[0.02] border-b border-zinc-200 dark:border-white/10 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                 <tr>
                   <th className="py-3 px-4">Source</th>
                   <th className="py-3 px-4 text-center">Visitors</th>
@@ -999,11 +1067,11 @@ export function LiveWebClient() {
                 {(sourcesData?.sources || []).map((s: any) => (
                   <tr key={s.source} className="hover:bg-zinc-50/80 dark:hover:bg-white/[0.02] transition-colors">
                     <td className="py-3 px-4 font-semibold text-ink dark:text-white">{s.source}</td>
-                    <td className="py-3 px-4 text-center font-mono font-bold text-ink dark:text-white">{s.visitors}</td>
-                    <td className="py-3 px-4 text-center font-mono text-zinc-700 dark:text-zinc-300">{s.pagesPerVisit}</td>
-                    <td className="py-3 px-4 text-center font-mono text-zinc-600 dark:text-zinc-400">{s.avgTimeOnSiteFormatted}</td>
-                    <td className="py-3 px-4 text-center font-mono font-semibold text-red">{s.formsSent}</td>
-                    <td className="py-3 px-4 text-right font-mono font-semibold text-red">{s.applyClicks}</td>
+                    <td className="py-3 px-4 text-center font-bold tabular-nums text-ink dark:text-white">{s.visitors}</td>
+                    <td className="py-3 px-4 text-center font-medium tabular-nums text-zinc-700 dark:text-zinc-300">{s.pagesPerVisit}</td>
+                    <td className="py-3 px-4 text-center text-zinc-600 dark:text-zinc-400 tabular-nums">{s.avgTimeOnSiteFormatted}</td>
+                    <td className="py-3 px-4 text-center font-bold tabular-nums text-red">{s.formsSent}</td>
+                    <td className="py-3 px-4 text-right font-bold tabular-nums text-red">{s.applyClicks}</td>
                   </tr>
                 ))}
                 {(!sourcesData?.sources || sourcesData.sources.length === 0) && (

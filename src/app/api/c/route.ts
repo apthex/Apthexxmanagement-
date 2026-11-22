@@ -118,7 +118,12 @@ export async function POST(req: Request) {
     try {
       body = await req.json();
     } catch {
-      return NextResponse.json({ ok: true, ignored: true }, { headers: corsHeaders });
+      try {
+        const text = await req.text();
+        body = JSON.parse(text);
+      } catch {
+        return NextResponse.json({ ok: true, ignored: true }, { headers: corsHeaders });
+      }
     }
 
     const {

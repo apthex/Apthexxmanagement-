@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -8,26 +8,13 @@ const inter = Inter({
   display: "swap",
 });
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-space",
-  display: "swap",
-});
-
-const ibmPlexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-mono",
-  display: "swap",
-});
-
 export const metadata: Metadata = {
   title: {
-    default: "Apthex Internal",
-    template: "%s · Apthex Internal",
+    default: "Live Analytics · Apthex",
+    template: "%s · Apthex Analytics",
   },
-  description: "Apthex private operations workspace.",
-  applicationName: "Apthex Internal",
+  description: "Apthex real-time website traffic intelligence.",
+  applicationName: "Apthex Analytics",
   robots: { index: false, follow: false, nocache: true },
   referrer: "same-origin",
   formatDetection: { email: false, address: false, telephone: false },
@@ -46,7 +33,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable} ${ibmPlexMono.variable}`}>
+    <html lang="en" suppressHydrationWarning className={inter.variable}>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -69,7 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className="font-sans antialiased bg-wash text-ink">{children}</body>
+      <body className="font-sans antialiased bg-wash text-ink selection:bg-red/20">{children}</body>
     </html>
   );
 }

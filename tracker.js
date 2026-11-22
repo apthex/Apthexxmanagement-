@@ -40,30 +40,36 @@
           referrer: referrer
         }, data));
 
-        var endpoint = window.location.hostname === 'apt-root.apthex.com' ? '/api/c' : 'https://apt-root.apthex.com/api/c';
-        if (navigator.sendBeacon) {
-          var blob = new Blob([payload], { type: 'application/json' });
-          navigator.sendBeacon(endpoint, blob);
-        } else {
+        var endpoint = 'https://apt-root.apthex.com/api/c';
+
+        if (typeof fetch === 'function') {
           fetch(endpoint, {
             method: 'POST',
             body: payload,
             headers: { 'Content-Type': 'application/json' },
             mode: 'cors',
             keepalive: true
-          }).catch(function () {});
+          }).catch(function () {
+            if (navigator.sendBeacon) {
+              var blob = new Blob([payload], { type: 'text/plain' });
+              navigator.sendBeacon(endpoint, blob);
+            }
+          });
+        } else if (navigator.sendBeacon) {
+          var blob = new Blob([payload], { type: 'text/plain' });
+          navigator.sendBeacon(endpoint, blob);
         }
       } catch (e) {}
     }
 
-    // 1. Send initial pageview beacon
+    // 1. Initial pageview beacon
     send({ type: 'pageview' });
 
-    // 2. Heartbeat to capture active time on page
+    // 2. Heartbeat to capture active time on page every 15s
     setInterval(function () {
       var duration = Math.round((Date.now() - startTime) / 1000);
       send({ type: 'heartbeat', duration: duration });
-    }, 25000);
+    }, 15000);
 
     function onLeave() {
       var duration = Math.round((Date.now() - startTime) / 1000);
@@ -74,7 +80,7 @@
     });
     window.addEventListener('beforeunload', onLeave);
 
-    // 3. Track contact form submissions (no fields/values recorded)
+    // 3. Track contact form submissions
     document.addEventListener('submit', function (e) {
       try {
         var target = e.target;
@@ -84,7 +90,7 @@
       } catch (err) {}
     }, true);
 
-    // 4. Track apply button clicks (records role name)
+    // 4. Track apply button clicks
     document.addEventListener('click', function (e) {
       try {
         var link = e.target && e.target.closest ? e.target.closest('a.apply') : null;

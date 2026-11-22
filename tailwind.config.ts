@@ -42,9 +42,9 @@ const config: Config = {
         info: "#2355B8",
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
-        display: ["var(--font-space)", "system-ui", "sans-serif"],
-        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
+        sans: ["var(--font-inter)", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+        display: ["var(--font-inter)", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+        mono: ["var(--font-inter)", "ui-monospace", "monospace"],
       },
       boxShadow: {
         card: "0 1px 3px rgba(23,23,27,0.04), 0 1px 2px rgba(23,23,27,0.02)",
