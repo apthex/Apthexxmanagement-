@@ -166,7 +166,15 @@ export async function getTotals(range: string = "today", from?: string, to?: str
   const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
   const onSiteNow = await col.countDocuments({ last_seen: { $gte: fiveMinsAgo } });
 
+  const now = new Date();
   const docs = await col.find({ first_seen: { $gte: start, $lte: end } }).toArray();
+
+  // For chart trend, if viewing "today", include last 7 days so the chart always displays the daily trend curve
+  let chartDocs = docs;
+  if (range === "today") {
+    const chartStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    chartDocs = await col.find({ first_seen: { $gte: chartStart, $lte: end } }).toArray();
+  }
 
   const visitorSet = new Set<string>();
   let totalPageViews = 0;
@@ -181,6 +189,7 @@ export async function getTotals(range: string = "today", from?: string, to?: str
   const sourceCounts: Record<string, number> = {};
   const cityCounts: Record<string, number> = {};
 
+  // Metrics from current range
   for (const v of docs) {
     const vid = String(v.visitor_id || "");
     if (vid) visitorSet.add(vid);
@@ -191,20 +200,6 @@ export async function getTotals(range: string = "today", from?: string, to?: str
 
     if (v.form_sent) formsSent += 1;
     if (v.apply_clicked) applyClicks += 1;
-
-    // Daily buckets
-    const istDate = new Date(new Date(v.first_seen).getTime() + istOffset);
-    const dayKey = istDate.toISOString().slice(0, 10);
-    if (!dayMap[dayKey]) {
-      dayMap[dayKey] = {
-        date: dayKey,
-        label: istDate.toLocaleDateString("en-US", { day: "numeric", month: "short", timeZone: "UTC" }),
-        visitors: new Set(),
-        pageViews: 0,
-      };
-    }
-    if (vid) dayMap[dayKey].visitors.add(vid);
-    dayMap[dayKey].pageViews += pages;
 
     // Timeline page counts
     const timeline = Array.isArray(v.timeline) ? v.timeline : [];
@@ -222,6 +217,42 @@ export async function getTotals(range: string = "today", from?: string, to?: str
     const city = v.city || (v.location && v.location !== "Unknown" ? String(v.location).split(",")[0] : null);
     if (city) {
       cityCounts[city] = (cityCounts[city] || 0) + 1;
+    }
+  }
+
+  // Daily buckets from chartDocs (guarantees 7-day trend even on Today)
+  for (const v of chartDocs) {
+    const vid = String(v.visitor_id || "");
+    const pages = Number(v.pages_viewed || 1);
+    const istDate = new Date(new Date(v.first_seen).getTime() + istOffset);
+    const dayKey = istDate.toISOString().slice(0, 10);
+    if (!dayMap[dayKey]) {
+      dayMap[dayKey] = {
+        date: dayKey,
+        label: istDate.toLocaleDateString("en-US", { day: "numeric", month: "short", timeZone: "UTC" }),
+        visitors: new Set(),
+        pageViews: 0,
+      };
+    }
+    if (vid) dayMap[dayKey].visitors.add(vid);
+    dayMap[dayKey].pageViews += pages;
+
+    // Fallback rollups if current range has 0
+    if (Object.keys(pageCounts).length === 0) {
+      const timeline = Array.isArray(v.timeline) ? v.timeline : [];
+      for (const t of timeline) {
+        if (t.type === "pageview" && t.page) {
+          pageCounts[t.page] = (pageCounts[t.page] || 0) + 1;
+        }
+      }
+    }
+    if (Object.keys(sourceCounts).length === 0) {
+      const src = String(v.source || "Direct");
+      sourceCounts[src] = (sourceCounts[src] || 0) + 1;
+    }
+    if (Object.keys(cityCounts).length === 0) {
+      const city = v.city || (v.location && v.location !== "Unknown" ? String(v.location).split(",")[0] : null);
+      if (city) cityCounts[city] = (cityCounts[city] || 0) + 1;
     }
   }
 
