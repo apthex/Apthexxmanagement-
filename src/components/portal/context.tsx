@@ -17,7 +17,7 @@ type PortalContextValue = {
 const PortalContext = React.createContext<PortalContextValue | null>(null);
 
 export function PortalProvider({ user, children }: { user: SessionUser; children: React.ReactNode }) {
-  const [theme, setThemeState] = React.useState<Theme>("light");
+  const [theme, setThemeState] = React.useState<Theme>("dark");
 
   React.useEffect(() => {
     try {
@@ -26,10 +26,8 @@ export function PortalProvider({ user, children }: { user: SessionUser; children
         setThemeState(stored);
         applyTheme(stored);
       } else {
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        const initial = prefersDark ? "dark" : "light";
-        setThemeState(initial);
-        applyTheme(initial);
+        setThemeState("dark");
+        applyTheme("dark");
       }
     } catch (_) {}
 

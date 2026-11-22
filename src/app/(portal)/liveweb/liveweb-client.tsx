@@ -285,31 +285,63 @@ export function LiveWebClient() {
 
   const onSiteCount = liveData?.onSiteNow ?? overviewData?.onSiteNow ?? 0;
 
+  const defaultEmptyDates = React.useMemo(() => {
+    const dates = [];
+    const now = new Date();
+    for (let i = 8; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      dates.push(d.toLocaleDateString("en-US", { day: "numeric", month: "short" }));
+    }
+    return dates;
+  }, []);
+
   return (
-    <div className="space-y-6">
+    <div className="relative space-y-6">
+      {/* Ambient Crimson Ribbon Wave in Top Right */}
+      <div className="pointer-events-none absolute -top-4 right-0 h-[260px] w-[580px] overflow-hidden opacity-40 select-none z-0">
+        <svg viewBox="0 0 580 260" className="w-full h-full" fill="none">
+          <defs>
+            <linearGradient id="redWaveRibbon" x1="0%" y1="50%" x2="100%" y2="50%">
+              <stop offset="0%" stopColor="#ef4444" stopOpacity="0.8" />
+              <stop offset="45%" stopColor="#b91c1c" stopOpacity="0.45" />
+              <stop offset="100%" stopColor="#450a0a" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="redWaveRibbon2" x1="0%" y1="50%" x2="100%" y2="50%">
+              <stop offset="0%" stopColor="#ef4444" stopOpacity="0.35" />
+              <stop offset="50%" stopColor="#991b1b" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#450a0a" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d="M 40 160 C 200 260, 360 60, 580 110" stroke="url(#redWaveRibbon)" strokeWidth="3" filter="drop-shadow(0 0 12px rgba(239,68,68,0.5))" />
+          <path d="M 20 190 C 180 290, 340 90, 580 140" stroke="url(#redWaveRibbon2)" strokeWidth="1.5" />
+          <path d="M 80 130 C 230 230, 380 40, 580 80" stroke="url(#redWaveRibbon2)" strokeWidth="1" opacity="0.4" />
+        </svg>
+      </div>
+
       {/* Top Header & Toolbar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
             <span className="relative flex size-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red opacity-75"></span>
-              <span className="relative inline-flex rounded-full size-2 bg-red"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+              <span className="relative inline-flex rounded-full size-2 bg-red-500 shadow-[0_0_8px_#ef4444]"></span>
             </span>
-            <span className="text-[11px] font-semibold tracking-wider text-red uppercase">
+            <span className="text-[11px] font-semibold tracking-wider text-red-500 uppercase">
               LIVE WEB ANALYTICS · APTHEX.COM
             </span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink dark:text-white sm:text-3xl mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl mt-1">
             Website Traffic &amp; Visitors
           </h1>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+          <p className="text-xs text-zinc-400 mt-1">
             Real-time visitors, user journey timelines, channels and conversion tracking.
           </p>
         </div>
 
         {/* Date range & Export */}
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-          <div className="inline-flex rounded-lg border border-zinc-200 dark:border-white/10 bg-zinc-100/80 dark:bg-white/[0.04] p-1">
+          <div className="inline-flex rounded-lg border border-white/[0.08] bg-[#0e1017] p-1">
             {(["today", "7d", "30d", "custom"] as DateRange[]).map((r) => {
               const active = range === r;
               const label = r === "today" ? "Today" : r === "7d" ? "7 days" : r === "30d" ? "30 days" : "Custom";
@@ -318,11 +350,10 @@ export function LiveWebClient() {
                   key={r}
                   type="button"
                   onClick={() => setRange(r)}
-                  className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
-                    active
-                      ? "bg-red text-white shadow-sm font-semibold"
-                      : "text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5"
-                  }`}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${active
+                    ? "bg-[#8a141e] text-white shadow-sm font-semibold"
+                    : "text-zinc-400 hover:text-white hover:bg-white/[0.04]"
+                    }`}
                 >
                   {label}
                 </button>
@@ -336,14 +367,14 @@ export function LiveWebClient() {
                 type="date"
                 value={customFrom}
                 onChange={(e) => setCustomFrom(e.target.value)}
-                className="px-2 py-1 text-xs border border-zinc-200 dark:border-white/10 rounded-md bg-white dark:bg-[#14141a] text-zinc-800 dark:text-zinc-200"
+                className="px-2 py-1 text-xs border border-white/10 rounded-md bg-[#14141a] text-zinc-200"
               />
               <span className="text-xs text-zinc-400">to</span>
               <input
                 type="date"
                 value={customTo}
                 onChange={(e) => setCustomTo(e.target.value)}
-                className="px-2 py-1 text-xs border border-zinc-200 dark:border-white/10 rounded-md bg-white dark:bg-[#14141a] text-zinc-800 dark:text-zinc-200"
+                className="px-2 py-1 text-xs border border-white/10 rounded-md bg-[#14141a] text-zinc-200"
               />
             </div>
           )}
@@ -351,16 +382,16 @@ export function LiveWebClient() {
           <button
             type="button"
             onClick={handleExport}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-white/10 hover:border-zinc-300 dark:hover:border-white/20 bg-white dark:bg-[#14141a] text-xs font-medium text-zinc-700 dark:text-zinc-200 shadow-sm transition"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/[0.08] hover:border-white/20 bg-[#0e1017] text-xs font-medium text-zinc-300 shadow-sm transition"
           >
-            <Download className="size-3.5 text-zinc-500 dark:text-zinc-400" />
+            <Download className="size-3.5 text-zinc-400" />
             <span>Export CSV</span>
           </button>
         </div>
       </div>
 
       {/* Tabs Navigation Bar */}
-      <div className="flex items-center gap-1 overflow-x-auto border-b border-zinc-200 dark:border-white/10 pb-3" aria-label="Analytics Tabs">
+      <div className="relative z-10 flex items-center gap-1 overflow-x-auto border-b border-white/[0.06] pb-3" aria-label="Analytics Tabs">
         {(["overview", "live", "visitors", "pages", "sources"] as ActiveTab[]).map((t) => {
           const active = tab === t;
           return (
@@ -368,11 +399,10 @@ export function LiveWebClient() {
               key={t}
               type="button"
               onClick={() => switchTab(t)}
-              className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors capitalize ${
-                active
-                  ? "bg-red/[0.12] text-red border border-red/30 font-semibold"
-                  : "text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5 border border-transparent"
-              }`}
+              className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors capitalize ${active
+                ? "bg-red-950/40 text-red-400 border border-red-500/30 font-semibold shadow-[0_0_12px_rgba(239,68,68,0.12)]"
+                : "text-zinc-400 hover:text-white hover:bg-white/[0.04] border border-transparent"
+                }`}
             >
               {t === "overview" && <TrendingUp className="size-3.5" />}
               {t === "live" && <Eye className="size-3.5" />}
@@ -382,8 +412,8 @@ export function LiveWebClient() {
               <span>{t === "live" ? "Live Active" : t}</span>
               {t === "live" && (
                 <span className="relative flex size-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red opacity-75"></span>
-                  <span className="relative inline-flex rounded-full size-2 bg-red"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full size-2 bg-red-500 shadow-[0_0_6px_#ef4444]"></span>
                 </span>
               )}
             </button>
@@ -393,18 +423,18 @@ export function LiveWebClient() {
 
       {/* OVERVIEW SCREEN */}
       {tab === "overview" && (
-        <div className="space-y-6">
+        <div className="relative z-10 space-y-6">
           {/* Live Counter Banner with Heartbeat & Wave */}
-          <div className="flex items-center justify-between p-5 rounded-2xl bg-white dark:bg-[#14141a] border border-zinc-200 dark:border-white/10 shadow-sm">
-            <div className="flex items-center gap-4">
-              <span className="flex size-11 items-center justify-center rounded-xl bg-red/10 border border-red/20 text-red shadow-[0_0_12px_rgba(225,29,46,0.25)]">
+          <div className="flex items-center justify-between p-4 sm:p-5 rounded-xl bg-[#0c0e14] border border-white/[0.07] shadow-sm">
+            <div className="flex items-center gap-3.5">
+              <span className="flex size-11 items-center justify-center rounded-full bg-gradient-to-br from-red-600/30 to-red-950/50 border border-red-500/40 text-red-500 shadow-[0_0_18px_rgba(239,68,68,0.35)] shrink-0">
                 <Activity className="size-5 animate-pulse" />
               </span>
               <div>
-                <span className="text-[11px] font-semibold tracking-wider text-zinc-500 dark:text-zinc-400 uppercase">
+                <span className="text-[11px] font-medium tracking-wider text-zinc-400 uppercase">
                   On Site Now
                 </span>
-                <p className="text-3xl font-bold tabular-nums text-ink dark:text-white leading-tight">
+                <p className="text-3xl font-bold tabular-nums text-white leading-tight">
                   {onSiteCount}
                 </p>
               </div>
@@ -412,19 +442,22 @@ export function LiveWebClient() {
 
             <div className="flex items-center gap-6">
               {/* Soundwave Bars Visual */}
-              <div className="hidden md:flex items-center gap-1 opacity-70">
-                <span className="w-1 h-3 rounded-full bg-red animate-pulse" />
-                <span className="w-1 h-6 rounded-full bg-red animate-pulse delay-75" />
-                <span className="w-1 h-2 rounded-full bg-red animate-pulse delay-150" />
-                <span className="w-1 h-7 rounded-full bg-red animate-pulse" />
-                <span className="w-1 h-4 rounded-full bg-red animate-pulse delay-100" />
-                <span className="w-1 h-3 rounded-full bg-red animate-pulse delay-200" />
+              <div className="hidden sm:flex items-end gap-1 h-7 opacity-75">
+                {[14, 24, 10, 28, 16, 26, 8, 22, 14, 25, 18, 28, 12, 22, 16, 10].map((h, i) => (
+                  <span
+                    key={i}
+                    style={{ height: `${h}px` }}
+                    className={`w-[3px] rounded-full transition-all duration-300 ${
+                      i % 4 === 1 ? "bg-red-500" : "bg-zinc-600"
+                    }`}
+                  />
+                ))}
               </div>
 
               <button
                 type="button"
                 onClick={() => switchTab("live")}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red/30 bg-red/[0.08] text-xs font-semibold text-red hover:bg-red/15 transition shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-red-500/30 bg-red-950/20 text-xs font-semibold text-red-400 hover:bg-red-950/40 hover:text-red-300 transition shadow-sm"
               >
                 <span>View Live Visitors</span>
                 <ChevronRight className="size-3.5" />
@@ -435,127 +468,133 @@ export function LiveWebClient() {
           {/* 6 Metric Cards with Sparklines */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {/* 1. Visitors */}
-            <div className="bg-white dark:bg-[#14141a] p-4 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm flex items-center justify-between">
-              <div>
-                <span className="text-[11px] font-medium tracking-wide text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
-                  <Users className="size-3.5" /> Visitors
-                </span>
-                <p className="text-2xl font-bold tabular-nums text-ink dark:text-white mt-1">
-                  {overviewData?.metrics?.visitors?.toLocaleString() ?? 0}
-                </p>
+            <div className="bg-[#0c0e14] border border-white/[0.07] p-4 rounded-xl shadow-sm flex flex-col justify-between h-24">
+              <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-medium">
+                <Users className="size-3.5 text-zinc-400" />
+                <span>Visitors</span>
               </div>
-              <svg className="w-12 h-6 text-zinc-400 dark:text-zinc-600 shrink-0" viewBox="0 0 64 32" fill="none">
-                <path d="M2 28 C 16 28, 24 16, 36 22 C 48 26, 52 8, 62 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
+              <div className="flex items-end justify-between">
+                <span className="text-2xl font-bold tabular-nums text-white">
+                  {overviewData?.metrics?.visitors?.toLocaleString() ?? 0}
+                </span>
+                <svg className="w-14 h-7 text-zinc-500/40 shrink-0" viewBox="0 0 64 28" fill="none">
+                  <path d="M2 24 C 16 24, 24 14, 36 18 C 48 22, 52 6, 62 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </div>
             </div>
 
             {/* 2. Page Views */}
-            <div className="bg-white dark:bg-[#14141a] p-4 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm flex items-center justify-between">
-              <div>
-                <span className="text-[11px] font-medium tracking-wide text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
-                  <FileCheck2 className="size-3.5" /> Page Views
-                </span>
-                <p className="text-2xl font-bold tabular-nums text-ink dark:text-white mt-1">
-                  {overviewData?.metrics?.pageViews?.toLocaleString() ?? 0}
-                </p>
+            <div className="bg-[#0c0e14] border border-white/[0.07] p-4 rounded-xl shadow-sm flex flex-col justify-between h-24">
+              <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-medium">
+                <FileCheck2 className="size-3.5 text-zinc-400" />
+                <span>Page Views</span>
               </div>
-              <svg className="w-12 h-6 text-zinc-400 dark:text-zinc-600 shrink-0" viewBox="0 0 64 32" fill="none">
-                <path d="M2 24 C 14 26, 22 18, 32 20 C 44 22, 50 10, 62 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
+              <div className="flex items-end justify-between">
+                <span className="text-2xl font-bold tabular-nums text-white">
+                  {overviewData?.metrics?.pageViews?.toLocaleString() ?? 0}
+                </span>
+                <svg className="w-14 h-7 text-zinc-500/40 shrink-0" viewBox="0 0 64 28" fill="none">
+                  <path d="M2 20 C 14 22, 22 14, 32 16 C 44 18, 50 8, 62 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </div>
             </div>
 
             {/* 3. Avg. Time */}
-            <div className="bg-white dark:bg-[#14141a] p-4 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm flex items-center justify-between">
-              <div>
-                <span className="text-[11px] font-medium tracking-wide text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
-                  <Clock className="size-3.5" /> Avg. Time
-                </span>
-                <p className="text-2xl font-bold tabular-nums text-ink dark:text-white mt-1">
+            <div className="bg-[#0c0e14] border border-white/[0.07] p-4 rounded-xl shadow-sm flex flex-col justify-between h-24">
+              <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-medium">
+                <Clock className="size-3.5 text-zinc-400" />
+                <span>Avg. Time</span>
+              </div>
+              <div className="flex items-end justify-between">
+                <span className="text-2xl font-bold tabular-nums text-white">
                   {overviewData?.metrics?.avgTimeOnSiteFormatted ?? "0s"}
-                </p>
+                </span>
+                <svg className="w-14 h-7 text-zinc-500/40 shrink-0" viewBox="0 0 64 28" fill="none">
+                  <path d="M2 18 C 18 18, 26 22, 38 14 C 46 8, 54 12, 62 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
               </div>
-              <svg className="w-12 h-6 text-zinc-400 dark:text-zinc-600 shrink-0" viewBox="0 0 64 32" fill="none">
-                <path d="M2 20 C 18 20, 26 24, 38 16 C 46 10, 54 14, 62 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
             </div>
 
-            {/* 4. Forms Sent */}
-            <div className="bg-white dark:bg-[#14141a] p-4 rounded-xl border border-red/30 shadow-sm flex items-center justify-between bg-gradient-to-br from-transparent to-red/[0.04]">
-              <div>
-                <span className="text-[11px] font-medium tracking-wide text-red flex items-center gap-1">
-                  <Send className="size-3.5" /> Forms Sent
-                </span>
-                <p className="text-2xl font-bold tabular-nums text-red mt-1">
+            {/* 4. Forms Sent (RED ACCENT CARD) */}
+            <div className="bg-[#140b0e] border border-red-500/30 p-4 rounded-xl shadow-[0_0_15px_rgba(239,68,68,0.06)] flex flex-col justify-between h-24">
+              <div className="flex items-center gap-1.5 text-xs text-red-400 font-medium">
+                <Send className="size-3.5 text-red-500" />
+                <span>Forms Sent</span>
+              </div>
+              <div className="flex items-end justify-between">
+                <span className="text-2xl font-bold tabular-nums text-white">
                   {overviewData?.metrics?.formsSent ?? 0}
-                </p>
+                </span>
+                <svg className="w-14 h-7 text-red-500/80 shrink-0" viewBox="0 0 64 28" fill="none">
+                  <path d="M2 24 C 16 24, 24 14, 36 18 C 48 22, 52 6, 62 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
               </div>
-              <svg className="w-12 h-6 text-red/60 shrink-0" viewBox="0 0 64 32" fill="none">
-                <path d="M2 28 C 16 28, 24 16, 36 22 C 48 26, 52 8, 62 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
             </div>
 
-            {/* 5. Apply Clicks */}
-            <div className="bg-white dark:bg-[#14141a] p-4 rounded-xl border border-red/30 shadow-sm flex items-center justify-between bg-gradient-to-br from-transparent to-red/[0.04]">
-              <div>
-                <span className="text-[11px] font-medium tracking-wide text-red flex items-center gap-1">
-                  <MousePointerClick className="size-3.5" /> Apply Clicks
-                </span>
-                <p className="text-2xl font-bold tabular-nums text-red mt-1">
-                  {overviewData?.metrics?.applyClicks ?? 0}
-                </p>
+            {/* 5. Apply Clicks (RED ACCENT CARD) */}
+            <div className="bg-[#140b0e] border border-red-500/30 p-4 rounded-xl shadow-[0_0_15px_rgba(239,68,68,0.06)] flex flex-col justify-between h-24">
+              <div className="flex items-center gap-1.5 text-xs text-red-400 font-medium">
+                <MousePointerClick className="size-3.5 text-red-500" />
+                <span>Apply Clicks</span>
               </div>
-              <svg className="w-12 h-6 text-red/60 shrink-0" viewBox="0 0 64 32" fill="none">
-                <path d="M2 26 C 14 26, 26 12, 38 18 C 48 22, 54 6, 62 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
+              <div className="flex items-end justify-between">
+                <span className="text-2xl font-bold tabular-nums text-white">
+                  {overviewData?.metrics?.applyClicks ?? 0}
+                </span>
+                <svg className="w-14 h-7 text-red-500/80 shrink-0" viewBox="0 0 64 28" fill="none">
+                  <path d="M2 22 C 14 22, 26 10, 38 15 C 48 18, 54 4, 62 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </div>
             </div>
 
             {/* 6. Total Visits */}
-            <div className="bg-white dark:bg-[#14141a] p-4 rounded-xl border border-zinc-200 dark:border-white/10 shadow-sm flex items-center justify-between">
-              <div>
-                <span className="text-[11px] font-medium tracking-wide text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
-                  <Eye className="size-3.5" /> Total Visits
-                </span>
-                <p className="text-2xl font-bold tabular-nums text-ink dark:text-white mt-1">
-                  {overviewData?.metrics?.totalVisits?.toLocaleString() ?? 0}
-                </p>
+            <div className="bg-[#0c0e14] border border-white/[0.07] p-4 rounded-xl shadow-sm flex flex-col justify-between h-24">
+              <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-medium">
+                <Eye className="size-3.5 text-zinc-400" />
+                <span>Total Visits</span>
               </div>
-              <svg className="w-12 h-6 text-zinc-400 dark:text-zinc-600 shrink-0" viewBox="0 0 64 32" fill="none">
-                <path d="M2 22 C 16 26, 28 14, 40 18 C 50 20, 56 10, 62 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
+              <div className="flex items-end justify-between">
+                <span className="text-2xl font-bold tabular-nums text-white">
+                  {overviewData?.metrics?.totalVisits?.toLocaleString() ?? 0}
+                </span>
+                <svg className="w-14 h-7 text-zinc-500/40 shrink-0" viewBox="0 0 64 28" fill="none">
+                  <path d="M2 18 C 16 22, 28 12, 40 16 C 50 18, 56 8, 62 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </div>
             </div>
           </div>
 
           {/* Line Chart: Visitors Per Day */}
-          <div className="bg-white dark:bg-[#14141a] p-5 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm space-y-4">
+          <div className="bg-[#0c0e14] border border-white/[0.07] p-5 rounded-xl shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold tracking-tight text-ink dark:text-white">
+                <h3 className="text-sm font-semibold tracking-tight text-white">
                   Visitors per Day
                 </h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                <p className="text-xs text-zinc-400 mt-0.5">
                   Daily unique visitors and pageviews (IST)
                 </p>
               </div>
               <div className="flex items-center gap-4 text-xs">
-                <span className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300">
-                  <span className="size-2 rounded-full bg-emerald-500" /> Visitors
+                <span className="flex items-center gap-1.5 text-zinc-300">
+                  <span className="size-2 rounded-full bg-red-500" /> Visitors
                 </span>
-                <span className="flex items-center gap-1.5 text-zinc-600 dark:text-zinc-300">
-                  <span className="size-2 rounded-full bg-red" /> Page Views
+                <span className="flex items-center gap-1.5 text-zinc-300">
+                  <span className="size-2 rounded-full bg-zinc-400" /> Page Views
                 </span>
               </div>
             </div>
 
             <div className="h-64 w-full">
-              {overviewData?.visitorsPerDay && overviewData.visitorsPerDay.length > 0 ? (
+              {overviewData?.visitorsPerDay && overviewData.visitorsPerDay.some((d: any) => (d.visitors || 0) > 0 || (d.pageViews || 0) > 0) ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={overviewData.visitorsPerDay}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.12)" />
-                    <XAxis dataKey="label" stroke="#888888" fontSize={11} tickLine={false} />
-                    <YAxis stroke="#888888" fontSize={11} tickLine={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                    <XAxis dataKey="label" stroke="#71717a" fontSize={11} tickLine={false} />
+                    <YAxis stroke="#71717a" fontSize={11} tickLine={false} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "#14141a",
+                        backgroundColor: "#0e1017",
                         borderColor: "rgba(255,255,255,0.1)",
                         borderRadius: "8px",
                         color: "#fff",
@@ -565,16 +604,16 @@ export function LiveWebClient() {
                     <Line
                       type="monotone"
                       dataKey="visitors"
-                      stroke="#10b981"
+                      stroke="#ef4444"
                       strokeWidth={2}
-                      dot={{ r: 3 }}
+                      dot={{ r: 3, fill: "#ef4444" }}
                       activeDot={{ r: 5 }}
                       name="Visitors"
                     />
                     <Line
                       type="monotone"
                       dataKey="pageViews"
-                      stroke="#E11D2E"
+                      stroke="#94a3b8"
                       strokeWidth={1.5}
                       strokeDasharray="4 4"
                       dot={false}
@@ -583,77 +622,125 @@ export function LiveWebClient() {
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-xs text-zinc-400 gap-2">
-                  <Activity className="size-6 text-zinc-400/60" />
-                  <span>{overviewLoading ? "Loading visitor metrics…" : "No visitor data in this date range yet."}</span>
+                /* Empty state matching the reference visual exactly */
+                <div className="relative h-full flex flex-col justify-between py-2">
+                  <div className="flex-1 flex flex-col justify-between">
+                    {[5, 4, 3, 2, 1, 0].map((num) => (
+                      <div key={num} className="flex items-center gap-3">
+                        <span className="text-[11px] font-mono text-zinc-500 w-3 text-right">{num}</span>
+                        <div className="flex-1 border-b border-dashed border-white/[0.05]" />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Centered empty label with icon */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <svg className="size-5 text-zinc-500 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M3 3v18h18" />
+                      <path d="M18 17V9" />
+                      <path d="M13 17V5" />
+                      <path d="M8 17v-3" />
+                    </svg>
+                    <span className="text-xs text-zinc-500">
+                      {overviewLoading ? "Loading visitor metrics…" : "No visitor data in this date range yet."}
+                    </span>
+                  </div>
+
+                  {/* X-axis date labels */}
+                  <div className="flex justify-between pl-6 pr-2 pt-2 text-[11px] font-sans text-zinc-500">
+                    {defaultEmptyDates.map((dt, idx) => (
+                      <span key={idx}>{dt}</span>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
           {/* Top Pages, Top Sources, Top Cities */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Top Pages */}
-            <div className="bg-white dark:bg-[#14141a] p-5 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm">
-              <div className="flex items-center justify-between mb-3 border-b border-zinc-100 dark:border-white/5 pb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-ink dark:text-zinc-200 flex items-center gap-1.5">
-                  <FileCheck2 className="size-3.5 text-zinc-400" /> Top Pages
-                </span>
-                <span className="text-[11px] text-zinc-400">Views</span>
+            <div className="bg-[#0c0e14] border border-white/[0.07] p-4 sm:p-5 rounded-xl shadow-sm flex flex-col min-h-[190px]">
+              <div className="flex items-center gap-2 mb-3">
+                <FileCheck2 className="size-4 text-zinc-400" />
+                <span className="text-xs font-semibold text-white">Top Pages</span>
               </div>
-              <ul className="space-y-2.5">
-                {(overviewData?.topPages || []).map((item: any, idx: number) => (
-                  <li key={idx} className="flex items-center justify-between text-xs">
-                    <span className="text-zinc-700 dark:text-zinc-300 truncate max-w-[200px]">{item.page || item.label}</span>
-                    <span className="font-bold tabular-nums text-ink dark:text-white">{item.views || item.count}</span>
-                  </li>
-                ))}
-                {(!overviewData?.topPages || overviewData.topPages.length === 0) && (
-                  <li className="text-xs text-zinc-400 text-center py-4">No page data yet.</li>
+              <div className="flex items-center justify-between text-[11px] font-medium text-zinc-500 pb-2 border-b border-white/[0.05]">
+                <span>Page</span>
+                <span>Views</span>
+              </div>
+              <div className="flex-1 py-2">
+                {overviewData?.topPages && overviewData.topPages.length > 0 ? (
+                  <ul className="space-y-2">
+                    {overviewData.topPages.map((item: any, idx: number) => (
+                      <li key={idx} className="flex items-center justify-between text-xs">
+                        <span className="text-zinc-300 truncate max-w-[200px]">{item.page || item.label}</span>
+                        <span className="font-bold tabular-nums text-white">{item.views || item.count}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="h-full flex items-center justify-center py-6 text-xs text-zinc-500">
+                    No page data yet.
+                  </div>
                 )}
-              </ul>
+              </div>
             </div>
 
             {/* Top Sources */}
-            <div className="bg-white dark:bg-[#14141a] p-5 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm">
-              <div className="flex items-center justify-between mb-3 border-b border-zinc-100 dark:border-white/5 pb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-ink dark:text-zinc-200 flex items-center gap-1.5">
-                  <Layers className="size-3.5 text-zinc-400" /> Top Sources
-                </span>
-                <span className="text-[11px] text-zinc-400">Visitors</span>
+            <div className="bg-[#0c0e14] border border-white/[0.07] p-4 sm:p-5 rounded-xl shadow-sm flex flex-col min-h-[190px]">
+              <div className="flex items-center gap-2 mb-3">
+                <Layers className="size-4 text-zinc-400" />
+                <span className="text-xs font-semibold text-white">Top Sources</span>
               </div>
-              <ul className="space-y-2.5">
-                {(overviewData?.topSources || []).map((item: any, idx: number) => (
-                  <li key={idx} className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-zinc-700 dark:text-zinc-300">{item.source || item.label}</span>
-                    <span className="font-bold tabular-nums text-ink dark:text-white">{item.visitors || item.count}</span>
-                  </li>
-                ))}
-                {(!overviewData?.topSources || overviewData.topSources.length === 0) && (
-                  <li className="text-xs text-zinc-400 text-center py-4">No source data yet.</li>
+              <div className="flex items-center justify-between text-[11px] font-medium text-zinc-500 pb-2 border-b border-white/[0.05]">
+                <span>Source</span>
+                <span>Visitors</span>
+              </div>
+              <div className="flex-1 py-2">
+                {overviewData?.topSources && overviewData.topSources.length > 0 ? (
+                  <ul className="space-y-2">
+                    {overviewData.topSources.map((item: any, idx: number) => (
+                      <li key={idx} className="flex items-center justify-between text-xs">
+                        <span className="text-zinc-300 truncate max-w-[200px]">{item.source || item.label}</span>
+                        <span className="font-bold tabular-nums text-white">{item.visitors || item.count}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="h-full flex items-center justify-center py-6 text-xs text-zinc-500">
+                    No source data yet.
+                  </div>
                 )}
-              </ul>
+              </div>
             </div>
 
             {/* Top Cities */}
-            <div className="bg-white dark:bg-[#14141a] p-5 rounded-2xl border border-zinc-200 dark:border-white/10 shadow-sm">
-              <div className="flex items-center justify-between mb-3 border-b border-zinc-100 dark:border-white/5 pb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-ink dark:text-zinc-200 flex items-center gap-1.5">
-                  <MapPin className="size-3.5 text-zinc-400" /> Top Cities
-                </span>
-                <span className="text-[11px] text-zinc-400">Visitors</span>
+            <div className="bg-[#0c0e14] border border-white/[0.07] p-4 sm:p-5 rounded-xl shadow-sm flex flex-col min-h-[190px]">
+              <div className="flex items-center gap-2 mb-3">
+                <MapPin className="size-4 text-zinc-400" />
+                <span className="text-xs font-semibold text-white">Top Cities</span>
               </div>
-              <ul className="space-y-2.5">
-                {(overviewData?.topCities || []).map((item: any, idx: number) => (
-                  <li key={idx} className="flex items-center justify-between text-xs">
-                    <span className="text-zinc-700 dark:text-zinc-300 truncate max-w-[200px]">{item.city || item.label}</span>
-                    <span className="font-bold tabular-nums text-ink dark:text-white">{item.visitors || item.count}</span>
-                  </li>
-                ))}
-                {(!overviewData?.topCities || overviewData.topCities.length === 0) && (
-                  <li className="text-xs text-zinc-400 text-center py-4">No city data yet.</li>
+              <div className="flex items-center justify-between text-[11px] font-medium text-zinc-500 pb-2 border-b border-white/[0.05]">
+                <span>City</span>
+                <span>Visitors</span>
+              </div>
+              <div className="flex-1 py-2">
+                {overviewData?.topCities && overviewData.topCities.length > 0 ? (
+                  <ul className="space-y-2">
+                    {overviewData.topCities.map((item: any, idx: number) => (
+                      <li key={idx} className="flex items-center justify-between text-xs">
+                        <span className="text-zinc-300 truncate max-w-[200px]">{item.city || item.label}</span>
+                        <span className="font-bold tabular-nums text-white">{item.visitors || item.count}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="h-full flex items-center justify-center py-6 text-xs text-zinc-500">
+                    No city data yet.
+                  </div>
                 )}
-              </ul>
+              </div>
             </div>
           </div>
         </div>
