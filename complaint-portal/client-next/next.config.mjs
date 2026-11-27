@@ -26,17 +26,9 @@ const nextConfig = {
   // Next dev-tools badge (bottom "N" button) off — production builds never show it.
   devIndicators: false,
   async rewrites() {
-    // Friendly admin URL works locally and on the portal deployment.
-    // On www.apthex.com the root vercel.json already rewrites /admin,
-    // but localhost and the *.vercel.app portal need this too.
-    const rules = [
-      { source: "/admin", destination: "/complaint-review-console" },
-      { source: "/admin/:path*", destination: "/complaint-review-console/:path*" },
-    ];
+    const rules = [];
     // Local development only: proxy /api/* to the local Express server.
     // In production the API routing happens at the edge via vercel.json
-    // (function-runtime rewrites cannot resolve *.vercel.app targets —
-    // they resolve to a private IP and fail with DNS_HOSTNAME_RESOLVED_PRIVATE).
     if (isDev) rules.push({ source: "/api/:path*", destination: `${apiTarget}/api/:path*` });
     return rules;
   },

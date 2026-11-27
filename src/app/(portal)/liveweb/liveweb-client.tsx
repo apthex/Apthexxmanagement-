@@ -21,6 +21,7 @@ import {
   MousePointerClick,
   RefreshCw,
   Send,
+  ShieldCheck,
   Sparkles,
   TrendingUp,
   UserCheck,
@@ -447,9 +448,8 @@ export function LiveWebClient() {
                   <span
                     key={i}
                     style={{ height: `${h}px` }}
-                    className={`w-[3px] rounded-full transition-all duration-300 ${
-                      i % 4 === 1 ? "bg-red-500" : "bg-zinc-600"
-                    }`}
+                    className={`w-[3px] rounded-full transition-all duration-300 ${i % 4 === 1 ? "bg-red-500" : "bg-zinc-600"
+                      }`}
                   />
                 ))}
               </div>
@@ -465,8 +465,8 @@ export function LiveWebClient() {
             </div>
           </div>
 
-          {/* 6 Metric Cards with Sparklines */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {/* 7 Metric Cards with Sparklines */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
             {/* 1. Visitors */}
             <div className="bg-[#0c0e14] border border-white/[0.07] p-4 rounded-xl shadow-sm flex flex-col justify-between h-24">
               <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-medium">
@@ -547,7 +547,23 @@ export function LiveWebClient() {
               </div>
             </div>
 
-            {/* 6. Total Visits */}
+            {/* 6. Assessment Clicks (RED ACCENT CARD) */}
+            <div className="bg-[#140b0e] border border-red-500/30 p-4 rounded-xl shadow-[0_0_15px_rgba(239,68,68,0.06)] flex flex-col justify-between h-24">
+              <div className="flex items-center gap-1.5 text-xs text-red-400 font-medium">
+                <ShieldCheck className="size-3.5 text-red-500" />
+                <span>Assessments</span>
+              </div>
+              <div className="flex items-end justify-between">
+                <span className="text-2xl font-bold tabular-nums text-white">
+                  {overviewData?.metrics?.assessmentClicks ?? 0}
+                </span>
+                <svg className="w-14 h-7 text-red-500/80 shrink-0" viewBox="0 0 64 28" fill="none">
+                  <path d="M2 20 C 16 18, 24 8, 38 14 C 48 18, 54 4, 62 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              </div>
+            </div>
+
+            {/* 7. Total Visits */}
             <div className="bg-[#0c0e14] border border-white/[0.07] p-4 rounded-xl shadow-sm flex flex-col justify-between h-24">
               <div className="flex items-center gap-1.5 text-xs text-zinc-400 font-medium">
                 <Eye className="size-3.5 text-zinc-400" />
@@ -790,25 +806,23 @@ export function LiveWebClient() {
                         <td className="py-3 px-3 text-center font-bold tabular-nums text-white">{p.views}</td>
                         <td className="py-3 px-3 text-center font-medium tabular-nums text-zinc-300">{p.visitors}</td>
                         <td className="py-3 px-3 text-center">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold tabular-nums ${
-                            isLongest
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold tabular-nums ${isLongest
                               ? "bg-amber-950/40 text-amber-300 border border-amber-500/30"
                               : "bg-white/[0.04] text-zinc-200 border border-white/[0.06]"
-                          }`}>
+                            }`}>
                             <Clock className="size-3" />
                             {p.avgTimeOnPageFormatted}
                           </span>
                         </td>
                         <td className="py-3 px-3 text-right">
-                          <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase tracking-wider ${
-                            isLongest
+                          <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase tracking-wider ${isLongest
                               ? "bg-amber-950/40 text-amber-400 border border-amber-500/30"
                               : isMostVisited
-                              ? "bg-red-950/40 text-red-400 border border-red-500/30"
-                              : p.badge === "Lead Conversion"
-                              ? "bg-emerald-950/40 text-emerald-400 border border-emerald-500/30"
-                              : "bg-zinc-800/80 text-zinc-300 border border-white/10"
-                          }`}>
+                                ? "bg-red-950/40 text-red-400 border border-red-500/30"
+                                : p.badge === "Lead Conversion"
+                                  ? "bg-emerald-950/40 text-emerald-400 border border-emerald-500/30"
+                                  : "bg-zinc-800/80 text-zinc-300 border border-white/10"
+                            }`}>
                             {p.badge}
                           </span>
                         </td>
@@ -1102,6 +1116,11 @@ export function LiveWebClient() {
                         {ev.type === "apply_click" && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-800 dark:bg-white/10 text-white text-[11px] font-semibold">
                             <MousePointerClick className="size-3" /> Clicked Apply: {ev.role || "Open Role"}
+                          </span>
+                        )}
+                        {ev.type === "assessment_click" && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-950/40 border border-red-500/30 text-red-300 text-[11px] font-semibold">
+                            <ShieldCheck className="size-3 text-red-400" /> Clicked Request Assessment
                           </span>
                         )}
                       </div>

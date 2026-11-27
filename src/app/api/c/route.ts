@@ -177,6 +177,7 @@ export async function POST(req: Request) {
         visit_count: visitCount,
         form_sent: type === "contact_form_submit",
         apply_clicked: type === "apply_click",
+        assessment_clicked: type === "assessment_click",
         apply_role: role || "",
         timeline: [
           {
@@ -247,6 +248,17 @@ export async function POST(req: Request) {
             page,
             type: "apply_click",
             meta: { role },
+            time_on_page: 0,
+          },
+        };
+      } else if (type === "assessment_click") {
+        updateDoc.$set.assessment_clicked = true;
+        updateDoc.$push = {
+          timeline: {
+            time: now,
+            page,
+            type: "assessment_click",
+            meta: {},
             time_on_page: 0,
           },
         };

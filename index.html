@@ -20,11 +20,14 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://www.apthex.com/">
 <meta property="og:site_name" content="Apthex">
-<meta property="og:image" content="https://www.apthex.com/favicon.svg">
+<meta property="og:image" content="https://www.apthex.com/apthex-og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="APTHEX — Offensive Cybersecurity & Threat Operations">
 <meta name="twitter:description" content="Offensive security, threat operations and zero-trust resilience. Precise. Measured. Relentless.">
-<meta name="twitter:image" content="https://www.apthex.com/favicon.svg">
+<meta name="twitter:image" content="https://www.apthex.com/apthex-og.png">
+<meta name="google-site-verification" content="google-site-verification-token">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="favicon.svg">
 <script type="application/ld+json">
@@ -828,15 +831,6 @@
       </div>
     </article>
   </div>
-
-  <div class="tclose glass" data-reveal style="--i:5">
-    <span class="sup-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v5c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6l7-3z"/><path d="M9.5 12l2 2 3.5-4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-    <p>Supported by a <b>team of certified security researchers</b><br>across offensive security, security operations and compliance.</p>
-    <div class="sup-btns">
-      <button class="btn" data-open>Request assessment&nbsp;&nbsp;↗</button>
-      <button class="btn btn--ghost" id="teamClose">Close&nbsp;&nbsp;✕</button>
-    </div>
-  </div>
 </section>
 
 <!-- 06 HOW WE WORK + CONTACT — ref design, bg: design/contact.png -->
@@ -1127,7 +1121,7 @@
     if (mn && mn.classList.contains('is-open')) { mn.classList.remove('is-open'); document.body.classList.remove('no-scroll'); mb && mb.setAttribute('aria-expanded', 'false'); }
     openTeam();
   }));
-  $('#teamClose').addEventListener('click', () => closeTeam(true));
+  $('#teamClose')?.addEventListener('click', () => closeTeam(true));
   /* dusre section par jaane se team wapas chhup jayegi */
   $$('a[href="#home"],a[href="#threats"],a[href="#services"],a[href="#partners"]').forEach(a => a.addEventListener('click', e => {
     if (!document.body.classList.contains('team-open')) return;

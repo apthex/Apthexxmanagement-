@@ -10,12 +10,17 @@ import {
   Building2,
   CalendarDays,
   ChevronRight,
+  KeyRound,
   ListChecks,
+  Loader2,
+  Lock,
   LogOut,
+  Mail,
   Menu,
   Moon,
   NotebookPen,
   Search,
+  Settings,
   ShieldCheck,
   Sun,
   Target,
@@ -39,11 +44,6 @@ type NavItem = {
 
 const WORKSPACE_NAV: NavItem[] = [
   { href: "/dashboard", label: "Live Analytics", icon: Activity, exact: true, pulse: true },
-  { href: "/leads", label: "Leads", icon: Target },
-  { href: "/clients", label: "Clients", icon: Building2 },
-  { href: "/tasks", label: "Tasks", icon: ListChecks },
-  { href: "/worklogs", label: "Work Logs", icon: NotebookPen },
-  { href: "/meetings", label: "Meetings", icon: CalendarDays },
 ];
 
 function Brand() {
@@ -179,6 +179,207 @@ function SignOutButton() {
   );
 }
 
+function ProfileSettingsModal({
+  user,
+  isOpen,
+  onClose,
+}: {
+  user: SessionUser;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  const [email, setEmail] = React.useState(user.email || "");
+  const [currentPassword, setCurrentPassword] = React.useState("");
+  const [newPassword, setNewPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
+  const [logoutLoading, setLogoutLoading] = React.useState(false);
+  const [statusMessage, setStatusMessage] = React.useState<{ text: string; tone: "success" | "error" } | null>(null);
+
+  if (!isOpen) return null;
+
+  async function handleUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    setStatusMessage(null);
+
+    if (newPassword && newPassword !== confirmPassword) {
+      setStatusMessage({ text: "New passwords do not match.", tone: "error" });
+      return;
+    }
+    if (newPassword && !currentPassword) {
+      setStatusMessage({ text: "Please enter your current password to set a new password.", tone: "error" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload: Record<string, string> = {};
+      if (email.trim() && email.trim() !== user.email) {
+        payload.email = email.trim();
+      }
+      if (newPassword) {
+        payload.currentPassword = currentPassword;
+        payload.newPassword = newPassword;
+      }
+      if (Object.keys(payload).length === 0) {
+        setStatusMessage({ text: "No changes to save.", tone: "error" });
+        setLoading(false);
+        return;
+      }
+
+      await apiFetch("/api/auth/profile", {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
+
+      setStatusMessage({ text: "Settings saved successfully! Reloading...", tone: "success" });
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (err) {
+      setStatusMessage({ text: errorMessage(err), tone: "error" });
+      setLoading(false);
+    }
+  }
+
+  async function handleLogout() {
+    setLogoutLoading(true);
+    try {
+      await apiFetch("/api/auth/logout", { method: "POST" });
+      window.location.assign("/login");
+    } catch {
+      window.location.assign("/login");
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in" role="dialog" aria-modal="true">
+      <div className="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#0c0e14] p-6 shadow-2xl">
+        <div className="flex items-center justify-between pb-4 border-b border-white/[0.08]">
+          <div className="flex items-center gap-2.5">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-red-950/60 border border-red-500/30 text-red-400">
+              <Settings className="size-4" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-white">Account Settings</h3>
+              <p className="text-[11px] text-zinc-400">Update work email and credentials</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex size-7 items-center justify-center rounded-lg border border-white/10 text-zinc-400 hover:text-white hover:bg-white/[0.06] transition"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+
+        {statusMessage ? (
+          <div className={`mt-4 p-3 rounded-lg text-xs font-medium border ${
+            statusMessage.tone === "success"
+              ? "bg-emerald-950/40 text-emerald-300 border-emerald-500/30"
+              : "bg-red-950/40 text-red-300 border-red-500/30"
+          }`}>
+            {statusMessage.text}
+          </div>
+        ) : null}
+
+        <form onSubmit={handleUpdate} className="mt-4 space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+              Work Email
+            </label>
+            <div className="relative flex items-center">
+              <Mail className="absolute left-3 size-3.5 text-zinc-500" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full h-9 rounded-lg bg-[#141722] border border-white/10 pl-9 pr-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-red-500/50"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-white/[0.06]">
+            <p className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mb-2">Change Password</p>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-zinc-300 mb-1">
+                  Current Password
+                </label>
+                <div className="relative flex items-center">
+                  <Lock className="absolute left-3 size-3.5 text-zinc-500" />
+                  <input
+                    type="password"
+                    placeholder="Enter current password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full h-9 rounded-lg bg-[#141722] border border-white/10 pl-9 pr-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-red-500/50"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-zinc-300 mb-1">
+                  New Password
+                </label>
+                <div className="relative flex items-center">
+                  <KeyRound className="absolute left-3 size-3.5 text-zinc-500" />
+                  <input
+                    type="password"
+                    placeholder="At least 12 characters"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full h-9 rounded-lg bg-[#141722] border border-white/10 pl-9 pr-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-red-500/50"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-zinc-300 mb-1">
+                  Confirm New Password
+                </label>
+                <div className="relative flex items-center">
+                  <KeyRound className="absolute left-3 size-3.5 text-zinc-500" />
+                  <input
+                    type="password"
+                    placeholder="Repeat new password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full h-9 rounded-lg bg-[#141722] border border-white/10 pl-9 pr-3 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-red-500/50"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-3 flex items-center justify-between gap-3 border-t border-white/[0.08]">
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={logoutLoading}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-500/30 bg-red-950/20 text-xs font-medium text-red-400 hover:bg-red-950/40 transition disabled:opacity-50"
+            >
+              <LogOut className="size-3.5" />
+              <span>{logoutLoading ? "Signing out..." : "Sign Out"}</span>
+            </button>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-xs font-semibold text-white shadow-md transition disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="size-3.5 animate-spin" /> : null}
+              <span>Save Changes</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function InnerPortalLayout({
   user,
   children,
@@ -188,6 +389,7 @@ function InnerPortalLayout({
 }) {
   const pathname = usePathname() || "";
   const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [profileOpen, setProfileOpen] = React.useState(false);
 
   React.useEffect(() => {
     setDrawerOpen(false);
@@ -202,6 +404,8 @@ function InnerPortalLayout({
 
   return (
     <div className="min-h-screen bg-[#08090d] text-zinc-100 transition-colors duration-150">
+      <ProfileSettingsModal user={user} isOpen={profileOpen} onClose={() => setProfileOpen(false)} />
+
       {/* Top Header */}
       <header className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-white/[0.06] bg-[#090a0f]/95 backdrop-blur-md px-3 sm:px-6">
         <div className="flex items-center gap-3 sm:gap-4">
@@ -250,7 +454,12 @@ function InnerPortalLayout({
           </button>
 
           {/* User profile */}
-          <div className="flex items-center gap-2.5 rounded-lg border border-white/[0.08] bg-[#11131a] px-2.5 py-1">
+          <button
+            type="button"
+            onClick={() => setProfileOpen(true)}
+            className="flex items-center gap-2.5 rounded-lg border border-white/[0.08] bg-[#11131a] px-2.5 py-1 hover:border-red-500/30 hover:bg-[#161922] transition text-left cursor-pointer"
+            title="Account Settings & Credentials"
+          >
             <div className="flex size-7 items-center justify-center rounded-full bg-zinc-800 border border-white/10 text-xs font-semibold text-zinc-200">
               {initials}
             </div>
@@ -262,7 +471,8 @@ function InnerPortalLayout({
                 {ROLE_LABELS[user.accessLevel] ?? "Owner"}
               </p>
             </div>
-          </div>
+            <Settings className="size-3.5 text-zinc-500 ml-0.5 hover:text-white" />
+          </button>
 
           <ThemeToggle />
           <SignOutButton />
@@ -275,18 +485,22 @@ function InnerPortalLayout({
 
         {/* Bottom card: Private Workspace */}
         <div className="border-t border-white/[0.06] p-3">
-          <div className="rounded-xl border border-white/[0.08] bg-[#0e1017] p-3 shadow-sm">
+          <button
+            type="button"
+            onClick={() => setProfileOpen(true)}
+            className="w-full text-left rounded-xl border border-white/[0.08] bg-[#0e1017] p-3 shadow-sm hover:border-red-500/30 hover:bg-[#131620] transition group cursor-pointer"
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="size-4 text-red-500" />
-                <p className="text-[11.5px] font-semibold text-zinc-100">Private Workspace</p>
+                <p className="text-[11.5px] font-semibold text-zinc-100 group-hover:text-red-400 transition">Private Workspace</p>
               </div>
-              <ArrowUpRight className="size-3 text-zinc-500" />
+              <ArrowUpRight className="size-3 text-zinc-500 group-hover:text-zinc-300" />
             </div>
             <p className="mt-1 font-sans text-[10.5px] text-zinc-400 truncate">
               {user.email || "apthex@apthex.com"}
             </p>
-          </div>
+          </button>
           <p className="mt-2.5 px-1 font-sans text-[10px] uppercase tracking-wider text-zinc-600 font-medium">
             APTHEX OPS · v2.4
           </p>
@@ -316,15 +530,23 @@ function InnerPortalLayout({
             </div>
             <NavLinks pathname={pathname} onNavigate={() => setDrawerOpen(false)} />
             <div className="border-t border-white/10 p-4">
-              <div className="mb-3 flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setDrawerOpen(false);
+                  setProfileOpen(true);
+                }}
+                className="mb-3 flex w-full items-center gap-2.5 text-left rounded-lg p-1.5 hover:bg-white/[0.05] transition"
+              >
                 <div className="flex size-7 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold text-zinc-200">
                   {initials}
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-semibold text-zinc-100">{user.name}</p>
                   <p className="font-sans text-[10.5px] text-zinc-400 truncate">{user.email}</p>
                 </div>
-              </div>
+                <Settings className="size-3.5 text-zinc-500" />
+              </button>
               <SignOutButton />
             </div>
           </div>

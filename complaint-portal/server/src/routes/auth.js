@@ -268,6 +268,62 @@ router.post("/change-password", requireAuth, requireCsrf, async (req, res, next)
   }
 });
 
+router.post("/update-profile", requireAuth, requireCsrf, async (req, res, next) => {
+  try {
+    const { email, current_password, new_password } = req.body || {};
+    const member = await Member.findById(req.member._id);
+    if (!member) return res.status(404).json({ error: "Member not found" });
+
+    let updated = false;
+
+    if (new_password) {
+      if (!current_password) {
+        return res.status(400).json({ error: "Current password is required to change password." });
+      }
+      const valid = await bcrypt.compare(current_password, member.password_hash);
+      if (!valid) {
+        return res.status(400).json({ error: "Current password does not match." });
+      }
+      if (new_password.length < 8) {
+        return res.status(400).json({ error: "New password must be at least 8 characters long." });
+      }
+      member.password_hash = await bcrypt.hash(new_password, 12);
+      member.last_password_issued = new_password;
+      updated = true;
+    }
+
+    if (email && typeof email === "string" && email.trim().toLowerCase() !== member.email) {
+      const trimmedEmail = email.trim().toLowerCase();
+      if (!trimmedEmail.includes("@") || !trimmedEmail.includes(".")) {
+        return res.status(400).json({ error: "Please enter a valid email address." });
+      }
+      const existing = await Member.findOne({ email: trimmedEmail, _id: { $ne: member._id } });
+      if (existing) {
+        return res.status(400).json({ error: "This email is already in use by another account." });
+      }
+      member.email = trimmedEmail;
+      updated = true;
+    }
+
+    if (!updated) {
+      return res.status(400).json({ error: "No changes provided." });
+    }
+
+    await member.save();
+    await audit({
+      member_id: member._id,
+      action: "staff_profile_updated",
+      entity: "member",
+      entity_id: String(member._id),
+      ip: req.ip,
+    });
+
+    res.json({ ok: true, message: "Profile updated successfully.", member: publicMember(member) });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.post("/logout", requireAuth, requireCsrf, async (req, res, next) => {
   try {
     await revokeSession(req.staffSession, "logout");

@@ -192,6 +192,7 @@ export async function getTotals(range: string = "today", from?: string, to?: str
   let totalTime = 0;
   let formsSent = 0;
   let applyClicks = 0;
+  let assessmentClicks = 0;
 
   const dayMap: Record<string, { date: string; label: string; visitors: Set<string>; pageViews: number }> = {};
   const istOffset = 5.5 * 60 * 60 * 1000;
@@ -225,6 +226,7 @@ export async function getTotals(range: string = "today", from?: string, to?: str
 
     if (v.form_sent) formsSent += 1;
     if (v.apply_clicked) applyClicks += 1;
+    if (v.assessment_clicked) assessmentClicks += 1;
 
     // Timeline page counts
     const timeline = Array.isArray(v.timeline) ? v.timeline : [];
@@ -288,8 +290,10 @@ export async function getTotals(range: string = "today", from?: string, to?: str
   for (const v of targetPageDocs) {
     const vid = String(v.visitor_id || "");
     const timeline = Array.isArray(v.timeline) ? v.timeline : [];
+    let hasPv = false;
     for (const item of timeline) {
       if (item.type === "pageview" && item.page) {
+        hasPv = true;
         if (!pageEngagementMap[item.page]) {
           pageEngagementMap[item.page] = { page: item.page, views: 0, visitors: new Set(), duration: 0, count: 0 };
         }
@@ -301,13 +305,29 @@ export async function getTotals(range: string = "today", from?: string, to?: str
         }
       }
     }
+    if (!hasPv) {
+      const pageKey = v.current_page || v.entry_page || "/";
+      if (!pageEngagementMap[pageKey]) {
+        pageEngagementMap[pageKey] = { page: pageKey, views: 0, visitors: new Set(), duration: 0, count: 0 };
+      }
+      pageEngagementMap[pageKey].views += 1;
+      if (vid) pageEngagementMap[pageKey].visitors.add(vid);
+      if (Number(v.time_on_site) > 0) {
+        pageEngagementMap[pageKey].duration += Number(v.time_on_site);
+        pageEngagementMap[pageKey].count += 1;
+      }
+    }
   }
 
   const grandTotalViews = Object.values(pageEngagementMap).reduce((sum, p) => sum + p.views, 0) || 1;
 
   function getPageName(path: string): string {
     if (path === "/" || path === "") return "Homepage / Main Landing";
-    if (path === "/services" || path.startsWith("/services")) return "Services & Offerings";
+    if (path.includes("#services") || path === "/services" || path.startsWith("/services")) return "Services & Offerings (/#services)";
+    if (path.includes("#team") || path === "/team" || path.startsWith("/team")) return "Team & Leadership (/#team)";
+    if (path.includes("#threats")) return "Threat Operations & Countermeasures (/#threats)";
+    if (path.includes("#partners")) return "Partners & Ecosystem (/#partners)";
+    if (path.includes("#work")) return "How We Work & Methodology (/#work)";
     if (path === "/careers" || path.startsWith("/careers")) return "Careers & Opportunities";
     if (path === "/contact" || path.startsWith("/contact")) return "Contact Desk & Form";
     if (path === "/about" || path.startsWith("/about")) return "About Apthex";
@@ -392,6 +412,7 @@ export async function getTotals(range: string = "today", from?: string, to?: str
       avgTimeOnSiteFormatted: formatDuration(avgTime),
       formsSent,
       applyClicks,
+      assessmentClicks,
     },
     insights: {
       mostVisitedPage: mostVisited?.page || "/",

@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { apiFetch, errorMessage, fieldErrors } from "@/lib/api-client";
 import { InlineAlert } from "@/components/portal/ui";
@@ -41,38 +40,31 @@ export function LoginForm() {
   }
 
   return (
-    <div className="apt-frosted-panel w-full rounded-[22px] sm:rounded-[24px] p-8 sm:p-10 xl:p-11 relative z-10 transition-all">
-      {/* Technical Label (IBM Plex Mono 500, 11.5px) */}
-      <p className="mb-2.5 font-mono text-[11.5px] font-medium uppercase tracking-[0.22em] text-red">
-        Internal access
-      </p>
-
-      {/* Sign-in Heading (Space Grotesk 600, 38px to 42px) */}
-      <h1 className="font-display text-[38px] sm:text-[42px] font-semibold tracking-[-0.035em] text-ink leading-tight">
+    <div className="w-full rounded-2xl border border-white/[0.08] bg-[#0c0e14]/95 p-7 sm:p-9 shadow-[0_0_50px_rgba(0,0,0,0.8)] relative z-10 transition-all backdrop-blur-xl">
+      {/* Title */}
+      <h1 className="font-display text-2xl sm:text-[26px] font-semibold tracking-tight text-white leading-tight">
         Sign in
       </h1>
 
-      {/* Supporting Text (Inter 400, 15px to 15.5px) */}
-      <p className="mt-2.5 font-sans text-[15px] sm:text-[15.5px] font-normal leading-relaxed text-zinc-600 mb-7">
-        Enter your work email and password to sign in.
+      <p className="mt-1.5 text-xs text-zinc-400 mb-6">
+        Enter your credentials to continue
       </p>
 
       {/* Error alert if any */}
       {error ? (
-        <InlineAlert tone="error" className="mb-6">
+        <InlineAlert tone="error" className="mb-5">
           {error}
         </InlineAlert>
       ) : null}
 
-      <form onSubmit={submit} className="space-y-5" noValidate>
+      <form onSubmit={submit} className="space-y-4" noValidate>
         {/* Work Email Field */}
-        <div className="space-y-2">
-          {/* Form Label (Inter 500, 14.5px) */}
-          <label htmlFor="email" className="flex items-center gap-1 font-sans text-[14.5px] font-medium text-zinc-800">
-            Work email <span className="text-red font-normal" aria-hidden>*</span>
+        <div className="space-y-1.5">
+          <label htmlFor="email" className="block text-xs font-medium text-zinc-300">
+            Work email
           </label>
-          <div className="relative h-[54px] rounded-xl border border-zinc-300/80 bg-white/70 hover:bg-white/90 focus-within:bg-white focus-within:border-zinc-900 focus-within:ring-2 focus-within:ring-[#E11D2E]/15 transition-all shadow-xs flex items-center">
-            <Mail className="pointer-events-none absolute left-4 size-[19px] text-zinc-400" aria-hidden />
+          <div className="relative h-11 rounded-xl border border-white/10 bg-[#141722] focus-within:border-red-500/50 focus-within:ring-1 focus-within:ring-red-500/30 transition-all flex items-center">
+            <Mail className="pointer-events-none absolute left-3.5 size-4 text-zinc-500" aria-hidden />
             <input
               id="email"
               name="email"
@@ -80,24 +72,23 @@ export function LoginForm() {
               autoComplete="username"
               autoCapitalize="none"
               spellCheck={false}
-              placeholder="apthexx@gmail.com"
+              placeholder="name@apthex.com"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="w-full h-full bg-transparent pl-12 pr-4 font-sans text-[16px] font-normal text-zinc-900 placeholder:text-zinc-400 outline-none rounded-xl"
+              className="w-full h-full bg-transparent pl-10 pr-3 text-sm text-white placeholder:text-zinc-500 outline-none rounded-xl"
               required
             />
           </div>
-          {fields.email ? <p className="font-sans text-[12px] text-red pt-0.5">{fields.email}</p> : null}
+          {fields.email ? <p className="text-[11px] text-red-400 pt-0.5">{fields.email}</p> : null}
         </div>
 
         {/* Password Field */}
-        <div className="space-y-2">
-          {/* Form Label (Inter 500, 14.5px) */}
-          <label htmlFor="password" className="flex items-center gap-1 font-sans text-[14.5px] font-medium text-zinc-800">
-            Password <span className="text-red font-normal" aria-hidden>*</span>
+        <div className="space-y-1.5">
+          <label htmlFor="password" className="block text-xs font-medium text-zinc-300">
+            Password
           </label>
-          <div className="relative h-[54px] rounded-xl border border-zinc-300/80 bg-white/70 hover:bg-white/90 focus-within:bg-white focus-within:border-zinc-900 focus-within:ring-2 focus-within:ring-[#E11D2E]/15 transition-all shadow-xs flex items-center">
-            <Lock className="pointer-events-none absolute left-4 size-[19px] text-zinc-400" aria-hidden />
+          <div className="relative h-11 rounded-xl border border-white/10 bg-[#141722] focus-within:border-red-500/50 focus-within:ring-1 focus-within:ring-red-500/30 transition-all flex items-center">
+            <Lock className="pointer-events-none absolute left-3.5 size-4 text-zinc-500" aria-hidden />
             <input
               id="password"
               name="password"
@@ -106,59 +97,42 @@ export function LoginForm() {
               placeholder="Your password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full h-full bg-transparent pl-12 pr-12 font-sans text-[16px] font-normal text-zinc-900 placeholder:text-zinc-400 outline-none rounded-xl"
+              className="w-full h-full bg-transparent pl-10 pr-10 text-sm text-white placeholder:text-zinc-500 outline-none rounded-xl"
               required
             />
             <button
               type="button"
               onClick={() => setShowPassword((value) => !value)}
-              className="absolute right-3 flex size-8 items-center justify-center rounded-lg text-zinc-400 transition hover:bg-zinc-200/50 hover:text-zinc-700"
+              className="absolute right-3 flex size-7 items-center justify-center rounded-lg text-zinc-500 transition hover:text-zinc-300"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
-              {showPassword ? <EyeOff className="size-4.5" aria-hidden /> : <Eye className="size-4.5" aria-hidden />}
+              {showPassword ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
             </button>
           </div>
-          {fields.password ? <p className="font-sans text-[12px] text-red pt-0.5">{fields.password}</p> : null}
+          {fields.password ? <p className="text-[11px] text-red-400 pt-0.5">{fields.password}</p> : null}
         </div>
 
-        {/* Links Row */}
-        <div className="flex items-center justify-between gap-3 pt-1">
-          <Link
-            href="/forgot-password"
-            className="font-sans text-[13.5px] font-medium text-zinc-600 underline underline-offset-4 transition hover:text-ink"
+        {/* Submit button */}
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={loading}
+            className="group relative flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-500 text-sm font-semibold text-white shadow-[0_0_20px_rgba(225,29,46,0.3)] transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Forgot password?
-          </Link>
-          <span className="font-mono text-[12px] font-medium text-emerald-600">Direct Sign-In</span>
+            {loading ? (
+              <>
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+                <span>Signing in…</span>
+              </>
+            ) : (
+              <>
+                <span>Sign in</span>
+                <ArrowRight className="size-4 text-white/80 transition-transform duration-200 group-hover:translate-x-1" aria-hidden />
+              </>
+            )}
+          </button>
         </div>
-
-        {/* Sign-in Button: Horizontal black-to-deep-crimson button (Inter 600, 15.5px, 52px height) */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="group relative flex h-[52px] w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#111114] via-[#1a1417] to-[#36090e] border border-black/80 font-sans text-[15.5px] font-semibold text-white shadow-md transition-all duration-200 hover:from-black hover:to-[#4a0d14] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="size-5 animate-spin" aria-hidden />
-              <span>Signing in…</span>
-            </>
-          ) : (
-            <>
-              <span>Sign in to workspace</span>
-              <ArrowRight className="size-4.5 text-white/80 transition-transform duration-200 group-hover:translate-x-1" aria-hidden />
-            </>
-          )}
-        </button>
       </form>
-
-      {/* Footer Notes (Inter 400, 13px, with 600 bold) */}
-      <div className="mt-8 border-t border-zinc-200/80 pt-6 font-sans text-[13px] font-normal leading-[1.65] text-zinc-600">
-        <p>
-          No self sign-up. Accounts are created by an owner from <strong className="font-semibold text-ink">Members</strong>.
-        </p>
-        <p className="mt-1">Problems signing in? Contact Devendra or Pranav.</p>
-      </div>
     </div>
   );
 }
