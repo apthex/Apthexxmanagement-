@@ -156,12 +156,18 @@ function SignOutButton() {
   async function signOut() {
     setLoading(true);
     try {
-      await apiFetch("/api/auth/logout", { method: "POST" });
-      window.location.assign("/login");
-    } catch {
-      window.location.assign("/login");
+      localStorage.removeItem("apt_session");
+      sessionStorage.removeItem("apt_session");
+      localStorage.clear();
+      sessionStorage.clear();
+      document.cookie = "apt_session=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie = "__Host-apt_session=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      }).catch(() => {});
     } finally {
-      setLoading(false);
+      window.location.replace("/login?logged_out=1");
     }
   }
 
@@ -245,10 +251,18 @@ function ProfileSettingsModal({
   async function handleLogout() {
     setLogoutLoading(true);
     try {
-      await apiFetch("/api/auth/logout", { method: "POST" });
-      window.location.assign("/login");
-    } catch {
-      window.location.assign("/login");
+      localStorage.removeItem("apt_session");
+      sessionStorage.removeItem("apt_session");
+      localStorage.clear();
+      sessionStorage.clear();
+      document.cookie = "apt_session=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie = "__Host-apt_session=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      }).catch(() => {});
+    } finally {
+      window.location.replace("/login?logged_out=1");
     }
   }
 
@@ -275,11 +289,10 @@ function ProfileSettingsModal({
         </div>
 
         {statusMessage ? (
-          <div className={`mt-4 p-3 rounded-lg text-xs font-medium border ${
-            statusMessage.tone === "success"
+          <div className={`mt-4 p-3 rounded-lg text-xs font-medium border ${statusMessage.tone === "success"
               ? "bg-emerald-950/40 text-emerald-300 border-emerald-500/30"
               : "bg-red-950/40 text-red-300 border-red-500/30"
-          }`}>
+            }`}>
             {statusMessage.text}
           </div>
         ) : null}

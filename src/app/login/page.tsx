@@ -10,21 +10,28 @@ import { SESSION_COOKIE } from "@/lib/env";
 export const metadata: Metadata = { title: "Sign in" };
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
-  const cookieStore = await cookies();
-  const headerStore = await headers();
-  const token =
-    cookieStore.get("apt_session")?.value ||
-    cookieStore.get("__Host-apt_session")?.value ||
-    cookieStore.get(SESSION_COOKIE)?.value;
+export default async function LoginPage(props: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const searchParams = props.searchParams ? await props.searchParams : {};
+  const isLoggedOut = searchParams.logged_out === "1";
 
-  if (token) {
-    const session = await loadSession(token, {
-      ip: requestIp(headerStore),
-      userAgent: requestUserAgent(headerStore),
-    });
-    if (session) {
-      redirect("/dashboard");
+  if (!isLoggedOut) {
+    const cookieStore = await cookies();
+    const headerStore = await headers();
+    const token =
+      cookieStore.get("apt_session")?.value ||
+      cookieStore.get("__Host-apt_session")?.value ||
+      cookieStore.get(SESSION_COOKIE)?.value;
+
+    if (token) {
+      const session = await loadSession(token, {
+        ip: requestIp(headerStore),
+        userAgent: requestUserAgent(headerStore),
+      });
+      if (session) {
+        redirect("/dashboard");
+      }
     }
   }
 

@@ -22,14 +22,37 @@ export function ApthexLogo({ className = "size-8" }: { className?: string }) {
 export function AuthShell({ children, wide = false }: { children: React.ReactNode; wide?: boolean }) {
   return (
     <div className="min-h-screen w-full bg-[#08090d] text-zinc-100 flex flex-col justify-between font-sans selection:bg-red-500/25 selection:text-white relative overflow-hidden">
+      {/* Background Image: exactly same as team section */}
+      <div
+        className="absolute inset-0 pointer-events-none select-none z-0 bg-cover bg-no-repeat"
+        style={{
+          backgroundImage: `url("/team-bg.png")`,
+          backgroundPosition: "50% 20%",
+        }}
+        aria-hidden="true"
+      />
+
+      {/* Cinematic dark shade & vignette overlay matching #team */}
+      <div
+        className="absolute inset-0 pointer-events-none select-none z-0"
+        style={{
+          background: `
+            linear-gradient(90deg, rgba(8,9,13,0.92) 0%, rgba(8,9,13,0.65) 45%, rgba(8,9,13,0.50) 75%, rgba(8,9,13,0.72) 100%),
+            linear-gradient(0deg, #08090d 5%, transparent 35%),
+            linear-gradient(180deg, rgba(8,9,13,0.9) 0%, transparent 30%)
+          `,
+        }}
+        aria-hidden="true"
+      />
+
       {/* Subtle ambient lighting */}
       <div className="absolute inset-0 pointer-events-none select-none z-0">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-red-600/[0.04] blur-[120px] rounded-full" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-red-950/[0.08] blur-[100px] rounded-full" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-red-600/[0.06] blur-[120px] rounded-full" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-red-950/[0.12] blur-[100px] rounded-full" />
       </div>
 
       {/* Minimal Top Header */}
-      <header className="relative z-10 flex items-center justify-between px-6 py-5 sm:px-10 border-b border-white/[0.05]">
+      <header className="relative z-10 flex items-center justify-between px-6 py-5 sm:px-10 border-b border-white/[0.08] backdrop-blur-sm bg-black/20">
         <Link href="/login" className="flex items-center gap-3 group">
           <ApthexLogo className="size-7 transition-transform group-hover:scale-105" />
           <div className="flex items-baseline gap-1.5">
@@ -54,7 +77,7 @@ export function AuthShell({ children, wide = false }: { children: React.ReactNod
       </main>
 
       {/* Minimal Footer */}
-      <footer className="relative z-10 flex items-center justify-between px-6 py-4 sm:px-10 border-t border-white/[0.05] text-[11px] font-mono text-zinc-600">
+      <footer className="relative z-10 flex items-center justify-between px-6 py-4 sm:px-10 border-t border-white/[0.08] backdrop-blur-sm bg-black/20 text-[11px] font-mono text-zinc-500">
         <span>APTHEX OPS</span>
         <span>WORKSPACE</span>
       </footer>
