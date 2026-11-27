@@ -40,9 +40,12 @@ export function LoginForm() {
   }
 
   return (
-    <div className="w-full rounded-2xl border border-white/[0.08] bg-[#0c0e14]/95 p-7 sm:p-9 shadow-[0_0_50px_rgba(0,0,0,0.8)] relative z-10 transition-all backdrop-blur-xl">
+    <div className="w-full rounded-2xl border border-white/[0.12] bg-[#0c0e14]/55 backdrop-blur-2xl p-8 sm:p-10 shadow-[0_24px_64px_rgba(0,0,0,0.7),0_0_40px_rgba(225,29,46,0.08),inset_0_1px_0_rgba(255,255,255,0.12)] relative z-10 transition-all duration-300 hover:border-red-500/30">
+      {/* Glass Top Subtle Edge Highlight */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-t-2xl pointer-events-none" />
+
       {/* Title */}
-      <h1 className="font-display text-2xl sm:text-[26px] font-semibold tracking-tight text-white leading-tight">
+      <h1 className="font-display text-2xl sm:text-[28px] font-semibold tracking-tight text-white leading-tight">
         Sign in
       </h1>
 
@@ -63,7 +66,7 @@ export function LoginForm() {
           <label htmlFor="email" className="block text-xs font-medium text-zinc-300">
             Work email
           </label>
-          <div className="relative h-11 rounded-xl border border-white/10 bg-[#141722] focus-within:border-red-500/50 focus-within:ring-1 focus-within:ring-red-500/30 transition-all flex items-center">
+          <div className="relative h-11 rounded-xl border border-white/10 bg-[#121520]/60 backdrop-blur-md focus-within:border-red-500/50 focus-within:ring-1 focus-within:ring-red-500/30 transition-all flex items-center">
             <Mail className="pointer-events-none absolute left-3.5 size-4 text-zinc-500" aria-hidden />
             <input
               id="email"
@@ -87,7 +90,7 @@ export function LoginForm() {
           <label htmlFor="password" className="block text-xs font-medium text-zinc-300">
             Password
           </label>
-          <div className="relative h-11 rounded-xl border border-white/10 bg-[#141722] focus-within:border-red-500/50 focus-within:ring-1 focus-within:ring-red-500/30 transition-all flex items-center">
+          <div className="relative h-11 rounded-xl border border-white/10 bg-[#121520]/60 backdrop-blur-md focus-within:border-red-500/50 focus-within:ring-1 focus-within:ring-red-500/30 transition-all flex items-center">
             <Lock className="pointer-events-none absolute left-3.5 size-4 text-zinc-500" aria-hidden />
             <input
               id="password"
@@ -117,7 +120,7 @@ export function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="group relative flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-500 text-sm font-semibold text-white shadow-[0_0_20px_rgba(225,29,46,0.3)] transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+            className="group relative flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-600 text-sm font-semibold text-white shadow-[0_0_24px_rgba(225,29,46,0.35)] transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? (
               <>

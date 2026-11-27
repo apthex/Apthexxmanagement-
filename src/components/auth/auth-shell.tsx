@@ -37,9 +37,9 @@ export function AuthShell({ children, wide = false }: { children: React.ReactNod
         className="absolute inset-0 pointer-events-none select-none z-0"
         style={{
           background: `
-            linear-gradient(90deg, rgba(8,9,13,0.92) 0%, rgba(8,9,13,0.65) 45%, rgba(8,9,13,0.50) 75%, rgba(8,9,13,0.72) 100%),
+            linear-gradient(90deg, rgba(8,9,13,0.86) 0%, rgba(8,9,13,0.52) 45%, rgba(8,9,13,0.42) 75%, rgba(8,9,13,0.70) 100%),
             linear-gradient(0deg, #08090d 5%, transparent 35%),
-            linear-gradient(180deg, rgba(8,9,13,0.9) 0%, transparent 30%)
+            linear-gradient(180deg, rgba(8,9,13,0.84) 0%, transparent 30%)
           `,
         }}
         aria-hidden="true"
@@ -47,8 +47,8 @@ export function AuthShell({ children, wide = false }: { children: React.ReactNod
 
       {/* Subtle ambient lighting */}
       <div className="absolute inset-0 pointer-events-none select-none z-0">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-red-600/[0.06] blur-[120px] rounded-full" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-red-950/[0.12] blur-[100px] rounded-full" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-red-600/[0.08] blur-[120px] rounded-full" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-red-950/[0.15] blur-[100px] rounded-full" />
       </div>
 
       {/* Minimal Top Header */}
@@ -71,7 +71,7 @@ export function AuthShell({ children, wide = false }: { children: React.ReactNod
 
       {/* Centered Card Content */}
       <main className="relative z-10 flex flex-1 items-center justify-center px-4 py-12 sm:px-6">
-        <div className={wide ? "w-full max-w-[540px]" : "w-full max-w-[420px]"}>
+        <div className={wide ? "w-full max-w-[560px]" : "w-full max-w-[480px]"}>
           {children}
         </div>
       </main>
