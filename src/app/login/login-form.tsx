@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { ArrowRight, Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { apiFetch, errorMessage, fieldErrors } from "@/lib/api-client";
 import { InlineAlert } from "@/components/portal/ui";
@@ -87,9 +88,17 @@ export function LoginForm() {
 
         {/* Password Field */}
         <div className="space-y-1.5">
-          <label htmlFor="password" className="block text-xs font-medium text-zinc-300">
-            Password
-          </label>
+          <div className="flex items-center justify-between">
+            <label htmlFor="password" className="block text-xs font-medium text-zinc-300">
+              Password
+            </label>
+            <Link
+              href="/forgot-password"
+              className="text-[11px] text-zinc-400 hover:text-red-400 transition"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <div className="relative h-11 rounded-xl border border-white/10 bg-[#121520]/60 backdrop-blur-md focus-within:border-red-500/50 focus-within:ring-1 focus-within:ring-red-500/30 transition-all flex items-center">
             <Lock className="pointer-events-none absolute left-3.5 size-4 text-zinc-500" aria-hidden />
             <input
