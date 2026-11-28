@@ -25,15 +25,10 @@ export async function GET(request: NextRequest) {
     const from = searchParams.get("from") || undefined;
     const to = searchParams.get("to") || undefined;
 
-    // Overview metrics are accessible if member has dashboard.view OR liveweb.read
-    // Detailed tabs (live, visitors, single visit) and exports require liveweb.read
-    if (tab === "overview") {
-      if (!can(session.member.accessLevel, "dashboard.view") && !can(session.member.accessLevel, "liveweb.read")) {
-        await auditDenial(session, "dashboard.view", { path: "/api/liveweb" });
-        throw notFound();
-      }
-    } else {
-      await requirePermission(session, "liveweb.read", { path: "/api/liveweb" });
+    // LiveWeb analytics is accessible if member has dashboard.view OR liveweb.read
+    if (!can(session.member.accessLevel, "dashboard.view") && !can(session.member.accessLevel, "liveweb.read")) {
+      await auditDenial(session, "dashboard.view", { path: "/api/liveweb" });
+      throw notFound();
     }
 
     if (tab === "live") {

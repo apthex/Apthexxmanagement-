@@ -47,9 +47,25 @@ export function LiveWebClient() {
   const [tab, setTab] = React.useState<ActiveTab>(
     ["overview", "live", "visitors", "pages", "sources"].includes(urlTab) ? urlTab : "overview"
   );
-  const [range, setRange] = React.useState<DateRange>("today");
+  const [range, setRange] = React.useState<DateRange>("7d");
   const [customFrom, setCustomFrom] = React.useState<string>("");
   const [customTo, setCustomTo] = React.useState<string>("");
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const getAuthHeaders = React.useCallback((): Record<string, string> => {
+    const headers: Record<string, string> = {};
+    if (typeof window !== "undefined") {
+      try {
+        const token = localStorage.getItem("apt_session");
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+      } catch {}
+    }
+    return headers;
+  }, []);
 
   React.useEffect(() => {
     if (urlTab && ["overview", "live", "visitors", "pages", "sources"].includes(urlTab)) {
@@ -139,7 +155,10 @@ export function LiveWebClient() {
   const fetchLive = React.useCallback(async () => {
     setLiveLoading(true);
     try {
-      const res = await fetch("/api/liveweb?tab=live");
+      const res = await fetch("/api/liveweb?tab=live", {
+        credentials: "same-origin",
+        headers: getAuthHeaders(),
+      });
       if (res.ok) {
         const json = await res.json();
         setLiveData(json);
@@ -150,13 +169,16 @@ export function LiveWebClient() {
     } finally {
       setLiveLoading(false);
     }
-  }, []);
+  }, [getAuthHeaders]);
 
   // Fetch Overview
   const fetchOverview = React.useCallback(async () => {
     setOverviewLoading(true);
     try {
-      const res = await fetch(`/api/liveweb?${getQueryString("overview")}`);
+      const res = await fetch(`/api/liveweb?${getQueryString("overview")}`, {
+        credentials: "same-origin",
+        headers: getAuthHeaders(),
+      });
       if (res.ok) {
         const json = await res.json();
         setOverviewData(json);
@@ -166,7 +188,7 @@ export function LiveWebClient() {
     } finally {
       setOverviewLoading(false);
     }
-  }, [getQueryString]);
+  }, [getQueryString, getAuthHeaders]);
 
   // Fetch Visitors
   const fetchVisitors = React.useCallback(async () => {
@@ -185,7 +207,10 @@ export function LiveWebClient() {
       if (filterFormSent) params.set("formSent", "true");
       params.set("page", String(page));
 
-      const res = await fetch(`/api/liveweb?${params.toString()}`);
+      const res = await fetch(`/api/liveweb?${params.toString()}`, {
+        credentials: "same-origin",
+        headers: getAuthHeaders(),
+      });
       if (res.ok) {
         const json = await res.json();
         setVisitorsData(json);
@@ -195,13 +220,16 @@ export function LiveWebClient() {
     } finally {
       setVisitorsLoading(false);
     }
-  }, [range, customFrom, customTo, filterCity, filterSource, filterReturning, filterFormSent, page]);
+  }, [range, customFrom, customTo, filterCity, filterSource, filterReturning, filterFormSent, page, getAuthHeaders]);
 
   // Fetch Visit Detail
   const fetchVisitDetail = React.useCallback(async (id: string) => {
     setVisitLoading(true);
     try {
-      const res = await fetch(`/api/liveweb?tab=visit&id=${encodeURIComponent(id)}`);
+      const res = await fetch(`/api/liveweb?tab=visit&id=${encodeURIComponent(id)}`, {
+        credentials: "same-origin",
+        headers: getAuthHeaders(),
+      });
       if (res.ok) {
         const json = await res.json();
         setVisitDetail(json);
@@ -211,13 +239,16 @@ export function LiveWebClient() {
     } finally {
       setVisitLoading(false);
     }
-  }, []);
+  }, [getAuthHeaders]);
 
   // Fetch Pages
   const fetchPages = React.useCallback(async () => {
     setPagesLoading(true);
     try {
-      const res = await fetch(`/api/liveweb?${getQueryString("pages")}`);
+      const res = await fetch(`/api/liveweb?${getQueryString("pages")}`, {
+        credentials: "same-origin",
+        headers: getAuthHeaders(),
+      });
       if (res.ok) {
         const json = await res.json();
         setPagesData(json);
@@ -227,13 +258,16 @@ export function LiveWebClient() {
     } finally {
       setPagesLoading(false);
     }
-  }, [getQueryString]);
+  }, [getQueryString, getAuthHeaders]);
 
   // Fetch Sources
   const fetchSources = React.useCallback(async () => {
     setSourcesLoading(true);
     try {
-      const res = await fetch(`/api/liveweb?${getQueryString("sources")}`);
+      const res = await fetch(`/api/liveweb?${getQueryString("sources")}`, {
+        credentials: "same-origin",
+        headers: getAuthHeaders(),
+      });
       if (res.ok) {
         const json = await res.json();
         setSourcesData(json);
@@ -243,7 +277,7 @@ export function LiveWebClient() {
     } finally {
       setSourcesLoading(false);
     }
-  }, [getQueryString]);
+  }, [getQueryString, getAuthHeaders]);
 
   // Frequent polling for real-time live visitor updates (every 10s)
   React.useEffect(() => {
@@ -677,7 +711,7 @@ export function LiveWebClient() {
             </div>
 
             <div className="h-64 w-full">
-              {overviewData?.visitorsPerDay && overviewData.visitorsPerDay.some((d: any) => (d.visitors || 0) > 0 || (d.pageViews || 0) > 0) ? (
+              {mounted && overviewData?.visitorsPerDay && overviewData.visitorsPerDay.some((d: any) => (d.visitors || 0) > 0 || (d.pageViews || 0) > 0) ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={overviewData.visitorsPerDay}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
@@ -807,8 +841,8 @@ export function LiveWebClient() {
                         <td className="py-3 px-3 text-center font-medium tabular-nums text-zinc-300">{p.visitors}</td>
                         <td className="py-3 px-3 text-center">
                           <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold tabular-nums ${isLongest
-                              ? "bg-amber-950/40 text-amber-300 border border-amber-500/30"
-                              : "bg-white/[0.04] text-zinc-200 border border-white/[0.06]"
+                            ? "bg-amber-950/40 text-amber-300 border border-amber-500/30"
+                            : "bg-white/[0.04] text-zinc-200 border border-white/[0.06]"
                             }`}>
                             <Clock className="size-3" />
                             {p.avgTimeOnPageFormatted}
@@ -816,12 +850,12 @@ export function LiveWebClient() {
                         </td>
                         <td className="py-3 px-3 text-right">
                           <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-md uppercase tracking-wider ${isLongest
-                              ? "bg-amber-950/40 text-amber-400 border border-amber-500/30"
-                              : isMostVisited
-                                ? "bg-red-950/40 text-red-400 border border-red-500/30"
-                                : p.badge === "Lead Conversion"
-                                  ? "bg-emerald-950/40 text-emerald-400 border border-emerald-500/30"
-                                  : "bg-zinc-800/80 text-zinc-300 border border-white/10"
+                            ? "bg-amber-950/40 text-amber-400 border border-amber-500/30"
+                            : isMostVisited
+                              ? "bg-red-950/40 text-red-400 border border-red-500/30"
+                              : p.badge === "Lead Conversion"
+                                ? "bg-emerald-950/40 text-emerald-400 border border-emerald-500/30"
+                                : "bg-zinc-800/80 text-zinc-300 border border-white/10"
                             }`}>
                             {p.badge}
                           </span>
